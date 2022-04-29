@@ -41,6 +41,8 @@ dependencies {
 
 	implementation group: 'com.google.firebase', name: 'firebase-admin', version: '8.0.1'
 	implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.4.2'
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.6'
+
 
 	// querydsl 추가
 	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"

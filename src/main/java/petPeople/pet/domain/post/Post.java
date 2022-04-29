@@ -3,6 +3,7 @@ package petPeople.pet.domain.post;
 import lombok.*;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.comment.Comment;
 import petPeople.pet.domain.member.Member;
 import petPeople.pet.domain.notification.Notification;
@@ -19,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Getter @Setter
-public class Post {
+public class Post extends BaseTimeEntity {
 
     @Id @GeneratedValue
     @Column(name = "post_id")

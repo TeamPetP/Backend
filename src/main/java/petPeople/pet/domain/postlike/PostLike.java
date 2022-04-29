@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.Member;
 import petPeople.pet.domain.post.Post;
 
@@ -14,7 +15,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PostLike {
+public class PostLike extends BaseTimeEntity {
 
     @Id @GeneratedValue
     @Column(name = "post_like_id")

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.comment.Comment;
 import petPeople.pet.domain.member.Member;
 
@@ -14,7 +15,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Builder
 @Getter
-public class CommentLike {
+public class CommentLike extends BaseTimeEntity {
 
     @Id
     @GeneratedValue
