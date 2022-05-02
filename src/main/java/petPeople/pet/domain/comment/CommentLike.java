@@ -1,4 +1,4 @@
-package petPeople.pet.domain.commentlike;
+package petPeople.pet.domain.comment;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
