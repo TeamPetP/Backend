@@ -1,6 +1,7 @@
 package petPeople.pet.domain.meeting;
 
 import lombok.*;
+import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.Member;
 
 import javax.persistence.*;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter @Setter
 @Builder
-public class Meeting {
+public class Meeting extends BaseTimeEntity {
 
     @Id @Generated
     @Column(name = "meeting_id")
@@ -28,13 +29,17 @@ public class Meeting {
     private Integer maxPeople;
 
     @Enumerated(EnumType.STRING)
+    private Participant participant;
+
+    @Enumerated(EnumType.STRING)
     private Category category;
+
+    private Integer age;
 
     private String title;
 
     private String content;
 
-    private boolean isOpened;
+    private Boolean isOpened;
 
-    // TODO: 2022-05-03 이미지 추가
 }
