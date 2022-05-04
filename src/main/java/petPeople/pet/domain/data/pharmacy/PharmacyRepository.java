@@ -1,4 +1,4 @@
-package petPeople.pet.domain.pharmacy;
+package petPeople.pet.domain.data.pharmacy;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

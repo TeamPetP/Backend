@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import petPeople.pet.domain.pharmacy.Pharmacy;
-import petPeople.pet.domain.pharmacy.PharmacyRepository;
+import petPeople.pet.domain.data.pharmacy.Pharmacy;
+import petPeople.pet.domain.data.pharmacy.PharmacyRepository;
 
 import java.util.List;
 

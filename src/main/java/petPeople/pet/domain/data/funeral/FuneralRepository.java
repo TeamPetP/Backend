@@ -1,4 +1,4 @@
-package petPeople.pet.domain.funeral;
+package petPeople.pet.domain.data.funeral;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

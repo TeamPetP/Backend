@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import petPeople.pet.domain.funeral.Funeral;
-import petPeople.pet.domain.funeral.FuneralRepository;
+import petPeople.pet.domain.data.funeral.Funeral;
+import petPeople.pet.domain.data.funeral.FuneralRepository;
 
 import java.util.List;
 

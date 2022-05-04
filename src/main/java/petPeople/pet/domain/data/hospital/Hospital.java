@@ -1,4 +1,4 @@
-package petPeople.pet.domain.funeral;
+package petPeople.pet.domain.data.hospital;
 
 import lombok.*;
 
@@ -8,28 +8,28 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Builder
-public class Funeral {
+public class Hospital {
 
     @Id @GeneratedValue
-    @Column(name = "funeral_id")
+    @Column(name = "hospital_id")
     private Long id;
 
     //가평군
     private String sigunNm;
 
     //병원이름
-    private String funeralName;
-
+    private String hospitalName;
+    
     //지번 주소
     private String address;
-
+    
     //우편 주소
     private String zipCode;
-
+    
     //번호
     private String phone;
 

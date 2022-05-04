@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.Member;
-import petPeople.pet.domain.post.Post;
 
 import javax.persistence.*;
 
