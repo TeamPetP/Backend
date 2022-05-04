@@ -1,14 +1,12 @@
 package petPeople.pet.config.auth;
 
 
-import com.google.firebase.auth.FirebaseAuth;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import petPeople.pet.domain.member.MemberService;
-import petPeople.pet.filter.JwtFilter;
+import petPeople.pet.domain.member.service.MemberService;
 import petPeople.pet.filter.MockJwtFilter;
 
 @Configuration

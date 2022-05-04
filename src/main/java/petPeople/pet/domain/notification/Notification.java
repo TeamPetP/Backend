@@ -4,7 +4,7 @@ package petPeople.pet.domain.notification;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import petPeople.pet.domain.base.BaseTimeEntity;
-import petPeople.pet.domain.member.Member;
+import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;
 
