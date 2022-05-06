@@ -37,9 +37,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(WebSecurity web) throws Exception {
         //인증 예외 URL 설정
         web.ignoring()
-                .antMatchers(HttpMethod.POST ,"/hospitals")
-                .antMatchers(HttpMethod.POST ,"/pharmacies")
-                .antMatchers(HttpMethod.POST ,"/funerals")
+                .antMatchers(HttpMethod.POST ,"/members/local")//로컬용 회원가입
+                .antMatchers(HttpMethod.POST, "/members")//배포용 회원가입
                 .antMatchers("/css/**")
                 .antMatchers("/static/**")
                 .antMatchers("/js/**")

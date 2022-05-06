@@ -1,16 +1,13 @@
 package petPeople.pet.domain.post.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;
 
 @Entity
-@Getter
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
