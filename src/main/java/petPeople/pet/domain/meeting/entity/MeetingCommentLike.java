@@ -1,20 +1,19 @@
 package petPeople.pet.domain.meeting.entity;
 
 import lombok.*;
-import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;
 
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class MeetingComment extends BaseTimeEntity {
+public class MeetingCommentLike {
 
     @Id @Generated
-    @Column(name = "meeting_comment_id")
+    @Column(name = "meeting_comment_like_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -22,9 +21,6 @@ public class MeetingComment extends BaseTimeEntity {
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_post_id")
-    private MeetingPost meetingPost;
-
-    private String content;
-
+    @JoinColumn(name = "meeting_comment_id")
+    private MeetingComment meetingComment;
 }

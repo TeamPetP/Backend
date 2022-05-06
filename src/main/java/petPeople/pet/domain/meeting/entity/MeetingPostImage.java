@@ -11,20 +11,19 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Getter @Setter
 @Builder
-public class MeetingPost extends BaseTimeEntity {
+public class MeetingPostImage extends BaseTimeEntity {
 
     @Id @Generated
-    @Column(name = "meeting_post_id")
+    @Column(name = "meeting_post_image_id")
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
-    private Meeting meeting;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
-    private String content;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "meeting_post_id")
+    private MeetingPost meetingPost;
 
+    private String imgUrl;
 }
