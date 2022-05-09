@@ -1,6 +1,5 @@
 package petPeople.pet.domain.member.service;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,8 +30,8 @@ class MemberServiceTest {
     @InjectMocks
     MemberService memberService;
 
-    Member registerMember;
     Member member;
+    Member beforeMember;
 
     private static final Long ID = 1L;
     private static final String UID = "abcd";
@@ -44,8 +43,8 @@ class MemberServiceTest {
 
     @BeforeEach
     void before() {
-        registerMember = createRegisterMember();
-        member = createMember();
+        member = createRegisterMember();
+        beforeMember = createBeforeMember();
     }
 
     private Member createRegisterMember() {
@@ -60,7 +59,7 @@ class MemberServiceTest {
                 .build();
     }
 
-    private Member createMember() {
+    private Member createBeforeMember() {
         return Member.builder()
                 .uid(UID)
                 .email(EMAIL)
@@ -75,23 +74,23 @@ class MemberServiceTest {
     @DisplayName("회원 조회 테스트")
     void loadByUserNameTest() throws Exception {
         //given
-        when(memberRepository.findByUid(UID)).thenReturn(Optional.ofNullable(registerMember));
+        when(memberRepository.findByUid(UID)).thenReturn(Optional.ofNullable(member));
 
         //when
         Member member = (Member)memberService.loadUserByUsername(UID);
 
         //then
-        assertThat(member).isEqualTo(this.registerMember);
+        assertThat(member).isEqualTo(this.member);
     }
 
     @Test
     @DisplayName("로컬 회원 가입 테스트")
     public void memberRegisterTest() throws Exception {
         //given
-        MemberRegisterResponseDto result = new MemberRegisterResponseDto(registerMember);
+        MemberRegisterResponseDto result = new MemberRegisterResponseDto(member);
         MemberLocalRegisterRequestDto memberLocalRegisterRequestDto = new MemberLocalRegisterRequestDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE);
 
-        when(memberRepository.save(any())).thenReturn(registerMember);
+        when(memberRepository.save(any())).thenReturn(member);
         when(memberRepository.findByUid(any())).thenReturn(Optional.empty());
 
         //when
@@ -105,11 +104,36 @@ class MemberServiceTest {
     @DisplayName("중복 회원 가입 테스트")
     public void duplicatedMemberRegisterTest() throws Exception {
         //given
-        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(member));
+        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(beforeMember));
 
         //when
         //then
         assertThrows(CustomException.class,
                 () -> memberService.register(new MemberRegisterDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE)));
     }
+    
+    @Test
+    @DisplayName("닉네임 변경 테스트")
+    public void editNicknameTest() throws Exception {
+        //given
+        //when
+        memberService.editNickname(member, "가나다라");
+        
+        //then
+        assertThat(member.getNickname()).isEqualTo("가나다라");
+        System.out.println(1 + " " + member.getNickname());
+    }
+
+     @Test
+     public void editIntroduceTest() throws Exception {
+         //given
+         //when
+         String introduce = "강아지죠아";
+         memberService.editIntroduce(member, introduce);
+
+         //then
+         assertThat(member.getIntroduce()).isEqualTo(introduce);
+         System.out.println(2 + " " + member.getNickname());
+     }
+
 }
