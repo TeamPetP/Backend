@@ -9,7 +9,7 @@ import petPeople.pet.domain.member.entity.Member;
 @Builder
 @EqualsAndHashCode
 @ToString
-public class MemberRegisterResponseDto {
+public class MemberRegisterRespDto {
 
     private Long memberId;
 
@@ -25,7 +25,7 @@ public class MemberRegisterResponseDto {
 
     private String introduce;
 
-    public MemberRegisterResponseDto(Member member) {
+    public MemberRegisterRespDto(Member member) {
         this.memberId = member.getId();
         this.uid = member.getUid();
         this.email = member.getEmail();
