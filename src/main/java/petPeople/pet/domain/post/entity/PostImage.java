@@ -20,10 +20,6 @@ public class PostImage extends BaseTimeEntity {
     @Column(name = "post_image_id")
     private Long id;
 
-    @JoinColumn(name = "member_id")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Member member;
-
     @JoinColumn(name = "post_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
