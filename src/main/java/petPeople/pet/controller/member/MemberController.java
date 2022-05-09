@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import petPeople.pet.controller.member.dto.req.MemberEditRequestDto;
 import petPeople.pet.controller.member.dto.req.MemberLocalRegisterRequestDto;
 import petPeople.pet.controller.member.dto.req.MemberRegisterRequestDto;
 import petPeople.pet.controller.member.dto.resp.MemberRegisterResponseDto;
@@ -49,11 +50,27 @@ public class MemberController {
 
     @GetMapping("/me")
     public ResponseEntity<MemberRegisterResponseDto> login(Authentication authentication) {
-        Member member = ((Member) authentication.getPrincipal());
+        Member member = getMember(authentication);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(new MemberRegisterResponseDto(member));
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity editMember(Authentication authentication,
+                                     @RequestBody MemberEditRequestDto memberEditRequestDto) {
+        Member member = getMember(authentication);
+        memberService.editNickname(member, memberEditRequestDto.getNickname());
+        memberService.editIntroduce(member, memberEditRequestDto.getIntroduce());
+
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    private Member getMember(Authentication authentication) {
+        return (Member) authentication.getPrincipal();
     }
 
     public FirebaseToken decodeToken(String header) {

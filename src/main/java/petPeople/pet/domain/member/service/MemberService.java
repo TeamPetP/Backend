@@ -34,6 +34,16 @@ public class MemberService implements UserDetailsService {
         return new MemberRegisterResponseDto(saveMember(memberRegisterDto));
     }
 
+    @Transactional
+    public void editNickname(Member member, String nickname) {
+        member.setNickname(nickname);
+    }
+
+    @Transactional
+    public void editIntroduce(Member member, String introduce) {
+        member.setIntroduce(introduce);
+    }
+
     private Member saveMember(MemberRegisterDto memberRegisterDto) {
         return memberRepository.save(createMember(memberRegisterDto));
     }
