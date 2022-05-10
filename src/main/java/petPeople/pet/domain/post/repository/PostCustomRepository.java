@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface PostCustomRepository {
 
-    Page<Post> findAllByIdWithFetchJoinMemberPaging(Pageable pageable);
+    Page<Post> findAllPostByIdWithFetchJoinMemberPaging(Pageable pageable);
     Optional<Post> findByIdWithFetchJoinMember(Long postId);
 
 }

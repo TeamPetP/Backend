@@ -2,6 +2,7 @@ package petPeople.pet.domain.post.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -75,42 +76,80 @@ public class PostService {
     }
 
     public Page<PostRetrieveRespDto> retrieveAll(Pageable pageable) {
-        Page<Post> postPage = postRepository.findAllByIdWithFetchJoinMemberPaging(pageable);
+        Page<Post> postPage = findAllPostByIdWithFetchJoinMemberPaging(pageable);
 
-        List<Long> ids = new ArrayList<>();
-        for (Post post : postPage.getContent()) {
-            ids.add(post.getId());
-        }
+        List<Long> ids = getPostId(postPage.getContent());
 
-        List<Tag> findTagList = tagRepository.findTagsByPostIds(ids);
-        List<PostImage> findPostImageList = postImageRepository.findPostImagesByPostIds(ids);
-        List<PostLike> findPostLikeList = postLikeRepository.findPostLikesByPostIds(ids);
+        List<Tag> findTagList = findTagsByPostIds(ids);
+        List<PostImage> findPostImageList = findPostImagesByPostIds(ids);
+        List<PostLike> findPostLikeList = findPostLikesByPostIds(ids);
 
         Page<PostRetrieveRespDto> respDtoPage = postPage.map(post -> {
-            List<Tag> tagList = new ArrayList<>();
-            for (Tag tag : findTagList) {
-                if (tag.getPost() == post) {
-                    tagList.add(tag);
-                }
-            }
-
-            List<PostImage> postImageList = new ArrayList<>();
-            for (PostImage postImage : findPostImageList) {
-                if (postImage.getPost() == post) {
-                    postImageList.add(postImage);
-                }
-            }
-
-            List<PostLike> postLikeList = new ArrayList<>();
-            for (PostLike postLike : findPostLikeList) {
-                if (postLike.getPost() == post) {
-                    postLikeList.add(postLike);
-                }
-            }
+            List<Tag> tagList = getTagListByPost(findTagList, post);
+            List<PostImage> postImageList = getPostImageListByPost(findPostImageList, post);
+            List<PostLike> postLikeList = getPostLikeListByPost(findPostLikeList, post);
 
             return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()));
         });
         return respDtoPage;
+    }
+
+    @NotNull
+    private List<PostLike> getPostLikeListByPost(List<PostLike> findPostLikeList, Post post) {
+        List<PostLike> postLikeList = new ArrayList<>();
+        for (PostLike postLike : findPostLikeList) {
+            if (postLike.getPost() == post) {
+                postLikeList.add(postLike);
+            }
+        }
+        return postLikeList;
+    }
+
+    @NotNull
+    private List<PostImage> getPostImageListByPost(List<PostImage> findPostImageList, Post post) {
+        List<PostImage> postImageList = new ArrayList<>();
+        for (PostImage postImage : findPostImageList) {
+            if (postImage.getPost() == post) {
+                postImageList.add(postImage);
+            }
+        }
+        return postImageList;
+    }
+
+    @NotNull
+    private List<Tag> getTagListByPost(List<Tag> findTagList, Post post) {
+        List<Tag> tagList = new ArrayList<>();
+        for (Tag tag : findTagList) {
+            if (tag.getPost() == post) {
+                tagList.add(tag);
+            }
+        }
+        return tagList;
+    }
+
+    private List<PostLike> findPostLikesByPostIds(List<Long> ids) {
+        return postLikeRepository.findPostLikesByPostIds(ids);
+    }
+
+    private List<PostImage> findPostImagesByPostIds(List<Long> ids) {
+        return postImageRepository.findPostImagesByPostIds(ids);
+    }
+
+    private List<Tag> findTagsByPostIds(List<Long> ids) {
+        return tagRepository.findTagsByPostIds(ids);
+    }
+
+    @NotNull
+    private List<Long> getPostId(List<Post> content) {
+        List<Long> ids = new ArrayList<>();
+        for (Post post : content) {
+            ids.add(post.getId());
+        }
+        return ids;
+    }
+
+    private Page<Post> findAllPostByIdWithFetchJoinMemberPaging(Pageable pageable) {
+        return postRepository.findAllPostByIdWithFetchJoinMemberPaging(pageable);
     }
 
     private Long countPostLike(Long postId) {

@@ -34,7 +34,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
     }
 
     @Override
-    public Page<Post> findAllByIdWithFetchJoinMemberPaging(Pageable pageable) {
+    public Page<Post> findAllPostByIdWithFetchJoinMemberPaging(Pageable pageable) {
 
         List<Post> content = queryFactory
                 .selectFrom(post)
