@@ -26,6 +26,8 @@ public class PostWriteRespDto {
 
     private LocalDateTime createdDate;
 
+    private LocalDateTime lastModifiedDate;
+
     public PostWriteRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls) {
         this.postId = post.getId();
         this.content = post.getContent();
@@ -39,5 +41,6 @@ public class PostWriteRespDto {
         }
 
         this.createdDate = post.getCreatedDate();
+        this.lastModifiedDate = post.getLastModifiedDate();
     }
 }

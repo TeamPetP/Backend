@@ -7,8 +7,5 @@ import petPeople.pet.domain.post.entity.Post;
 
 import java.util.Optional;
 
-public interface PostRepository extends JpaRepository<Post, Long> {
-
-    @Query("select p from Post p join fetch p.member m where p.id = :postId")
-    Optional<Post> findByIdWithFetchJoinMember(@Param("postId") Long postId);
+public interface PostRepository extends JpaRepository<Post, Long>, PostCustomRepository {
 }

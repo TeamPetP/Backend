@@ -1,0 +1,40 @@
+package petPeople.pet.domain.post.repository;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.Query;
+import petPeople.pet.domain.post.entity.PostImage;
+import petPeople.pet.domain.post.entity.QPostImage;
+
+import javax.persistence.EntityManager;
+
+import java.util.List;
+
+import static petPeople.pet.domain.post.entity.QPostImage.*;
+
+@RequiredArgsConstructor
+public class PostImageCustomRepositoryImpl implements PostImageCustomRepository {
+
+    private final JPAQueryFactory queryFactory;
+    private final EntityManager em;
+
+    @Override
+    public void deleteByPostId(Long postId) {
+        queryFactory
+                .delete(postImage)
+                .where(postImage.post.id.eq(postId))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+    @Override
+    public List<PostImage> findPostImagesByPostIds(List<Long> postIds) {
+
+        return queryFactory
+                .selectFrom(postImage)
+                .where(postImage.post.id.in(postIds))
+                .fetch();
+    }
+}

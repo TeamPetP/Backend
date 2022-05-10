@@ -1,6 +1,8 @@
 package petPeople.pet.controller.post;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -9,6 +11,7 @@ import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.service.PostService;
 
 @RestController
@@ -36,15 +39,22 @@ public class PostController {
                 .body(postRetrieveRespDto);
     }
 
+    @GetMapping("")
+    public ResponseEntity retrieveAllPost(Pageable pageable) {
+        Page<PostRetrieveRespDto> postRetrieveRespDtos = postService.retrieveAll(pageable);
+
+        return ResponseEntity.ok().body(postRetrieveRespDtos);
+    }
+
     @PutMapping("/{postId}")
-    public ResponseEntity editPost(Authentication authentication, @PathVariable Long postId, @RequestBody PostWriteReqDto postWriteReqDto) {
-        Member member = getMember(authentication);
-        PostWriteRespDto postWriteRespDto = postService.editPost(member, postId, postWriteReqDto);
+    public ResponseEntity<PostWriteRespDto> editPost(Authentication authentication, @PathVariable Long postId, @RequestBody PostWriteReqDto postWriteReqDto) {
+        PostWriteRespDto postWriteRespDto = postService.editPost(getMember(authentication), postId, postWriteReqDto);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(postWriteRespDto);
     }
+
 
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();

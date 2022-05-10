@@ -2,6 +2,8 @@ package petPeople.pet.domain.post.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
@@ -10,8 +12,10 @@ import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostImage;
+import petPeople.pet.domain.post.entity.PostLike;
 import petPeople.pet.domain.post.entity.Tag;
 import petPeople.pet.domain.post.repository.PostImageRepository;
+import petPeople.pet.domain.post.repository.PostLikeRepository;
 import petPeople.pet.domain.post.repository.PostRepository;
 import petPeople.pet.domain.post.repository.TagRepository;
 import petPeople.pet.exception.CustomException;
@@ -30,6 +34,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final PostImageRepository postImageRepository;
+    private final PostLikeRepository postLikeRepository;
 
     @Transactional
     public PostWriteRespDto write(Member member, PostWriteReqDto postWriteReqDto) {
@@ -42,10 +47,12 @@ public class PostService {
     }
 
     public PostRetrieveRespDto retrieveOne(Long postId) {
+
         return new PostRetrieveRespDto(
                 validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId)),
                 findTagList(postId),
-                findPostImageList(postId)
+                findPostImageList(postId),
+                countPostLike(postId)
         );
     }
 
@@ -65,6 +72,49 @@ public class PostService {
                 saveTagList(postWriteReqDto.getTagList(), findPost),
                 savePostImageList(postWriteReqDto.getImgUrlList(), findPost)
         );
+    }
+
+    public Page<PostRetrieveRespDto> retrieveAll(Pageable pageable) {
+        Page<Post> postPage = postRepository.findAllByIdWithFetchJoinMemberPaging(pageable);
+
+        List<Long> ids = new ArrayList<>();
+        for (Post post : postPage.getContent()) {
+            ids.add(post.getId());
+        }
+
+        List<Tag> findTagList = tagRepository.findTagsByPostIds(ids);
+        List<PostImage> findPostImageList = postImageRepository.findPostImagesByPostIds(ids);
+        List<PostLike> findPostLikeList = postLikeRepository.findPostLikesByPostIds(ids);
+
+        Page<PostRetrieveRespDto> respDtoPage = postPage.map(post -> {
+            List<Tag> tagList = new ArrayList<>();
+            for (Tag tag : findTagList) {
+                if (tag.getPost() == post) {
+                    tagList.add(tag);
+                }
+            }
+
+            List<PostImage> postImageList = new ArrayList<>();
+            for (PostImage postImage : findPostImageList) {
+                if (postImage.getPost() == post) {
+                    postImageList.add(postImage);
+                }
+            }
+
+            List<PostLike> postLikeList = new ArrayList<>();
+            for (PostLike postLike : findPostLikeList) {
+                if (postLike.getPost() == post) {
+                    postLikeList.add(postLike);
+                }
+            }
+
+            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()));
+        });
+        return respDtoPage;
+    }
+
+    private Long countPostLike(Long postId) {
+        return postLikeRepository.countByPostId(postId);
     }
 
     private void validateOwnPost(Member member, Member postMember) {
@@ -159,5 +209,4 @@ public class PostService {
                 .content(content)
                 .build();
     }
-
 }
