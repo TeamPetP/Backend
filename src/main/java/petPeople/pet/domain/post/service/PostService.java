@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
+import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.entity.Post;
@@ -13,9 +14,12 @@ import petPeople.pet.domain.post.entity.Tag;
 import petPeople.pet.domain.post.repository.PostImageRepository;
 import petPeople.pet.domain.post.repository.PostRepository;
 import petPeople.pet.domain.post.repository.TagRepository;
+import petPeople.pet.exception.CustomException;
+import petPeople.pet.exception.ErrorCode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +38,30 @@ public class PostService {
         List<PostImage> postImageList = createPostImageList(postWriteReqDto, savePost);
 
         return new PostWriteRespDto(savePost, tagList, postImageList);
+    }
+
+    public PostRetrieveRespDto retrieveOne(Long postId) {
+        return new PostRetrieveRespDto(findPost(postId), findTagList(postId), findPostImageList(postId));
+    }
+
+    private List<PostImage> findPostImageList(Long postId) {
+        return postImageRepository.findByPostId(postId);
+    }
+
+    private List<Tag> findTagList(Long postId) {
+        return tagRepository.findByPostId(postId);
+    }
+
+    private Post findPost(Long postId) {
+        return validateOptionalPost(findOptionalPost(postId));
+    }
+
+    private Post validateOptionalPost(Optional<Post> optionalPost) {
+        return optionalPost.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "존재하지 않은 게시글입니다."));
+    }
+
+    private Optional<Post> findOptionalPost(Long postId) {
+        return postRepository.findByIdWithFetchJoinMember(postId);
     }
 
     private List<PostImage> createPostImageList(PostWriteReqDto postWriteReqDto, Post savePost) {
