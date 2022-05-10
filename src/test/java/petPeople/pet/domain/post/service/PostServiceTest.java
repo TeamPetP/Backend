@@ -28,10 +28,14 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)//테스트 클래스가 Mockito를 사용함을 의미합니다.
 class PostServiceTest {
+
+    final Member member = createMember();
+    final List<String> tags = Arrays.asList("사진", "내새끼", "장난감");
+    final List<String> imgUrls = Arrays.asList("www.방울이귀엽죠?.com", "www.qkddnfdlrnlduqwy.com");
 
     @Mock
     PostRepository postRepository;
@@ -43,13 +47,12 @@ class PostServiceTest {
     @InjectMocks
     PostService postService;
 
-    final Member member = createMember();
-    final List<String> tags = Arrays.asList("사진", "내새끼", "장난감");
-    final List<String> imgUrls = Arrays.asList("www.방울이귀엽죠?.com", "www.qkddnfdlrnlduqwy.com");
-    final PostWriteReqDto postWriteReqDto = new PostWriteReqDto("게시글 및 피드입니다.", tags, imgUrls);
+    PostWriteReqDto postWriteReqDto;
     Post post;
+
     @BeforeEach
     void beforeEach() {
+        postWriteReqDto = new PostWriteReqDto("게시글 및 피드입니다.", tags, imgUrls);
         post = createPost(postWriteReqDto);
     }
 
@@ -113,6 +116,52 @@ class PostServiceTest {
         //when
         //then
         assertThrows(CustomException.class, () -> postService.retrieveOne(postId));
+    }
+
+    @Test
+    @DisplayName("게시글 수정 테스트")
+    public void editPostTest() throws Exception {
+        //given
+        Long postId = 2L;
+        post.setId(postId);
+
+        when(postRepository.findById(any())).thenReturn(Optional.of(post));
+
+        List<Tag> tagList = createTagList(tags, post);
+        when(tagRepository.save(any()))
+                .thenReturn(tagList.get(0))
+                .thenReturn(tagList.get(1))
+                .thenReturn(tagList.get(2));
+
+        List<PostImage> postImageList = createPostImageList(imgUrls, post);
+        when(postImageRepository.save(any()))
+                .thenReturn(postImageList.get(0))
+                .thenReturn(postImageList.get(1));
+
+        PostWriteRespDto result = new PostWriteRespDto(post, tagList, postImageList);
+
+        //when
+        PostWriteRespDto respDto = postService.editPost(member, postId, postWriteReqDto);
+
+        //then
+        verify(tagRepository, times(1)).deleteByPostId(postId);
+        verify(postImageRepository, times(1)).deleteByPostId(postId);
+        assertThat(respDto).isEqualTo(result);
+    }
+
+    @Test
+    @DisplayName("자신의 게시글이 아닌 수정 테스트")
+    public void editNotOwnPostTest() throws Exception {
+        //given
+        Long postId = 2L;
+        post.setId(postId);
+        post.setMember(new Member());
+
+        when(postRepository.findById(any())).thenReturn(Optional.of(post));
+
+        //when
+        //then
+        assertThrows(CustomException.class, () -> postService.editPost(member, postId, postWriteReqDto));
     }
 
     private Member createMember() {
