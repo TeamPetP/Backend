@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
+import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.entity.Post;
@@ -17,12 +18,15 @@ import petPeople.pet.domain.post.entity.Tag;
 import petPeople.pet.domain.post.repository.PostImageRepository;
 import petPeople.pet.domain.post.repository.PostRepository;
 import petPeople.pet.domain.post.repository.TagRepository;
+import petPeople.pet.exception.CustomException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -42,14 +46,17 @@ class PostServiceTest {
     final Member member = createMember();
     final List<String> tags = Arrays.asList("사진", "내새끼", "장난감");
     final List<String> imgUrls = Arrays.asList("www.방울이귀엽죠?.com", "www.qkddnfdlrnlduqwy.com");
+    final PostWriteReqDto postWriteReqDto = new PostWriteReqDto("게시글 및 피드입니다.", tags, imgUrls);
+    Post post;
+    @BeforeEach
+    void beforeEach() {
+        post = createPost(postWriteReqDto);
+    }
 
     @Test
     @DisplayName("게시글 작성 테스트")
     public void writePostTest() throws Exception {
         //given
-        PostWriteReqDto postWriteReqDto = new PostWriteReqDto("게시글 및 피드입니다.", tags, imgUrls);
-        Post post = createPost(postWriteReqDto);
-
         when(postRepository.save(any())).thenReturn(post);
 
         List<Tag> tagList = createTagList(tags, post);
@@ -70,6 +77,42 @@ class PostServiceTest {
 
         //then
         assertThat(result).isEqualTo(respDto);
+    }
+
+    @Test
+    @DisplayName("게시글 단건 조회")
+    public void retrievePostTest() throws Exception {
+        //given
+        Long postId = 2L;
+        post.setId(postId);
+
+        when(postRepository.findByIdWithFetchJoinMember(postId)).thenReturn(Optional.of(post));
+
+        List<Tag> tagList = createTagList(tags, post);
+        when(tagRepository.findByPostId(postId)).thenReturn(tagList);
+
+        List<PostImage> postImageList = createPostImageList(imgUrls, post);
+        when(postImageRepository.findByPostId(postId)).thenReturn(postImageList);
+
+        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList);
+
+        //when
+        PostRetrieveRespDto postRetrieveRespDto = postService.retrieveOne(postId);
+
+        //then
+        assertThat(postRetrieveRespDto).isEqualTo(result);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 게시글 조회")
+    public void retrieveNotFoundPostTest() throws Exception {
+        //given
+        Long postId = 2L;
+        when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.empty());
+
+        //when
+        //then
+        assertThrows(CustomException.class, () -> postService.retrieveOne(postId));
     }
 
     private Member createMember() {
@@ -108,18 +151,18 @@ class PostServiceTest {
                 .build();
     }
 
-    private PostImage createPostImage(Post savePost, String url) {
+    private PostImage createPostImage(Post post, String url) {
         return PostImage.builder()
-                .post(savePost)
+                .post(post)
                 .imgUrl(url)
                 .build();
     }
 
-    public List<PostImage> createPostImageList(List<String> urls, Post savePost) {
+    public List<PostImage> createPostImageList(List<String> urls, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
 
         for (String url : urls) {
-            postImageList.add((createPostImage(savePost, url)));
+            postImageList.add((createPostImage(post, url)));
         }
         return postImageList;
     }
