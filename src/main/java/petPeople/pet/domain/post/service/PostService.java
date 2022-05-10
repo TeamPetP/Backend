@@ -1,7 +1,7 @@
 package petPeople.pet.domain.post.service;
 
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
@@ -24,6 +24,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class PostService {
 
     private final PostRepository postRepository;
@@ -32,16 +33,60 @@ public class PostService {
 
     @Transactional
     public PostWriteRespDto write(Member member, PostWriteReqDto postWriteReqDto) {
-        Post savePost = savePost(createPost(member, postWriteReqDto));
-
-        List<Tag> tagList = createTagList(postWriteReqDto, savePost);
-        List<PostImage> postImageList = createPostImageList(postWriteReqDto, savePost);
-
-        return new PostWriteRespDto(savePost, tagList, postImageList);
+        Post savePost = savePost(createPost(member, postWriteReqDto.getContent()));
+        return new PostWriteRespDto(
+                savePost,
+                saveTagList(postWriteReqDto.getTagList(), savePost),
+                savePostImageList(postWriteReqDto.getImgUrlList(), savePost)
+        );
     }
 
     public PostRetrieveRespDto retrieveOne(Long postId) {
-        return new PostRetrieveRespDto(findPost(postId), findTagList(postId), findPostImageList(postId));
+        return new PostRetrieveRespDto(
+                validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId)),
+                findTagList(postId),
+                findPostImageList(postId)
+        );
+    }
+
+    @Transactional
+    public PostWriteRespDto editPost(Member member, Long postId, PostWriteReqDto postWriteReqDto) {
+        Post findPost = validateOptionalPost(findOptionalPost(postId));
+        validateOwnPost(member, findPost.getMember());
+
+        editPostContent(findPost, postWriteReqDto.getContent());
+
+        //기존 태그, 이미지 삭제
+        deleteTagByPostId(postId);
+        deletePostImageByPostId(postId);
+
+        return new PostWriteRespDto(
+                findPost,
+                saveTagList(postWriteReqDto.getTagList(), findPost),
+                savePostImageList(postWriteReqDto.getImgUrlList(), findPost)
+        );
+    }
+
+    private void validateOwnPost(Member member, Member postMember) {
+        if (isaNotSameMember(member, postMember)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_MEMBER, "해당 게시글에 권한이 없습니다.");
+        }
+    }
+
+    private boolean isaNotSameMember(Member member, Member postMember) {
+        return member != postMember;
+    }
+
+    private void editPostContent(Post post, String content) {
+        post.setContent(content);
+    }
+
+    private void deletePostImageByPostId(Long postId) {
+        postImageRepository.deleteByPostId(postId);
+    }
+
+    private void deleteTagByPostId(Long postId) {
+        tagRepository.deleteByPostId(postId);
     }
 
     private List<PostImage> findPostImageList(Long postId) {
@@ -52,32 +97,32 @@ public class PostService {
         return tagRepository.findByPostId(postId);
     }
 
-    private Post findPost(Long postId) {
-        return validateOptionalPost(findOptionalPost(postId));
+    private Optional<Post> findOptionalPost(Long postId) {
+        return postRepository.findById(postId);
     }
 
     private Post validateOptionalPost(Optional<Post> optionalPost) {
         return optionalPost.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "존재하지 않은 게시글입니다."));
     }
 
-    private Optional<Post> findOptionalPost(Long postId) {
+    private Optional<Post> findOptionalPostFetchJoinedWithMember(Long postId) {
         return postRepository.findByIdWithFetchJoinMember(postId);
     }
 
-    private List<PostImage> createPostImageList(PostWriteReqDto postWriteReqDto, Post savePost) {
+    private List<PostImage> savePostImageList(List<String> urls, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
 
-        for (String url : postWriteReqDto.getImgUrlList()) {
-            postImageList.add(savePostImage(createPostImage(savePost, url)));
+        for (String url : urls) {
+            postImageList.add(savePostImage(createPostImage(post, url)));
         }
         return postImageList;
     }
 
-    private List<Tag> createTagList(PostWriteReqDto postWriteReqDto, Post savePost) {
+    private List<Tag> saveTagList(List<String> tags, Post post) {
         List<Tag> tagList = new ArrayList<>();
 
-        for (String t : postWriteReqDto.getTagList()) {
-            tagList.add(saveTag(createTag(savePost, t)));
+        for (String t : tags) {
+            tagList.add(saveTag(createTag(post, t)));
         }
         return tagList;
     }
@@ -90,14 +135,13 @@ public class PostService {
         return tagRepository.save(tag);
     }
 
-    @NotNull
     private Post savePost(Post post) {
         return postRepository.save(post);
     }
 
-    private PostImage createPostImage(Post savePost, String url) {
+    private PostImage createPostImage(Post post, String url) {
         return PostImage.builder()
-                .post(savePost)
+                .post(post)
                 .imgUrl(url)
                 .build();
     }
@@ -109,10 +153,10 @@ public class PostService {
                 .build();
     }
 
-    private Post createPost(Member member, PostWriteReqDto postWriteReqDto) {
+    private Post createPost(Member member, String content) {
         return Post.builder()
                 .member(member)
-                .content(postWriteReqDto.getContent())
+                .content(content)
                 .build();
     }
 

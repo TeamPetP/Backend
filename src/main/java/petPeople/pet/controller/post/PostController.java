@@ -19,7 +19,7 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("")
-    public ResponseEntity<PostWriteRespDto> write(Authentication authentication, @RequestBody PostWriteReqDto postWriteReqDto) {
+    public ResponseEntity<PostWriteRespDto> writePost(Authentication authentication, @RequestBody PostWriteReqDto postWriteReqDto) {
         PostWriteRespDto respDto = postService.write(getMember(authentication), postWriteReqDto);
 
         return ResponseEntity.
@@ -28,12 +28,22 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public ResponseEntity retrieveOne(@PathVariable Long postId) {
+    public ResponseEntity<PostRetrieveRespDto> retrievePost(@PathVariable Long postId) {
         PostRetrieveRespDto postRetrieveRespDto = postService.retrieveOne(postId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(postRetrieveRespDto);
+    }
+
+    @PutMapping("/{postId}")
+    public ResponseEntity editPost(Authentication authentication, @PathVariable Long postId, @RequestBody PostWriteReqDto postWriteReqDto) {
+        Member member = getMember(authentication);
+        PostWriteRespDto postWriteRespDto = postService.editPost(member, postId, postWriteReqDto);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(postWriteRespDto);
     }
 
     private Member getMember(Authentication authentication) {
