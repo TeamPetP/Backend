@@ -98,7 +98,7 @@ public class PostService {
     public Long like(Member member, Long postId) {
 
         if (isOptionalPostLikePresent(findOptionalPostLike(member, postId))) {
-            deletePostLikeByPostId(postId);
+            deletePostLikeByPostIdAndMemberId(postId, member.getId());
         } else {
             savePostLike(createPostLike(member, validateOptionalPost(findOptionalPost(postId))));
         }
@@ -127,6 +127,10 @@ public class PostService {
 
     private void deletePostLikeByPostId(Long postId) {
         postLikeRepository.deleteByPostId(postId);
+    }
+
+    private void deletePostLikeByPostIdAndMemberId(Long postId, Long memberId) {
+        postLikeRepository.deleteByPostIdAndMemberId(postId, memberId);
     }
 
     private PostLike savePostLike(PostLike postLike) {

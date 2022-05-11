@@ -47,4 +47,15 @@ public class PostLikeCustomRepositoryImpl implements PostLikeCustomRepository {
         em.flush();
         em.clear();
     }
+
+    @Override
+    public void deleteByPostIdAndMemberId(Long postId, Long memberId) {
+        queryFactory
+                .delete(postLike)
+                .where(postLike.post.id.eq(postId), postLike.member.id.eq(memberId))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
 }

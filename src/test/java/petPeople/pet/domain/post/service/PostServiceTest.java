@@ -235,7 +235,7 @@ class PostServiceTest {
         PostLike postLike = new PostLike(id++, post, member);
 
         when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.ofNullable(postLike));
-        doNothing().when(postLikeRepository).deleteByPostId(any());
+        doNothing().when(postLikeRepository).deleteByPostIdAndMemberId(any(), any());
         when(postLikeRepository.countByPostId(any())).thenReturn(--result);
 
         //when
@@ -243,7 +243,7 @@ class PostServiceTest {
 
         //then
         assertThat(likeCnt).isEqualTo(0L);
-        verify(postLikeRepository, times(1)).deleteByPostId(post.getId());
+        verify(postLikeRepository, times(1)).deleteByPostIdAndMemberId(any(), any());
     }
     
     @Test
