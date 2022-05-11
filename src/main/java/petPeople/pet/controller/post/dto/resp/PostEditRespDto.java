@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostRetrieveRespDto {
+public class PostEditRespDto {
 
     private Long postId;
 
@@ -32,9 +32,8 @@ public class PostRetrieveRespDto {
 
     private Long likeCnt;
 
-    private Boolean isLiked;
 
-    public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked) {
+    public PostEditRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt) {
         this.postId = post.getId();
         this.memberId = post.getMember().getId();
         this.content = post.getContent();
@@ -50,6 +49,5 @@ public class PostRetrieveRespDto {
         this.createdDate = post.getCreatedDate();
         this.lastModifiedDate = post.getLastModifiedDate();
         this.likeCnt = likeCnt;
-        this.isLiked = isLiked;
     }
 }

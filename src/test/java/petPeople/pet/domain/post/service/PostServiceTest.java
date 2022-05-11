@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
+import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
@@ -103,7 +104,7 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 단건 조회")
+    @DisplayName("로그인 하지 않고 게시글 단건 조회")
     public void retrievePostTest() throws Exception {
         //given
         long likeCnt = 3L;
@@ -112,10 +113,10 @@ class PostServiceTest {
         when(postImageRepository.findByPostId(any())).thenReturn(postImageList);
         when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
 
-        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt);
+        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, null);
 
         //when
-        PostRetrieveRespDto postRetrieveRespDto = postService.retrieveOne(post.getId());
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), null);
 
         //then
         assertThat(postRetrieveRespDto).isEqualTo(result);
@@ -129,7 +130,7 @@ class PostServiceTest {
 
         //when
         //then
-        assertThrows(CustomException.class, () -> postService.retrieveOne(post.getId()));
+        assertThrows(CustomException.class, () -> postService.localRetrieveOne(post.getId(), null));
     }
 
     @Test
@@ -152,9 +153,10 @@ class PostServiceTest {
 
         when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
 
-        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt);
+        PostEditRespDto result = new PostEditRespDto(post, tagList, postImageList, likeCnt);
+
         //when
-        PostRetrieveRespDto respDto = postService.editPost(member, post.getId(), postWriteReqDto);
+        PostEditRespDto respDto = postService.editPost(member, post.getId(), postWriteReqDto);
 
         //then
         verify(tagRepository, times(1)).deleteByPostId(post.getId());
@@ -175,7 +177,7 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 전체 조회 테스트")
+    @DisplayName("로그인 하지 않고 게시글 전체 조회 테스트")
     public void retrieveAllPostTest() throws Exception {
         //given
         PageRequest pageRequest = PageRequest.of(0, 10);
@@ -216,11 +218,11 @@ class PostServiceTest {
             List<PostImage> postImages = getPostImagesByPost(allPostImageList, post);
             List<PostLike> postLikes = getPostsLikeByPost(allPostLikeList, post);
 
-            return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()));
+            return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()), null);
         });
 
         //when
-        Page<PostRetrieveRespDto> respDtoPage = postService.retrieveAll(pageRequest);
+        Page<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, null);
 
         //then
         assertThat(respDtoPage).isEqualTo(result);
@@ -245,7 +247,7 @@ class PostServiceTest {
         assertThat(likeCnt).isEqualTo(0L);
         verify(postLikeRepository, times(1)).deleteByPostIdAndMemberId(any(), any());
     }
-    
+
     @Test
     @DisplayName("게시글 좋아요")
     public void likePostTest() throws Exception {
@@ -266,7 +268,7 @@ class PostServiceTest {
         assertThat(likeCnt).isEqualTo(1L);
 
     }
-    
+
     @Test
     @DisplayName("게시글 삭제 테스트")
     public void deletePostTest() throws Exception {
@@ -298,7 +300,7 @@ class PostServiceTest {
         //then
         assertThrows(CustomException.class, () -> postService.like(member, post.getId()));
     }
-    
+
     private List<PostLike> getPostsLikeByPost(List<PostLike> allPostLikeList, Post post) {
         List<PostLike> postLikes = new ArrayList<>();
         for (PostLike postLike : allPostLikeList) {
