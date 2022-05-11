@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import petPeople.pet.controller.member.dto.resp.MemberRegisterResponseDto;
+import petPeople.pet.controller.member.dto.resp.MemberRegisterRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.exception.CustomException;
@@ -29,9 +29,9 @@ public class MemberService implements UserDetailsService {
     }
 
     @Transactional
-    public MemberRegisterResponseDto register(MemberRegisterDto memberRegisterDto) {
+    public MemberRegisterRespDto register(MemberRegisterDto memberRegisterDto) {
         validateDuplicatedMember(memberRegisterDto.getUid());
-        return new MemberRegisterResponseDto(saveMember(memberRegisterDto));
+        return new MemberRegisterRespDto(saveMember(memberRegisterDto));
     }
 
     @Transactional

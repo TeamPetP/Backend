@@ -7,8 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import petPeople.pet.controller.member.dto.req.MemberLocalRegisterRequestDto;
-import petPeople.pet.controller.member.dto.resp.MemberRegisterResponseDto;
+import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
+import petPeople.pet.controller.member.dto.resp.MemberRegisterRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.exception.CustomException;
@@ -87,14 +87,14 @@ class MemberServiceTest {
     @DisplayName("로컬 회원 가입 테스트")
     public void memberRegisterTest() throws Exception {
         //given
-        MemberRegisterResponseDto result = new MemberRegisterResponseDto(member);
-        MemberLocalRegisterRequestDto memberLocalRegisterRequestDto = new MemberLocalRegisterRequestDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE);
+        MemberRegisterRespDto result = new MemberRegisterRespDto(member);
+        MemberLocalRegisterReqDto memberLocalRegisterReqDto = new MemberLocalRegisterReqDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE);
 
         when(memberRepository.save(any())).thenReturn(member);
         when(memberRepository.findByUid(any())).thenReturn(Optional.empty());
 
         //when
-        MemberRegisterResponseDto responseDto = memberService.register(new MemberRegisterDto(memberLocalRegisterRequestDto));
+        MemberRegisterRespDto responseDto = memberService.register(new MemberRegisterDto(memberLocalRegisterReqDto));
 
         //then
         assertThat(responseDto).isEqualTo(result);

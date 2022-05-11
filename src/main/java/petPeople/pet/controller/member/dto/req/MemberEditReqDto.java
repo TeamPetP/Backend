@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MemberEditRequestDto {
+public class MemberEditReqDto {
 
     private String nickname;
     private String introduce;

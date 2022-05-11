@@ -25,8 +25,8 @@ public class Post extends BaseTimeEntity {
     @Lob
     private String content;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "post", orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<Tag> tagList = new ArrayList<>();
+//    @Builder.Default
+//    @OneToMany(mappedBy = "post", orphanRemoval = true, cascade = CascadeType.ALL)
+//    private List<Tag> tagList = new ArrayList<>();
 
 }

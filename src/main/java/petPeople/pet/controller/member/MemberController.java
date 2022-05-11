@@ -9,10 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import petPeople.pet.controller.member.dto.req.MemberEditRequestDto;
-import petPeople.pet.controller.member.dto.req.MemberLocalRegisterRequestDto;
-import petPeople.pet.controller.member.dto.req.MemberRegisterRequestDto;
-import petPeople.pet.controller.member.dto.resp.MemberRegisterResponseDto;
+import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
+import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
+import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
+import petPeople.pet.controller.member.dto.resp.MemberRegisterRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.service.MemberRegisterDto;
 import petPeople.pet.domain.member.service.MemberService;
@@ -28,8 +28,8 @@ public class MemberController {
 
     //로컬 회원 가입
     @PostMapping("/local")
-    public ResponseEntity<MemberRegisterResponseDto> registerLocalMember(@RequestBody MemberLocalRegisterRequestDto memberLocalRegisterRequestDto) {
-        MemberRegisterResponseDto responseDto = memberService.register(new MemberRegisterDto(memberLocalRegisterRequestDto));
+    public ResponseEntity<MemberRegisterRespDto> registerLocalMember(@RequestBody MemberLocalRegisterReqDto memberLocalRegisterReqDto) {
+        MemberRegisterRespDto responseDto = memberService.register(new MemberRegisterDto(memberLocalRegisterReqDto));
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -38,10 +38,10 @@ public class MemberController {
     
     //파이어베이스 회원 가입
     @PostMapping("")
-    public ResponseEntity<MemberRegisterResponseDto> registerMember(@RequestHeader("Authorization") String header,
-                                         @RequestBody MemberRegisterRequestDto memberRegisterRequestDto) {
+    public ResponseEntity<MemberRegisterRespDto> registerMember(@RequestHeader("Authorization") String header,
+                                                                @RequestBody MemberRegisterReqDto memberRegisterReqDto) {
 
-        MemberRegisterResponseDto responseDto = memberService.register(new MemberRegisterDto(decodeToken(header), memberRegisterRequestDto));
+        MemberRegisterRespDto responseDto = memberService.register(new MemberRegisterDto(decodeToken(header), memberRegisterReqDto));
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -49,20 +49,20 @@ public class MemberController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<MemberRegisterResponseDto> login(Authentication authentication) {
+    public ResponseEntity<MemberRegisterRespDto> login(Authentication authentication) {
         Member member = getMember(authentication);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(new MemberRegisterResponseDto(member));
+                .body(new MemberRegisterRespDto(member));
     }
 
     @PatchMapping("/me")
     public ResponseEntity editMember(Authentication authentication,
-                                     @RequestBody MemberEditRequestDto memberEditRequestDto) {
+                                     @RequestBody MemberEditReqDto memberEditReqDto) {
         Member member = getMember(authentication);
-        memberService.editNickname(member, memberEditRequestDto.getNickname());
-        memberService.editIntroduce(member, memberEditRequestDto.getIntroduce());
+        memberService.editNickname(member, memberEditReqDto.getNickname());
+        memberService.editIntroduce(member, memberEditReqDto.getIntroduce());
 
         return ResponseEntity
                 .noContent()
