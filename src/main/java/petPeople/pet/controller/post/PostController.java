@@ -47,8 +47,8 @@ public class PostController {
     }
 
     @PutMapping("/{postId}")
-    public ResponseEntity<PostWriteRespDto> editPost(Authentication authentication, @PathVariable Long postId, @RequestBody PostWriteReqDto postWriteReqDto) {
-        PostWriteRespDto respDto = postService.editPost(getMember(authentication), postId, postWriteReqDto);
+    public ResponseEntity<PostRetrieveRespDto> editPost(Authentication authentication, @PathVariable Long postId, @RequestBody PostWriteReqDto postWriteReqDto) {
+        PostRetrieveRespDto respDto = postService.editPost(getMember(authentication), postId, postWriteReqDto);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

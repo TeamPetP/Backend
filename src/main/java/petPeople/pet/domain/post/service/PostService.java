@@ -57,7 +57,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostWriteRespDto editPost(Member member, Long postId, PostWriteReqDto postWriteReqDto) {
+    public PostRetrieveRespDto editPost(Member member, Long postId, PostWriteReqDto postWriteReqDto) {
         Post findPost = validateOptionalPost(findOptionalPost(postId));
         validateAuthorization(member, findPost.getMember());
 
@@ -67,10 +67,11 @@ public class PostService {
         deleteTagByPostId(postId);
         deletePostImageByPostId(postId);
 
-        return new PostWriteRespDto(
+        return new PostRetrieveRespDto(
                 findPost,
                 saveTagList(postWriteReqDto.getTagList(), findPost),
                 savePostImageList(postWriteReqDto.getImgUrlList(), findPost)
+                , countPostLikeByPostId(postId)
         );
     }
 

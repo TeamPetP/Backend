@@ -136,6 +136,9 @@ class PostServiceTest {
     @DisplayName("게시글 수정 테스트")
     public void editPostTest() throws Exception {
         //given
+
+        Long likeCnt = 3L;
+
         when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
 
         when(tagRepository.save(any()))
@@ -147,10 +150,11 @@ class PostServiceTest {
                 .thenReturn(postImageList.get(0))
                 .thenReturn(postImageList.get(1));
 
-        PostWriteRespDto result = new PostWriteRespDto(post, tagList, postImageList);
+        when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
 
+        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt);
         //when
-        PostWriteRespDto respDto = postService.editPost(member, post.getId(), postWriteReqDto);
+        PostRetrieveRespDto respDto = postService.editPost(member, post.getId(), postWriteReqDto);
 
         //then
         verify(tagRepository, times(1)).deleteByPostId(post.getId());
