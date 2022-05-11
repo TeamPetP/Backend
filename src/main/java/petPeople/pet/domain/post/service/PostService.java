@@ -59,7 +59,7 @@ public class PostService {
     @Transactional
     public PostWriteRespDto editPost(Member member, Long postId, PostWriteReqDto postWriteReqDto) {
         Post findPost = validateOptionalPost(findOptionalPost(postId));
-        validateOwnPost(member, findPost.getMember());
+        validateAuthorization(member, findPost.getMember());
 
         editPostContent(findPost, postWriteReqDto.getContent());
 
@@ -103,6 +103,21 @@ public class PostService {
         }
 
         return countPostLikeByPostId(postId);
+    }
+
+    @Transactional
+    public void delete(Member member, Long postId) {
+        Post post = validateOptionalPost(findOptionalPost(postId));
+        validateAuthorization(member, post.getMember());
+
+        deleteTagByPostId(postId);
+        deletePostImageByPostId(postId);
+        deletePostLikeByPostId(postId);
+        deletePostByPostId(postId);
+    }
+
+    private void deletePostByPostId(Long postId) {
+        postRepository.deleteById(postId);
     }
 
     private boolean isOptionalPostLikePresent(Optional<PostLike> optionalPostLike) {
@@ -186,8 +201,8 @@ public class PostService {
         return postLikeRepository.countByPostId(postId);
     }
 
-    private void validateOwnPost(Member member, Member postMember) {
-        if (isaNotSameMember(member, postMember)) {
+    private void validateAuthorization(Member member, Member targetMember) {
+        if (isaNotSameMember(member, targetMember)) {
             throw new CustomException(ErrorCode.FORBIDDEN_MEMBER, "해당 게시글에 권한이 없습니다.");
         }
     }

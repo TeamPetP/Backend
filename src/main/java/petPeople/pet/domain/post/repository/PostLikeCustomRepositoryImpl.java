@@ -36,4 +36,15 @@ public class PostLikeCustomRepositoryImpl implements PostLikeCustomRepository {
 
         return Optional.ofNullable(postLike);
     }
+
+    @Override
+    public void deleteByPostId(Long postId) {
+        queryFactory
+                .delete(postLike)
+                .where(postLike.post.id.eq(postId))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
 }

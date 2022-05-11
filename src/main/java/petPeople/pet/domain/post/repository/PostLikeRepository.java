@@ -8,6 +8,4 @@ import java.util.List;
 public interface PostLikeRepository extends JpaRepository<PostLike, Long>, PostLikeCustomRepository {
 
     Long countByPostId(Long postId);
-
-    void deleteByPostId(Long postId);
 }
