@@ -32,29 +32,37 @@ public class PostController {
 
     @GetMapping("/{postId}")
     public ResponseEntity<PostRetrieveRespDto> retrievePost(@PathVariable Long postId) {
-        PostRetrieveRespDto postRetrieveRespDto = postService.retrieveOne(postId);
+        PostRetrieveRespDto respDto = postService.retrieveOne(postId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(postRetrieveRespDto);
+                .body(respDto);
     }
 
     @GetMapping("")
     public ResponseEntity retrieveAllPost(Pageable pageable) {
-        Page<PostRetrieveRespDto> postRetrieveRespDtos = postService.retrieveAll(pageable);
+        Page<PostRetrieveRespDto> respDtoPage = postService.retrieveAll(pageable);
 
-        return ResponseEntity.ok().body(postRetrieveRespDtos);
+        return ResponseEntity.ok().body(respDtoPage);
     }
 
     @PutMapping("/{postId}")
     public ResponseEntity<PostWriteRespDto> editPost(Authentication authentication, @PathVariable Long postId, @RequestBody PostWriteReqDto postWriteReqDto) {
-        PostWriteRespDto postWriteRespDto = postService.editPost(getMember(authentication), postId, postWriteReqDto);
+        PostWriteRespDto respDto = postService.editPost(getMember(authentication), postId, postWriteReqDto);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(postWriteRespDto);
+                .body(respDto);
     }
 
+    @PatchMapping("/{postId}")
+    public ResponseEntity<Long> likePost(Authentication authentication, @PathVariable Long postId) {
+        Long like = postService.like(getMember(authentication), postId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(like);
+    }
 
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();

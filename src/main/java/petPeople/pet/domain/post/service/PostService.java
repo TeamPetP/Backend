@@ -2,7 +2,6 @@ package petPeople.pet.domain.post.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -53,7 +52,7 @@ public class PostService {
                 validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId)),
                 findTagList(postId),
                 findPostImageList(postId),
-                countPostLike(postId)
+                countPostLikeByPostId(postId)
         );
     }
 
@@ -94,7 +93,41 @@ public class PostService {
         return respDtoPage;
     }
 
-    @NotNull
+    @Transactional
+    public Long like(Member member, Long postId) {
+
+        if (isOptionalPostLikePresent(findOptionalPostLike(member, postId))) {
+            deletePostLikeByPostId(postId);
+        } else {
+            savePostLike(createPostLike(member, validateOptionalPost(findOptionalPost(postId))));
+        }
+
+        return countPostLikeByPostId(postId);
+    }
+
+    private boolean isOptionalPostLikePresent(Optional<PostLike> optionalPostLike) {
+        return optionalPostLike.isPresent();
+    }
+
+    private void deletePostLikeByPostId(Long postId) {
+        postLikeRepository.deleteByPostId(postId);
+    }
+
+    private PostLike savePostLike(PostLike postLike) {
+        return postLikeRepository.save(postLike);
+    }
+
+    private Optional<PostLike> findOptionalPostLike(Member member, Long postId) {
+        return postLikeRepository.findPostLikeByPostIdAndMemberId(postId, member.getId());
+    }
+
+    private PostLike createPostLike(Member member, Post post) {
+        return PostLike.builder()
+                .post(post)
+                .member(member)
+                .build();
+    }
+
     private List<PostLike> getPostLikeListByPost(List<PostLike> findPostLikeList, Post post) {
         List<PostLike> postLikeList = new ArrayList<>();
         for (PostLike postLike : findPostLikeList) {
@@ -105,7 +138,6 @@ public class PostService {
         return postLikeList;
     }
 
-    @NotNull
     private List<PostImage> getPostImageListByPost(List<PostImage> findPostImageList, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
         for (PostImage postImage : findPostImageList) {
@@ -116,7 +148,6 @@ public class PostService {
         return postImageList;
     }
 
-    @NotNull
     private List<Tag> getTagListByPost(List<Tag> findTagList, Post post) {
         List<Tag> tagList = new ArrayList<>();
         for (Tag tag : findTagList) {
@@ -139,7 +170,6 @@ public class PostService {
         return tagRepository.findTagsByPostIds(ids);
     }
 
-    @NotNull
     private List<Long> getPostId(List<Post> content) {
         List<Long> ids = new ArrayList<>();
         for (Post post : content) {
@@ -152,7 +182,7 @@ public class PostService {
         return postRepository.findAllPostByIdWithFetchJoinMemberPaging(pageable);
     }
 
-    private Long countPostLike(Long postId) {
+    private Long countPostLikeByPostId(Long postId) {
         return postLikeRepository.countByPostId(postId);
     }
 
@@ -248,4 +278,5 @@ public class PostService {
                 .content(content)
                 .build();
     }
+
 }

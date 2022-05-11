@@ -41,6 +41,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
                 .join(post.member, member).fetchJoin()
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
+                .orderBy(post.createdDate.desc())
                 .fetch();
 
         Long total = queryFactory
