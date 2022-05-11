@@ -223,8 +223,8 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요")
-    public void likePostTest() throws Exception {
+    @DisplayName("중복 게시글 좋아요")
+    public void duplicateLikePostTest() throws Exception {
         //given
         long result = 1L;
 
@@ -243,8 +243,8 @@ class PostServiceTest {
     }
     
     @Test
-    @DisplayName("중복 게시글 좋아요")
-    public void duplicateLikePostTest() throws Exception {
+    @DisplayName("게시글 좋아요")
+    public void likePostTest() throws Exception {
         //given
         Long result = 0L;
 
@@ -261,6 +261,38 @@ class PostServiceTest {
         //then
         assertThat(likeCnt).isEqualTo(1L);
 
+    }
+    
+    @Test
+    @DisplayName("게시글 삭제 테스트")
+    public void deletePostTest() throws Exception {
+        //given
+        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
+
+        doNothing().when(tagRepository).deleteByPostId(any());
+        doNothing().when(postImageRepository).deleteByPostId(any());
+        doNothing().when(postLikeRepository).deleteByPostId(any());
+        doNothing().when(postRepository).deleteById(any());
+
+        //when
+        postService.delete(member, post.getId());
+
+        //then
+        verify(tagRepository, times(1)).deleteByPostId(post.getId());
+        verify(postImageRepository, times(1)).deleteByPostId(post.getId());
+        verify(postLikeRepository, times(1)).deleteByPostId(post.getId());
+        verify(postRepository, times(1)).deleteById(post.getId());
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 테스트")
+    public void deleteNotOwnPostTest() throws Exception {
+        //given
+        when(postRepository.findById(any())).thenReturn(Optional.empty());
+
+        //when
+        //then
+        assertThrows(CustomException.class, () -> postService.like(member, post.getId()));
     }
     
     private List<PostLike> getPostsLikeByPost(List<PostLike> allPostLikeList, Post post) {
