@@ -1,6 +1,5 @@
 package petPeople.pet.domain.post.service;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,7 @@ import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostImage;
+import petPeople.pet.domain.post.entity.PostLike;
 import petPeople.pet.domain.post.entity.Tag;
 import petPeople.pet.domain.post.repository.PostImageRepository;
 import petPeople.pet.domain.post.repository.PostLikeRepository;
@@ -192,21 +192,27 @@ class PostServiceTest {
 
         List<Post> postList = createPostList(writeReqDtoList);
 
+        PostLike postLike1 = new PostLike(id++, postList.get(0), createMember(uid, email, name, nickname, imgUrl, introduce));
+        PostLike postLike2 = new PostLike(id++, postList.get(1), createMember(uid, email, name, nickname, imgUrl, introduce));
+        PostLike postLike3 = new PostLike(id++, postList.get(2), createMember(uid, email, name, nickname, imgUrl, introduce));
+
         PageImpl<Post> postPage = new PageImpl<>(postList, pageRequest, postList.size());
 
         List<Tag> allTagList = addAllTagList(tags1, tags2, tags3, postList);
         List<PostImage> allPostImageList = addAllPostImageList(imgUrls1, imgUrls2, imgUrls3, postList);
+        List<PostLike> allPostLikeList = Arrays.asList(postLike1, postLike2, postLike3);
 
-        when(postRepository.findAllByIdWithFetchJoinMemberPaging(any())).thenReturn(postPage);
+        when(postRepository.findAllPostByIdWithFetchJoinMemberPaging(any())).thenReturn(postPage);
         when(tagRepository.findTagsByPostIds(any())).thenReturn(allTagList);
         when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(allPostImageList);
-        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(new ArrayList<>());
+        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(allPostLikeList);
 
         Page<PostRetrieveRespDto> result = postPage.map(post -> {
             List<Tag> tags = getTagsByPost(allTagList, post);
             List<PostImage> postImages = getPostImagesByPost(allPostImageList, post);
+            List<PostLike> postLikes = getPostsLikeByPost(allPostLikeList, post);
 
-            return new PostRetrieveRespDto(post, tags, postImages, 0L);
+            return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()));
         });
 
         //when
@@ -216,7 +222,57 @@ class PostServiceTest {
         assertThat(respDtoPage).isEqualTo(result);
     }
 
-    @NotNull
+    @Test
+    @DisplayName("게시글 좋아요")
+    public void likePostTest() throws Exception {
+        //given
+        long result = 1L;
+
+        PostLike postLike = new PostLike(id++, post, member);
+
+        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.ofNullable(postLike));
+        doNothing().when(postLikeRepository).deleteByPostId(any());
+        when(postLikeRepository.countByPostId(any())).thenReturn(--result);
+
+        //when
+        Long likeCnt = postService.like(member, post.getId());
+
+        //then
+        assertThat(likeCnt).isEqualTo(0L);
+        verify(postLikeRepository, times(1)).deleteByPostId(post.getId());
+    }
+    
+    @Test
+    @DisplayName("중복 게시글 좋아요")
+    public void duplicateLikePostTest() throws Exception {
+        //given
+        Long result = 0L;
+
+        PostLike postLike = new PostLike(id++, post, member);
+
+        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.empty());
+        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
+        when(postLikeRepository.save(any())).thenReturn(postLike);
+        when(postLikeRepository.countByPostId(any())).thenReturn(++result);
+
+        //when
+        Long likeCnt = postService.like(member, post.getId());
+
+        //then
+        assertThat(likeCnt).isEqualTo(1L);
+
+    }
+    
+    private List<PostLike> getPostsLikeByPost(List<PostLike> allPostLikeList, Post post) {
+        List<PostLike> postLikes = new ArrayList<>();
+        for (PostLike postLike : allPostLikeList) {
+            if (postLike.getPost() == post) {
+                postLikes.add(postLike);
+            }
+        }
+        return postLikes;
+    }
+
     private List<PostImage> addAllPostImageList(List<String> imgUrls1, List<String> imgUrls2, List<String> imgUrls3, List<Post> postList) {
         List<PostImage> postImageList = new ArrayList<>();
         postImageList.addAll(createPostImageList(imgUrls1, postList.get(0)));
@@ -225,7 +281,6 @@ class PostServiceTest {
         return postImageList;
     }
 
-    @NotNull
     private List<Tag> addAllTagList(List<String> tags1, List<String> tags2, List<String> tags3, List<Post> postList) {
         List<Tag> tagList = new ArrayList<>();
         tagList.addAll(createTagList(tags1, postList.get(0)));
@@ -234,7 +289,6 @@ class PostServiceTest {
         return tagList;
     }
 
-    @NotNull
     private List<PostImage> getPostImagesByPost(List<PostImage> postImageList, Post post) {
         List<PostImage> posts = new ArrayList<>();
         for (PostImage postImage : postImageList) {
@@ -245,7 +299,6 @@ class PostServiceTest {
         return posts;
     }
 
-    @NotNull
     private List<Tag> getTagsByPost(List<Tag> tagList, Post post) {
         List<Tag> tags = new ArrayList<>();
         for (Tag tag : tagList) {
