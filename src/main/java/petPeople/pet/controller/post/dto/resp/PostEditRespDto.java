@@ -14,9 +14,11 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostWriteRespDto {
+public class PostEditRespDto {
 
     private Long postId;
+
+    private Long memberId;
 
     private String content;
 
@@ -28,8 +30,12 @@ public class PostWriteRespDto {
 
     private LocalDateTime lastModifiedDate;
 
-    public PostWriteRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls) {
+    private Long likeCnt;
+
+
+    public PostEditRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt) {
         this.postId = post.getId();
+        this.memberId = post.getMember().getId();
         this.content = post.getContent();
 
         for (Tag tag : tags) {
@@ -42,5 +48,6 @@ public class PostWriteRespDto {
 
         this.createdDate = post.getCreatedDate();
         this.lastModifiedDate = post.getLastModifiedDate();
+        this.likeCnt = likeCnt;
     }
 }

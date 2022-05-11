@@ -31,7 +31,6 @@ class MemberServiceTest {
     MemberService memberService;
 
     Member member;
-    Member beforeMember;
 
     private static final Long ID = 1L;
     private static final String UID = "abcd";
@@ -43,24 +42,12 @@ class MemberServiceTest {
 
     @BeforeEach
     void before() {
-        member = createRegisterMember();
-        beforeMember = createBeforeMember();
+        member = createMember();
     }
 
-    private Member createRegisterMember() {
+    private Member createMember() {
         return Member.builder()
                 .id(ID)
-                .uid(UID)
-                .email(EMAIL)
-                .name(NAME)
-                .nickname(NICKNAME)
-                .imgUrl(IMG_URL)
-                .introduce(INTRODUCE)
-                .build();
-    }
-
-    private Member createBeforeMember() {
-        return Member.builder()
                 .uid(UID)
                 .email(EMAIL)
                 .name(NAME)
@@ -74,7 +61,7 @@ class MemberServiceTest {
     @DisplayName("회원 조회 테스트")
     void loadByUserNameTest() throws Exception {
         //given
-        when(memberRepository.findByUid(UID)).thenReturn(Optional.ofNullable(member));
+        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(member));
 
         //when
         Member member = (Member)memberService.loadUserByUsername(UID);
@@ -104,7 +91,7 @@ class MemberServiceTest {
     @DisplayName("중복 회원 가입 테스트")
     public void duplicatedMemberRegisterTest() throws Exception {
         //given
-        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(beforeMember));
+        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(member));
 
         //when
         //then
@@ -121,7 +108,6 @@ class MemberServiceTest {
         
         //then
         assertThat(member.getNickname()).isEqualTo("가나다라");
-        System.out.println(1 + " " + member.getNickname());
     }
 
      @Test
@@ -133,7 +119,6 @@ class MemberServiceTest {
 
          //then
          assertThat(member.getIntroduce()).isEqualTo(introduce);
-         System.out.println(2 + " " + member.getNickname());
      }
 
 }

@@ -28,7 +28,13 @@ public class PostRetrieveRespDto {
 
     private LocalDateTime createdDate;
 
-    public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls) {
+    private LocalDateTime lastModifiedDate;
+
+    private Long likeCnt;
+
+    private Boolean isLiked;
+
+    public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked) {
         this.postId = post.getId();
         this.memberId = post.getMember().getId();
         this.content = post.getContent();
@@ -42,5 +48,8 @@ public class PostRetrieveRespDto {
         }
 
         this.createdDate = post.getCreatedDate();
+        this.lastModifiedDate = post.getLastModifiedDate();
+        this.likeCnt = likeCnt;
+        this.isLiked = isLiked;
     }
 }
