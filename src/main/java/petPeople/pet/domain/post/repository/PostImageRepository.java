@@ -9,7 +9,4 @@ import petPeople.pet.domain.post.entity.PostImage;
 import java.util.List;
 
 public interface PostImageRepository extends JpaRepository<PostImage, Long>, PostImageCustomRepository {
-
-    List<PostImage> findByPostId(Long postId);
-
 }

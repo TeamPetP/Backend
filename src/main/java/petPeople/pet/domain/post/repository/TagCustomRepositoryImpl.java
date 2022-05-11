@@ -37,4 +37,12 @@ public class TagCustomRepositoryImpl implements TagCustomRepository {
                 .where(tag1.post.id.in(postIds))
                 .fetch();
     }
+
+    @Override
+    public List<Tag> findByPostId(Long postId) {
+        return queryFactory
+                .selectFrom(tag1)
+                .where(tag1.post.id.eq(postId))
+                .fetch();
+    }
 }

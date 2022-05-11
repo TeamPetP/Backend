@@ -37,4 +37,12 @@ public class PostImageCustomRepositoryImpl implements PostImageCustomRepository 
                 .where(postImage.post.id.in(postIds))
                 .fetch();
     }
+
+    @Override
+    public List<PostImage> findByPostId(Long postId) {
+        return queryFactory
+                .selectFrom(postImage)
+                .where(postImage.post.id.eq(postId))
+                .fetch();
+    }
 }

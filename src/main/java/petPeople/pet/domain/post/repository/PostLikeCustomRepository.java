@@ -11,4 +11,5 @@ public interface PostLikeCustomRepository {
     Optional<PostLike> findPostLikeByPostIdAndMemberId(Long postId, Long memberId);
     void deleteByPostId(Long postId);
     void deleteByPostIdAndMemberId(Long postId, Long memberId);
+    Long countByPostId(Long postId);
 }

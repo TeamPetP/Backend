@@ -58,4 +58,13 @@ public class PostLikeCustomRepositoryImpl implements PostLikeCustomRepository {
         em.flush();
         em.clear();
     }
+
+    @Override
+    public Long countByPostId(Long postId) {
+        return queryFactory
+                .select(postLike.count())
+                .from(postLike)
+                .where(postLike.post.id.eq(postId))
+                .fetchOne();
+    }
 }

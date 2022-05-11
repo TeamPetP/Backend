@@ -6,6 +6,4 @@ import petPeople.pet.domain.post.entity.PostLike;
 import java.util.List;
 
 public interface PostLikeRepository extends JpaRepository<PostLike, Long>, PostLikeCustomRepository {
-
-    Long countByPostId(Long postId);
 }
