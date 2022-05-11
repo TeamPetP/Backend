@@ -37,14 +37,15 @@ class PostServiceTest {
     final List<String> tags = Arrays.asList("사진", "내새끼", "장난감");
     final List<String> imgUrls = Arrays.asList("www.방울이귀엽죠?.com", "www.qkddnfdlrnlduqwy.com");
 
-    @Mock
+    @Mock //mock 객체를 생성함
     PostRepository postRepository;
     @Mock
     TagRepository tagRepository;
     @Mock
     PostImageRepository postImageRepository;
 
-    @InjectMocks
+    @InjectMocks //생성한 mock 객체를 @InjectMocks이 붙은 객체에 주입
+    //주로 @InjectMocks(Service) @Mock(Repository) 이러한 식으로 Service 테스트 목객체에 DAO 목객체를 주입시켜 사용함
     PostService postService;
 
     PostWriteReqDto postWriteReqDto;
