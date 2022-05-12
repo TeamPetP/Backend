@@ -88,6 +88,13 @@ public class PostController {
                 .build();
     }
 
+    @PatchMapping("/{postId}/bookmarks")
+    public ResponseEntity bookmarkPost(Authentication authentication, @PathVariable Long postId) {
+        postService.bookmark(getMember(authentication), postId);
+
+        return ResponseEntity.noContent().build();
+    }
+
     private String getProfile() {
         return System.getProperty("spring.profiles.active");
     }

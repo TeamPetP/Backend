@@ -13,14 +13,8 @@ import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.datastructure.PostChildList;
 import petPeople.pet.domain.member.entity.Member;
-import petPeople.pet.domain.post.entity.Post;
-import petPeople.pet.domain.post.entity.PostImage;
-import petPeople.pet.domain.post.entity.PostLike;
-import petPeople.pet.domain.post.entity.Tag;
-import petPeople.pet.domain.post.repository.PostImageRepository;
-import petPeople.pet.domain.post.repository.PostLikeRepository;
-import petPeople.pet.domain.post.repository.PostRepository;
-import petPeople.pet.domain.post.repository.TagRepository;
+import petPeople.pet.domain.post.entity.*;
+import petPeople.pet.domain.post.repository.*;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
@@ -39,6 +33,7 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserDetailsService userDetailsService;
+    private final PostBookmarkRepository postBookmarkRepository;
 
     @Transactional
     public PostWriteRespDto write(Member member, PostWriteReqDto postWriteReqDto) {
@@ -120,6 +115,33 @@ public class PostService {
         deletePostImageByPostId(postId);
         deletePostLikeByPostId(postId);
         deletePostByPostId(postId);
+    }
+
+    @Transactional
+    public void bookmark(Member member, Long postId) {
+        Optional<PostBookmark> optionalPostBookmark = postBookmarkRepository.findByMemberIdAndPostId(member.getId(), postId);
+        Post post = validateOptionalPost(findOptionalPost(postId));
+        if (isOptionalPostBookmarkPresent(optionalPostBookmark)) {
+            throwException(ErrorCode.BOOKMARKED_POST, "이미 북마크를 눌렀습니다.");
+        } else {
+            postBookmarkRepository.save(createPostBookmark(member, post));
+        }
+
+    }
+
+    private void throwException(ErrorCode errorCode, String message) {
+        throw new CustomException(errorCode, message);
+    }
+
+    private boolean isOptionalPostBookmarkPresent(Optional<PostBookmark> optionalPostBookmark) {
+        return optionalPostBookmark.isPresent();
+    }
+
+    private PostBookmark createPostBookmark(Member member, Post post) {
+        return PostBookmark.builder()
+                .post(post)
+                .member(member)
+                .build();
     }
 
     private PostChildList createPostChildList(List<Tag> findTagList, List<PostImage> findPostImageList, List<PostLike> findPostLikeList) {
@@ -266,7 +288,7 @@ public class PostService {
 
     private void validateMemberAuthorization(Member member, Member targetMember) {
         if (isaNotSameMember(member, targetMember)) {
-            throw new CustomException(ErrorCode.FORBIDDEN_MEMBER, "해당 게시글에 권한이 없습니다.");
+            throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 게시글에 권한이 없습니다.");
         }
     }
 
