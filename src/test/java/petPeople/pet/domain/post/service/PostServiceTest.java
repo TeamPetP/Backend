@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
@@ -58,6 +59,8 @@ class PostServiceTest {
     PostLikeRepository postLikeRepository;
     @Mock
     PostImageRepository postImageRepository;
+    @Mock
+    UserDetailsService userDetailsService;
 
     @InjectMocks
     PostService postService;
@@ -68,6 +71,7 @@ class PostServiceTest {
     Post post;
     List<Tag> tagList;
     List<PostImage> postImageList;
+    List<PostLike> postLikeList;
 
     @BeforeEach
     void beforeEach() {
@@ -77,6 +81,7 @@ class PostServiceTest {
         post = createPost(member, postWriteReqDto.getContent());
         tagList = createTagList(tags, post);
         postImageList = createPostImageList(imgUrls, post);
+        postLikeList = createPostLikeList();
     }
 
     @Test
@@ -105,7 +110,7 @@ class PostServiceTest {
 
     @Test
     @DisplayName("로그인 하지 않고 게시글 단건 조회")
-    public void retrievePostTest() throws Exception {
+    public void noLoginRetrievePostTest() throws Exception {
         //given
         long likeCnt = 3L;
         when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
@@ -117,6 +122,54 @@ class PostServiceTest {
 
         //when
         PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), null);
+
+        //then
+        assertThat(postRetrieveRespDto).isEqualTo(result);
+    }
+
+    @Test
+    @DisplayName("로그인 하고 좋아요 누른 게시글 단건 조회")
+    public void loginRetrieveNotLikedPostTest() throws Exception {
+        //given
+        long likeCnt = 3L;
+
+        String uid = "abcd";
+
+        when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
+        when(tagRepository.findByPostId(any())).thenReturn(tagList);
+        when(postImageRepository.findByPostId(any())).thenReturn(postImageList);
+        when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
+        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
+        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.ofNullable(postLikeList.get(0)));
+
+        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, true);
+
+        //when
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), uid);
+
+        //then
+        assertThat(postRetrieveRespDto).isEqualTo(result);
+    }
+
+    @Test
+    @DisplayName("로그인 하고 좋아요 누르지 않은 게시글 단건 조회")
+    public void loginRetrieveLikedPostTest() throws Exception {
+        //given
+        long likeCnt = 3L;
+
+        String uid = "abcd";
+
+        when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
+        when(tagRepository.findByPostId(any())).thenReturn(tagList);
+        when(postImageRepository.findByPostId(any())).thenReturn(postImageList);
+        when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
+        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
+        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.empty());
+
+        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, false);
+
+        //when
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), uid);
 
         //then
         assertThat(postRetrieveRespDto).isEqualTo(result);
@@ -390,6 +443,10 @@ class PostServiceTest {
                 .post(post)
                 .tag(t)
                 .build();
+    }
+
+    private List<PostLike> createPostLikeList() {
+        return Arrays.asList(new PostLike(id++, post, member), new PostLike(id++, post, member), new PostLike(id++, post, member));
     }
 
     private PostWriteReqDto createPostWriteReqDto(String content, List<String> tags, List<String> imgUrls) {
