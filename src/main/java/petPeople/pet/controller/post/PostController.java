@@ -95,6 +95,13 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{postId}/bookmarks")
+    public ResponseEntity deleteBookmarkPost(Authentication authentication, @PathVariable Long postId) {
+        postService.deleteBookmark(getMember(authentication), postId);
+
+        return ResponseEntity.noContent().build();
+    }
+
     private String getProfile() {
         return System.getProperty("spring.profiles.active");
     }

@@ -60,6 +60,21 @@ public class PostService {
         }
     }
 
+    public Page<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, String header) {
+        Page<Post> postPage = findAllPostByIdWithFetchJoinMemberPaging(pageable);
+
+        List<Long> ids = getPostId(postPage.getContent());
+
+        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
+
+        if (header == null) {
+            return postPageMapToRespDtoWithNoLogin(postPage, postChildList);
+        } else {
+            return postPageMapToRespDtoWithLogin(header, postPage, postChildList);
+        }
+
+    }
+
     @Transactional
     public PostEditRespDto editPost(Member member, Long postId, PostWriteReqDto postWriteReqDto) {
         Post findPost = validateOptionalPost(findOptionalPost(postId));
@@ -77,21 +92,6 @@ public class PostService {
                 savePostImageList(postWriteReqDto.getImgUrlList(), findPost),
                 countPostLikeByPostId(postId)
         );
-    }
-
-    public Page<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, String header) {
-        Page<Post> postPage = findAllPostByIdWithFetchJoinMemberPaging(pageable);
-
-        List<Long> ids = getPostId(postPage.getContent());
-
-        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
-
-        if (header == null) {
-            return postPageMapToRespDtoWithNoLogin(postPage, postChildList);
-        } else {
-            return postPageMapToRespDtoWithLogin(header, postPage, postChildList);
-        }
-
     }
 
     @Transactional
@@ -119,14 +119,28 @@ public class PostService {
 
     @Transactional
     public void bookmark(Member member, Long postId) {
-        Optional<PostBookmark> optionalPostBookmark = postBookmarkRepository.findByMemberIdAndPostId(member.getId(), postId);
-        Post post = validateOptionalPost(findOptionalPost(postId));
-        if (isOptionalPostBookmarkPresent(optionalPostBookmark)) {
+        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
             throwException(ErrorCode.BOOKMARKED_POST, "이미 북마크를 눌렀습니다.");
         } else {
-            postBookmarkRepository.save(createPostBookmark(member, post));
+            savePostBookmark(createPostBookmark(member, validateOptionalPost(findOptionalPost(postId))));
         }
+    }
 
+    @Transactional
+    public void deleteBookmark(Member member, Long postId) {
+        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
+            postBookmarkRepository.deleteByMemberIdAndPostId(member.getId(), postId);
+        } else {
+            throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
+        }
+    }
+
+    private void savePostBookmark(PostBookmark postBookmark) {
+        postBookmarkRepository.save(postBookmark);
+    }
+
+    private Optional<PostBookmark> findPostBookmarkByMemberIdAndPostId(Long memberId, Long postId) {
+        return postBookmarkRepository.findByMemberIdAndPostId(memberId, postId);
     }
 
     private void throwException(ErrorCode errorCode, String message) {
@@ -378,4 +392,6 @@ public class PostService {
                 .content(content)
                 .build();
     }
+
+
 }
