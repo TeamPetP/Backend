@@ -367,6 +367,32 @@ class PostServiceTest {
         //then
         verify(postBookmarkRepository, times(1)).save(any());
     }
+    
+    @Test
+    @DisplayName("북마크한 게시글 북마크 취소 테스트")
+    public void deleteBookmarkPost() throws Exception {
+        //given
+        PostBookmark postBookMark = createPostBookMark();
+        when(postBookmarkRepository.findByMemberIdAndPostId(any(), any())).thenReturn(Optional.ofNullable(postBookMark));
+        doNothing().when(postBookmarkRepository).deleteByMemberIdAndPostId(any(), any());
+
+        //when
+        postService.deleteBookmark(member, post.getId());
+
+        //then
+        verify(postBookmarkRepository, times(1)).deleteByMemberIdAndPostId(any(), any());
+
+    }
+
+    @Test
+    @DisplayName("북마크하지 않은 게시글 북마크 취소 테스트")
+    public void deleteNeverBookmarkPost() throws Exception {
+        //given
+        when(postBookmarkRepository.findByMemberIdAndPostId(any(), any())).thenReturn(Optional.empty());
+        //when
+        assertThrows(CustomException.class, () -> postService.deleteBookmark(member, post.getId()));
+
+    }
 
     private PostBookmark createPostBookMark() {
         return PostBookmark.builder()
