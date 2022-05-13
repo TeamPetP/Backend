@@ -1,4 +1,5 @@
 package petPeople.pet.domain.post.service;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +17,8 @@ import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
-import petPeople.pet.domain.post.entity.Post;
-import petPeople.pet.domain.post.entity.PostImage;
-import petPeople.pet.domain.post.entity.PostLike;
-import petPeople.pet.domain.post.entity.Tag;
-import petPeople.pet.domain.post.repository.PostImageRepository;
-import petPeople.pet.domain.post.repository.PostLikeRepository;
-import petPeople.pet.domain.post.repository.PostRepository;
-import petPeople.pet.domain.post.repository.TagRepository;
+import petPeople.pet.domain.post.entity.*;
+import petPeople.pet.domain.post.repository.*;
 import petPeople.pet.exception.CustomException;
 
 import java.util.ArrayList;
@@ -61,6 +56,8 @@ class PostServiceTest {
     PostImageRepository postImageRepository;
     @Mock
     UserDetailsService userDetailsService;
+    @Mock
+    PostBookmarkRepository postBookmarkRepository;
 
     @InjectMocks
     PostService postService;
@@ -212,13 +209,13 @@ class PostServiceTest {
         PostEditRespDto respDto = postService.editPost(member, post.getId(), postWriteReqDto);
 
         //then
-        verify(tagRepository, times(1)).deleteByPostId(post.getId());
-        verify(postImageRepository, times(1)).deleteByPostId(post.getId());
+        verify(tagRepository, times(1)).deleteByPostId(any());
+        verify(postImageRepository, times(1)).deleteByPostId(any());
         assertThat(respDto).isEqualTo(result);
     }
 
     @Test
-    @DisplayName("자신의 게시글이 아닌 수정 테스트")
+    @DisplayName("권한 없는 게시글 수정 테스트")
     public void editNotOwnPostTest() throws Exception {
         //given
         Member postMember = createMember(uid, email, name, nickname, imgUrl, introduce);
@@ -337,14 +334,14 @@ class PostServiceTest {
         postService.delete(member, post.getId());
 
         //then
-        verify(tagRepository, times(1)).deleteByPostId(post.getId());
-        verify(postImageRepository, times(1)).deleteByPostId(post.getId());
-        verify(postLikeRepository, times(1)).deleteByPostId(post.getId());
-        verify(postRepository, times(1)).deleteById(post.getId());
+        verify(tagRepository, times(1)).deleteByPostId(any());
+        verify(postImageRepository, times(1)).deleteByPostId(any());
+        verify(postLikeRepository, times(1)).deleteByPostId(any());
+        verify(postRepository, times(1)).deleteById(any());
     }
 
     @Test
-    @DisplayName("게시글 삭제 테스트")
+    @DisplayName("없는 게시글 삭제 테스트")
     public void deleteNotOwnPostTest() throws Exception {
         //given
         when(postRepository.findById(any())).thenReturn(Optional.empty());
@@ -352,6 +349,31 @@ class PostServiceTest {
         //when
         //then
         assertThrows(CustomException.class, () -> postService.like(member, post.getId()));
+    }
+
+    // TODO: 2022-05-13 권한 없이 게시글 삭제 테스트 
+    
+    @Test
+    @DisplayName("북마크하지 않은 게시글 북마크 테스트")
+    public void bookmarkPost() throws Exception {
+        //given
+        PostBookmark postBookMark = createPostBookMark();
+        when(postBookmarkRepository.findByMemberIdAndPostId(any(), any())).thenReturn(Optional.empty());
+        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
+        when(postBookmarkRepository.save(any())).thenReturn(postBookMark);
+
+        //when
+        postService.bookmark(member, post.getId());
+        //then
+        verify(postBookmarkRepository, times(1)).save(any());
+    }
+
+    private PostBookmark createPostBookMark() {
+        return PostBookmark.builder()
+                .id(id++)
+                .member(member)
+                .post(post)
+                .build();
     }
 
     private List<PostLike> getPostsLikeByPost(List<PostLike> allPostLikeList, Post post) {
