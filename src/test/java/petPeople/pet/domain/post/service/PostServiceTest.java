@@ -8,9 +8,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
@@ -252,18 +253,18 @@ class PostServiceTest {
         PostLike postLike2 = new PostLike(id++, postList.get(1), createMember(uid, email, name, nickname, imgUrl, introduce));
         PostLike postLike3 = new PostLike(id++, postList.get(2), createMember(uid, email, name, nickname, imgUrl, introduce));
 
-        PageImpl<Post> postPage = new PageImpl<>(postList, pageRequest, postList.size());
+        SliceImpl<Post> postSlice = new SliceImpl<>(postList, pageRequest, false);
 
         List<Tag> allTagList = addAllTagList(tags1, tags2, tags3, postList);
         List<PostImage> allPostImageList = addAllPostImageList(imgUrls1, imgUrls2, imgUrls3, postList);
         List<PostLike> allPostLikeList = Arrays.asList(postLike1, postLike2, postLike3);
 
-        when(postRepository.findAllPostByIdWithFetchJoinMemberPaging(any())).thenReturn(postPage);
+        when(postRepository.findAllPostSlicing(any())).thenReturn(postSlice);
         when(tagRepository.findTagsByPostIds(any())).thenReturn(allTagList);
         when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(allPostImageList);
         when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(allPostLikeList);
 
-        Page<PostRetrieveRespDto> result = postPage.map(post -> {
+        Slice<PostRetrieveRespDto> result = postSlice.map(post -> {
             List<Tag> tags = getTagsByPost(allTagList, post);
             List<PostImage> postImages = getPostImagesByPost(allPostImageList, post);
             List<PostLike> postLikes = getPostsLikeByPost(allPostLikeList, post);
@@ -272,7 +273,7 @@ class PostServiceTest {
         });
 
         //when
-        Page<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, null);
+        Slice<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, null);
 
         //then
         assertThat(respDtoPage).isEqualTo(result);

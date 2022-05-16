@@ -2,20 +2,17 @@ package petPeople.pet.domain.post.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import petPeople.pet.domain.member.entity.QMember;
+import org.springframework.data.domain.*;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.QPost;
+import petPeople.pet.domain.post.entity.QTag;
 
 import java.util.List;
 import java.util.Optional;
 
 import static petPeople.pet.domain.member.entity.QMember.*;
 import static petPeople.pet.domain.post.entity.QPost.*;
+import static petPeople.pet.domain.post.entity.QTag.*;
 
 @RequiredArgsConstructor
 public class PostCustomRepositoryImpl implements PostCustomRepository {
@@ -34,21 +31,42 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
     }
 
     @Override
-    public Page<Post> findAllPostByIdWithFetchJoinMemberPaging(Pageable pageable) {
+    public Slice<Post> findAllPostSlicing(Pageable pageable) {
 
         List<Post> content = queryFactory
                 .selectFrom(post)
-                .join(post.member, member).fetchJoin()
                 .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
+                .limit(pageable.getPageSize() + 1)
                 .orderBy(post.createdDate.desc())
                 .fetch();
 
-        Long total = queryFactory
-                .select(post.count())
-                .from(post)
-                .fetchOne();
+        boolean hasNext = false;
+        if (content.size() > pageable.getPageSize()) {
+            content.remove(pageable.getPageSize());
+            hasNext = true;
+        }
 
-        return new PageImpl<>(content, pageable, total);
+        return new SliceImpl<>(content, pageable, hasNext);
+    }
+
+    @Override
+    public Slice<Post> findAllPostSlicingByTag(Pageable pageable, String tag) {
+        List<Post> content = queryFactory
+                .select(post)
+                .from(tag1)
+                .join(tag1.post, post)
+                .where(tag1.tag.eq(tag))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1)
+                .orderBy(post.createdDate.desc())
+                .fetch();
+
+        boolean hasNext = false;
+        if (content.size() > pageable.getPageSize()) {
+            content.remove(pageable.getPageSize());
+            hasNext = true;
+        }
+
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 }

@@ -2,8 +2,8 @@ package petPeople.pet.domain.post.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,17 +60,19 @@ public class PostService {
         }
     }
 
-    public Page<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, String header) {
-        Page<Post> postPage = findAllPostByIdWithFetchJoinMemberPaging(pageable);
-
-        List<Long> ids = getPostId(postPage.getContent());
+    public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, String header) {
+        Slice<Post> postSlice = findAllPostSlicing(pageable);
+//        if (tag != null) {
+//            postRepository.findAllPostSlicingByTag(pageable, tag);
+//        }
+        List<Long> ids = getPostId(postSlice.getContent());
 
         PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
 
         if (header == null) {
-            return postPageMapToRespDtoWithNoLogin(postPage, postChildList);
+            return postSliceMapToRespDtoWithNoLogin(postSlice, postChildList);
         } else {
-            return postPageMapToRespDtoWithLogin(header, postPage, postChildList);
+            return postSliceMapToRespDtoWithLogin(header, postSlice, postChildList);
         }
 
     }
@@ -170,7 +172,7 @@ public class PostService {
         return (Member) userDetailsService.loadUserByUsername(header);
     }
 
-    private Page<PostRetrieveRespDto> postPageMapToRespDtoWithLogin(String header, Page<Post> postPage, PostChildList postChildList) {
+    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostChildList postChildList) {
         Member member = getLocalMemberByHeader(header);
         return postPage.map(post -> {
             List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
@@ -193,7 +195,7 @@ public class PostService {
         return flag;
     }
 
-    private Page<PostRetrieveRespDto> postPageMapToRespDtoWithNoLogin(Page<Post> postPage, PostChildList postChildList) {
+    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithNoLogin(Slice<Post> postPage, PostChildList postChildList) {
         return postPage.map(post -> {
             List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
             List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
@@ -292,8 +294,8 @@ public class PostService {
         return ids;
     }
 
-    private Page<Post> findAllPostByIdWithFetchJoinMemberPaging(Pageable pageable) {
-        return postRepository.findAllPostByIdWithFetchJoinMemberPaging(pageable);
+    private Slice<Post> findAllPostSlicing(Pageable pageable) {
+        return postRepository.findAllPostSlicing(pageable);
     }
 
     private Long countPostLikeByPostId(Long postId) {
