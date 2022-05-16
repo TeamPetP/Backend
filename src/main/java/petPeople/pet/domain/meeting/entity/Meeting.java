@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class Meeting extends BaseTimeEntity {
 
-    @Id @Generated
+    @Id @GeneratedValue
     @Column(name = "meeting_id")
     private Long id;
 
@@ -30,7 +30,7 @@ public class Meeting extends BaseTimeEntity {
 
     private LocalDateTime meetingDate;
 
-    private String condition;
+    private String qualification;
 
     private Integer maxPeople;
 
