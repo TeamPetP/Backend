@@ -143,7 +143,7 @@ class PostServiceTest {
         PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, true);
 
         //when
-        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), uid);
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), Optional.ofNullable(uid));
 
         //then
         assertThat(postRetrieveRespDto).isEqualTo(result);
@@ -167,7 +167,7 @@ class PostServiceTest {
         PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, false);
 
         //when
-        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), uid);
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), Optional.ofNullable(uid));
 
         //then
         assertThat(postRetrieveRespDto).isEqualTo(result);
@@ -273,7 +273,7 @@ class PostServiceTest {
         });
 
         //when
-        Slice<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, null);
+        Slice<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, Optional.empty(),Optional.empty());
 
         //then
         assertThat(respDtoPage).isEqualTo(result);

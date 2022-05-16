@@ -45,36 +45,35 @@ public class PostService {
         );
     }
 
-    public PostRetrieveRespDto localRetrieveOne(Long postId, String header) {
+    public PostRetrieveRespDto localRetrieveOne(Long postId, Optional<String> optionalHeader) {
 
         Post post = validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId));
         List<Tag> tagList = findTagList(postId);
         List<PostImage> postImageList = findPostImageList(postId);
         Long likeCnt = countPostLikeByPostId(postId);
 
-        if (header == null) {
-            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt);
+        PostRetrieveRespDto respDto;
+
+        if (isLogined(optionalHeader)) {
+            Long memberId = getLocalMemberByHeader(optionalHeader.get()).getId();
+            boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(memberId, postId));
+            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent);
         } else {
-            Member member = getLocalMemberByHeader(header);
-            return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId)));
+            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt);
         }
+
+        return respDto;
     }
 
-    public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, String header) {
-        Slice<Post> postSlice = findAllPostSlicing(pageable);
-//        if (tag != null) {
-//            postRepository.findAllPostSlicingByTag(pageable, tag);
-//        }
-        List<Long> ids = getPostId(postSlice.getContent());
+    public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
 
-        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
-
-        if (header == null) {
-            return postSliceMapToRespDtoWithNoLogin(postSlice, postChildList);
+        Slice<Post> postSlice;
+        if (isSearchTag(optionalTag)) {
+            postSlice = findAllPostByTagSlicing(pageable, optionalTag.get());
         } else {
-            return postSliceMapToRespDtoWithLogin(header, postSlice, postChildList);
+            postSlice = findAllPostSlicing(pageable);
         }
-
+        return postSliceMapToRespDtoSlice(optionalHeader, postSlice);
     }
 
     @Transactional
@@ -170,6 +169,30 @@ public class PostService {
 
     private Member getLocalMemberByHeader(String header) {
         return (Member) userDetailsService.loadUserByUsername(header);
+    }
+
+    private boolean isSearchTag(Optional<String> optionalTag) {
+        return optionalTag.isPresent();
+    }
+
+    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoSlice(Optional<String> optionalHeader, Slice<Post> postSlice) {
+        List<Long> ids = getPostId(postSlice.getContent());
+
+        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
+
+        if (isLogined(optionalHeader)) {
+            return postSliceMapToRespDtoWithLogin(optionalHeader.get(), postSlice, postChildList);
+        } else {
+            return postSliceMapToRespDtoWithNoLogin(postSlice, postChildList);
+        }
+    }
+
+    private boolean isLogined(Optional<String> optionalHeader) {
+        return optionalHeader.isPresent();
+    }
+
+    private Slice<Post> findAllPostByTagSlicing(Pageable pageable, String tag) {
+        return postRepository.findAllPostSlicingByTag(pageable, tag);
     }
 
     private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostChildList postChildList) {
