@@ -30,7 +30,7 @@ public class Meeting extends BaseTimeEntity {
 
     private LocalDateTime meetingDate;
 
-    private String qualification;
+    private String conditions;
 
     private Integer maxPeople;
 

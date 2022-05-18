@@ -25,4 +25,6 @@ public class MeetingMember extends BaseTimeEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+
+
 }
