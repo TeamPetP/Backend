@@ -15,6 +15,7 @@ import petPeople.pet.domain.post.service.PostService;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,21 +40,21 @@ public class PostController {
         if (isLocalProfile()) {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(postService.localRetrieveOne(postId, header));
+                    .body(postService.localRetrieveOne(postId, Optional.ofNullable(header)));
         } else {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(postService.localRetrieveOne(postId, header));
+                    .body(postService.localRetrieveOne(postId, Optional.ofNullable(header)));
         }
     }
 
     @GetMapping("")
-    public ResponseEntity retrieveAllPost(Pageable pageable, HttpServletRequest request) {
+    public ResponseEntity retrieveAllPost(Pageable pageable, @RequestParam(required = false) String tag, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
         if (isLocalProfile())
-            return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, header));
+            return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
         else
-            return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, header));
+            return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
 
     }
 
@@ -86,6 +87,20 @@ public class PostController {
         return ResponseEntity
                 .noContent()
                 .build();
+    }
+
+    @PatchMapping("/{postId}/bookmarks")
+    public ResponseEntity bookmarkPost(Authentication authentication, @PathVariable Long postId) {
+        postService.bookmark(getMember(authentication), postId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{postId}/bookmarks")
+    public ResponseEntity deleteBookmarkPost(Authentication authentication, @PathVariable Long postId) {
+        postService.deleteBookmark(getMember(authentication), postId);
+
+        return ResponseEntity.noContent().build();
     }
 
     private String getProfile() {

@@ -2,8 +2,8 @@ package petPeople.pet.domain.post.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,15 +11,10 @@ import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
+import petPeople.pet.domain.datastructure.PostChildList;
 import petPeople.pet.domain.member.entity.Member;
-import petPeople.pet.domain.post.entity.Post;
-import petPeople.pet.domain.post.entity.PostImage;
-import petPeople.pet.domain.post.entity.PostLike;
-import petPeople.pet.domain.post.entity.Tag;
-import petPeople.pet.domain.post.repository.PostImageRepository;
-import petPeople.pet.domain.post.repository.PostLikeRepository;
-import petPeople.pet.domain.post.repository.PostRepository;
-import petPeople.pet.domain.post.repository.TagRepository;
+import petPeople.pet.domain.post.entity.*;
+import petPeople.pet.domain.post.repository.*;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
@@ -38,6 +33,7 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserDetailsService userDetailsService;
+    private final PostBookmarkRepository postBookmarkRepository;
 
     @Transactional
     public PostWriteRespDto write(Member member, PostWriteReqDto postWriteReqDto) {
@@ -49,24 +45,41 @@ public class PostService {
         );
     }
 
-    public PostRetrieveRespDto localRetrieveOne(Long postId, String header) {
+    public PostRetrieveRespDto localRetrieveOne(Long postId, Optional<String> optionalHeader) {
 
         Post post = validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId));
         List<Tag> tagList = findTagList(postId);
         List<PostImage> postImageList = findPostImageList(postId);
         Long likeCnt = countPostLikeByPostId(postId);
 
-        if (header == null) {
-            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt);
+        PostRetrieveRespDto respDto;
+
+        if (isLogined(optionalHeader)) {
+            Long memberId = getLocalMemberByHeader(optionalHeader.get()).getId();
+            boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(memberId, postId));
+            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent);
         } else {
-            return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, findOptionalPostLikeByMemberIdAndPostId(getLocalMemberByHeader(header).getId(), postId).isPresent());
+            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt);
         }
+
+        return respDto;
+    }
+
+    public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
+
+        Slice<Post> postSlice;
+        if (isSearchTag(optionalTag)) {
+            postSlice = findAllPostByTagSlicing(pageable, optionalTag.get());
+        } else {
+            postSlice = findAllPostSlicing(pageable);
+        }
+        return postSliceMapToRespDtoSlice(optionalHeader, postSlice);
     }
 
     @Transactional
     public PostEditRespDto editPost(Member member, Long postId, PostWriteReqDto postWriteReqDto) {
         Post findPost = validateOptionalPost(findOptionalPost(postId));
-        validateAuthorization(member, findPost.getMember());
+        validateMemberAuthorization(member, findPost.getMember());
 
         editPostContent(findPost, postWriteReqDto.getContent());
 
@@ -77,52 +90,9 @@ public class PostService {
         return new PostEditRespDto(
                 findPost,
                 saveTagList(postWriteReqDto.getTagList(), findPost),
-                savePostImageList(postWriteReqDto.getImgUrlList(), findPost)
-                , countPostLikeByPostId(postId)
+                savePostImageList(postWriteReqDto.getImgUrlList(), findPost),
+                countPostLikeByPostId(postId)
         );
-    }
-
-    public Page<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, String header) {
-        Page<Post> postPage = findAllPostByIdWithFetchJoinMemberPaging(pageable);
-
-        List<Long> ids = getPostId(postPage.getContent());
-
-        List<Tag> findTagList = findTagsByPostIds(ids);
-        List<PostImage> findPostImageList = findPostImagesByPostIds(ids);
-        List<PostLike> findPostLikeList = findPostLikesByPostIds(ids);
-
-        if (header == null) {
-            return postPage.map(post -> {
-                List<Tag> tagList = getTagListByPost(findTagList, post);
-                List<PostImage> postImageList = getPostImageListByPost(findPostImageList, post);
-                List<PostLike> postLikeList = getPostLikeListByPost(findPostLikeList, post);
-
-                return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()));
-            });
-        } else {
-            Member member = getLocalMemberByHeader(header);
-            return postPage.map(post -> {
-                List<Tag> tagList = getTagListByPost(findTagList, post);
-                List<PostImage> postImageList = getPostImageListByPost(findPostImageList, post);
-                List<PostLike> postLikeList = getPostLikeListByPost(findPostLikeList, post);
-
-                boolean flag = false;
-
-                for (PostLike postLike : postLikeList) {
-                    if (postLike.getMember() == member) {
-                        flag = true;
-                        break;
-                    }
-                }
-
-                return createLoginPostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), flag);
-            });
-        }
-
-    }
-
-    private Member getLocalMemberByHeader(String header) {
-        return (Member) userDetailsService.loadUserByUsername(header);
     }
 
     @Transactional
@@ -140,12 +110,122 @@ public class PostService {
     @Transactional
     public void delete(Member member, Long postId) {
         Post post = validateOptionalPost(findOptionalPost(postId));
-        validateAuthorization(member, post.getMember());
+        validateMemberAuthorization(member, post.getMember());
 
         deleteTagByPostId(postId);
         deletePostImageByPostId(postId);
         deletePostLikeByPostId(postId);
         deletePostByPostId(postId);
+    }
+
+    @Transactional
+    public void bookmark(Member member, Long postId) {
+        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
+            throwException(ErrorCode.BOOKMARKED_POST, "이미 북마크를 눌렀습니다.");
+        } else {
+            savePostBookmark(createPostBookmark(member, validateOptionalPost(findOptionalPost(postId))));
+        }
+    }
+
+    @Transactional
+    public void deleteBookmark(Member member, Long postId) {
+        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
+            postBookmarkRepository.deleteByMemberIdAndPostId(member.getId(), postId);
+        } else {
+            throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
+        }
+    }
+
+    private void savePostBookmark(PostBookmark postBookmark) {
+        postBookmarkRepository.save(postBookmark);
+    }
+
+    private Optional<PostBookmark> findPostBookmarkByMemberIdAndPostId(Long memberId, Long postId) {
+        return postBookmarkRepository.findByMemberIdAndPostId(memberId, postId);
+    }
+
+    private void throwException(ErrorCode errorCode, String message) {
+        throw new CustomException(errorCode, message);
+    }
+
+    private boolean isOptionalPostBookmarkPresent(Optional<PostBookmark> optionalPostBookmark) {
+        return optionalPostBookmark.isPresent();
+    }
+
+    private PostBookmark createPostBookmark(Member member, Post post) {
+        return PostBookmark.builder()
+                .post(post)
+                .member(member)
+                .build();
+    }
+
+    private PostChildList createPostChildList(List<Tag> findTagList, List<PostImage> findPostImageList, List<PostLike> findPostLikeList) {
+        return PostChildList.builder()
+                .tagList(findTagList)
+                .postImageList(findPostImageList)
+                .postLikeList(findPostLikeList)
+                .build();
+    }
+
+    private Member getLocalMemberByHeader(String header) {
+        return (Member) userDetailsService.loadUserByUsername(header);
+    }
+
+    private boolean isSearchTag(Optional<String> optionalTag) {
+        return optionalTag.isPresent();
+    }
+
+    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoSlice(Optional<String> optionalHeader, Slice<Post> postSlice) {
+        List<Long> ids = getPostId(postSlice.getContent());
+
+        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
+
+        if (isLogined(optionalHeader)) {
+            return postSliceMapToRespDtoWithLogin(optionalHeader.get(), postSlice, postChildList);
+        } else {
+            return postSliceMapToRespDtoWithNoLogin(postSlice, postChildList);
+        }
+    }
+
+    private boolean isLogined(Optional<String> optionalHeader) {
+        return optionalHeader.isPresent();
+    }
+
+    private Slice<Post> findAllPostByTagSlicing(Pageable pageable, String tag) {
+        return postRepository.findAllPostSlicingByTag(pageable, tag);
+    }
+
+    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostChildList postChildList) {
+        Member member = getLocalMemberByHeader(header);
+        return postPage.map(post -> {
+            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
+            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
+            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
+
+            return createLoginPostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList));
+        });
+    }
+
+    private boolean isMemberLikedPostInPostLikeList(Member member, List<PostLike> postLikeList) {
+        boolean flag = false;
+
+        for (PostLike postLike : postLikeList) {
+            if (postLike.getMember() == member) {
+                flag = true;
+                break;
+            }
+        }
+        return flag;
+    }
+
+    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithNoLogin(Slice<Post> postPage, PostChildList postChildList) {
+        return postPage.map(post -> {
+            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
+            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
+            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
+
+            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()));
+        });
     }
 
     private PostRetrieveRespDto createLoginPostRetrieveRespDto(Post post, List<Tag> tagList, List<PostImage> postImageList, Long likeCnt, boolean flag) {
@@ -237,17 +317,17 @@ public class PostService {
         return ids;
     }
 
-    private Page<Post> findAllPostByIdWithFetchJoinMemberPaging(Pageable pageable) {
-        return postRepository.findAllPostByIdWithFetchJoinMemberPaging(pageable);
+    private Slice<Post> findAllPostSlicing(Pageable pageable) {
+        return postRepository.findAllPostSlicing(pageable);
     }
 
     private Long countPostLikeByPostId(Long postId) {
         return postLikeRepository.countByPostId(postId);
     }
 
-    private void validateAuthorization(Member member, Member targetMember) {
+    private void validateMemberAuthorization(Member member, Member targetMember) {
         if (isaNotSameMember(member, targetMember)) {
-            throw new CustomException(ErrorCode.FORBIDDEN_MEMBER, "해당 게시글에 권한이 없습니다.");
+            throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 게시글에 권한이 없습니다.");
         }
     }
 
@@ -337,5 +417,6 @@ public class PostService {
                 .content(content)
                 .build();
     }
+
 
 }
