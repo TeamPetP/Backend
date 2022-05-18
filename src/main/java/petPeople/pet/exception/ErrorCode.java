@@ -36,6 +36,9 @@ public enum ErrorCode {
     //게시글 예외
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."),
 
+    //모임 예외
+    NOT_FOUND_MEETING(HttpStatus.NOT_FOUND, "해당 모임을 찾을 수 없습니다."),
+
     //댓글 예외
     NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다.");
 

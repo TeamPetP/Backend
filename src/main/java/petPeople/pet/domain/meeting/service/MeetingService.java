@@ -3,8 +3,9 @@ package petPeople.pet.domain.meeting.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import petPeople.pet.controller.dto.req.MeetingCreateReqDto;
-import petPeople.pet.controller.dto.resp.MeetingCreateRespDto;
+import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.domain.meeting.entity.Meeting;
 import petPeople.pet.domain.meeting.entity.MeetingImage;
 import petPeople.pet.domain.meeting.entity.MeetingMember;
@@ -18,6 +19,7 @@ import petPeople.pet.exception.ErrorCode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,10 +39,34 @@ public class MeetingService {
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
         for (String url : meetingCreateReqDto.getImgUrlList()) {
-            meetingImageList.add(saveMeetingImage(createMeetingImage(member, saveMeeting, url)));
+            meetingImageList.add(saveMeetingImage(createMeetingImage(saveMeeting, url)));
         }
 
         return new MeetingCreateRespDto(saveMeeting, meetingImageList);
+    }
+
+    public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
+        Meeting meeting = validateOptionalPost(findOptionalMeetingByMeetingId(meetingId));
+        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList);
+    }
+
+    private List<MeetingImage> findMeetingImageListByMeetingId(Long meetingId) {
+        return meetingImageRepository.findByMeetingId(meetingId);
+    }
+
+    private List<MeetingMember> findMeetingMemberListByMeetingId(Long meetingId) {
+        return meetingMemberRepository.findByMeetingId(meetingId);
+    }
+
+    private Meeting validateOptionalPost(Optional<Meeting> optionalMeeting) {
+        return optionalMeeting.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
+    }
+
+    private Optional<Meeting> findOptionalMeetingByMeetingId(Long meetingId) {
+        return meetingRepository.findById(meetingId);
     }
 
     private void validateEndDateBeforeMeetingDate(LocalDateTime meetingDate, LocalDateTime endDate) {
@@ -57,9 +83,8 @@ public class MeetingService {
         return meetingImageRepository.save(meetingImage);
     }
 
-    private MeetingImage createMeetingImage(Member member, Meeting meeting, String url) {
+    private MeetingImage createMeetingImage(Meeting meeting, String url) {
         return MeetingImage.builder()
-                .member(member)
                 .meeting(meeting)
                 .imgUrl(url)
                 .build();
@@ -98,5 +123,6 @@ public class MeetingService {
                 .isOpened(true)
                 .build();
     }
+
 
 }

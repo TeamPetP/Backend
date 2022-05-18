@@ -1,4 +1,4 @@
-package petPeople.pet.controller.dto.resp;
+package petPeople.pet.controller.meeting.dto.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -43,7 +43,7 @@ public class MeetingCreateRespDto {
 
     private Integer maxPeople;
 
-    private List<String> imgUrlList;
+    private List<String> imgUrlList = new ArrayList<>();
 
     private LocalDateTime createdDate;
 
@@ -64,11 +64,9 @@ public class MeetingCreateRespDto {
         this.meetingDate = meeting.getMeetingDate();
         this.maxPeople = meeting.getMaxPeople();
 
-        List<String> imgUrlList = new ArrayList<>();
         for (MeetingImage meetingImage : meetingImageList) {
             imgUrlList.add(meetingImage.getImgUrl());
         }
-        this.imgUrlList = imgUrlList;
 
         this.createdDate = meeting.getCreatedDate();
         this.lastModifiedDate = meeting.getLastModifiedDate();

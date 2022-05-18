@@ -4,11 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import petPeople.pet.controller.dto.req.MeetingCreateReqDto;
+import org.springframework.web.bind.annotation.*;
+import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.member.entity.Member;
 
@@ -20,10 +19,17 @@ public class MeetingController {
     private final MeetingService meetingService;
 
     @PostMapping("")
-    public ResponseEntity createMeeting(Authentication authentication, @RequestBody MeetingCreateReqDto meetingCreateReqDto) {
+    public ResponseEntity<MeetingCreateRespDto> createMeeting(Authentication authentication, @RequestBody MeetingCreateReqDto meetingCreateReqDto) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(meetingService.create(getMember(authentication), meetingCreateReqDto));
+    }
+
+    @GetMapping("/{meetingId}")
+    public ResponseEntity retrieveMeeting(@PathVariable Long meetingId) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingService.retrieveOne(meetingId));
     }
 
     private Member getMember(Authentication authentication) {

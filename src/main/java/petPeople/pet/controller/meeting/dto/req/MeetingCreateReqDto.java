@@ -1,4 +1,4 @@
-package petPeople.pet.controller.dto.req;
+package petPeople.pet.controller.meeting.dto.req;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
