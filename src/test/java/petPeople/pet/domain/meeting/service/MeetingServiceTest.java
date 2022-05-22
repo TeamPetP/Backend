@@ -7,6 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
@@ -18,6 +22,7 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -151,6 +156,55 @@ class MeetingServiceTest {
         //when
         //then
         assertThrows(CustomException.class, () -> meetingService.retrieveOne(meeting.getId()));
+    }
+
+    @Test
+    @DisplayName("미팅 전체 조회")
+    public void retrieveAllMeetingTest() throws Exception {
+        //given
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        Meeting meeting1 = Meeting.builder().id(++id).member(member).category(Category.AMITY).build();
+        List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
+
+        Meeting meeting2 = Meeting.builder().id(++id).member(member).category(Category.EVENT).build();
+        List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
+
+        Meeting meeting3 = Meeting.builder().id(++id).member(member).category(Category.WALK).build();
+        List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
+
+        MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1);
+        MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2);
+        MeetingRetrieveRespDto result3 = new MeetingRetrieveRespDto(meeting3, meetingImageList3, meetingMemberList3);
+
+        List<Meeting> meetingList = Arrays.asList(meeting1, meeting2, meeting3);
+        List<MeetingRetrieveRespDto> content = Arrays.asList(result1, result2, result3);
+
+        SliceImpl<Meeting> meetingSlice = new SliceImpl<>(meetingList, pageRequest, false);
+        SliceImpl<MeetingRetrieveRespDto> result = new SliceImpl<>(content, pageRequest, false);
+
+        List<MeetingImage> meetingImageList = new ArrayList<>();
+        meetingImageList.addAll(meetingImageList1);
+        meetingImageList.addAll(meetingImageList2);
+        meetingImageList.addAll(meetingImageList3);
+
+        List<MeetingMember> meetingMemberList = new ArrayList<>();
+        meetingMemberList.addAll(meetingMemberList1);
+        meetingMemberList.addAll(meetingMemberList2);
+        meetingMemberList.addAll(meetingMemberList3);
+
+        when(meetingRepository.findAllSlicingWithFetchJoinMember(any())).thenReturn(meetingSlice);
+        when(meetingImageRepository.findByMeetingIds(any())).thenReturn(meetingImageList);
+        when(meetingMemberRepository.findByMeetingIds(any())).thenReturn(meetingMemberList);
+
+        //when
+        Slice<MeetingRetrieveRespDto> respDtoSlice = meetingService.retrieveAll(pageRequest);
+
+        //then
+        assertThat(respDtoSlice).isEqualTo(result);
     }
 
 
