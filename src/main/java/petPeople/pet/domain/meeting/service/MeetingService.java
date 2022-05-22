@@ -6,7 +6,9 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
+import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.domain.meeting.entity.Meeting;
 import petPeople.pet.domain.meeting.entity.MeetingImage;
@@ -45,6 +47,43 @@ public class MeetingService {
         }
 
         return new MeetingCreateRespDto(saveMeeting, meetingImageList);
+    }
+
+    @Transactional
+    public MeetingEditRespDto editMeeting(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
+        validateEndDateBeforeMeetingDate(meetingEditReqDto.getMeetingDate(), meetingEditReqDto.getEndDate());
+
+        Meeting findMeeting = validateOptionalPost(findOptionalMeetingByMeetingId(meetingId));
+
+        validateMemberAuthorization(member, findMeeting.getMember());
+
+        editMeeting(meetingEditReqDto, findMeeting);
+        deleteMeetingImageByMeetingId(meetingId);
+
+        List<MeetingImage> meetingImageList = new ArrayList<>();
+        for (String url : meetingEditReqDto.getImgUrlList()) {
+            meetingImageList.add(saveMeetingImage(createMeetingImage(findMeeting, url)));
+        }
+
+        return new MeetingEditRespDto(findMeeting, meetingImageList);
+    }
+
+    private void editMeeting(MeetingEditReqDto meetingEditReqDto, Meeting meeting) {
+        meeting.edit(meetingEditReqDto);
+    }
+
+    private void validateMemberAuthorization(Member member, Member targetMember) {
+        if (isaNotSameMember(member, targetMember)) {
+            throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 모임에 권한이 없습니다.");
+        }
+    }
+
+    private boolean isaNotSameMember(Member member, Member postMember) {
+        return member != postMember;
+    }
+
+    private void deleteMeetingImageByMeetingId(Long meetingId) {
+        meetingImageRepository.deleteByMeetingId(meetingId);
     }
 
     public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
@@ -139,7 +178,7 @@ public class MeetingService {
     private void throwException(ErrorCode errorCode, String message) {
         throw new CustomException(errorCode, message);
     }
-    
+
     private MeetingImage saveMeetingImage(MeetingImage meetingImage) {
         return meetingImageRepository.save(meetingImage);
     }
