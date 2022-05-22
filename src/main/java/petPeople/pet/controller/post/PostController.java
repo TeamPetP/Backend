@@ -58,10 +58,6 @@ public class PostController {
 
     }
 
-    private boolean isLocalProfile() {
-        return getProfile().equals("local");
-    }
-
     @PutMapping("/{postId}")
     public ResponseEntity<PostEditRespDto> editPost(Authentication authentication, @PathVariable Long postId, @RequestBody PostWriteReqDto postWriteReqDto) {
         PostEditRespDto respDto = postService.editPost(getMember(authentication), postId, postWriteReqDto);
@@ -101,6 +97,10 @@ public class PostController {
         postService.deleteBookmark(getMember(authentication), postId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isLocalProfile() {
+        return getProfile().equals("local");
     }
 
     private String getProfile() {
