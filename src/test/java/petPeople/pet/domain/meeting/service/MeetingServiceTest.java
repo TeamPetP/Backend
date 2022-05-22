@@ -12,8 +12,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
+import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
@@ -207,6 +210,47 @@ class MeetingServiceTest {
         assertThat(respDtoSlice).isEqualTo(result);
     }
 
+    @Test
+    public void meetingEditTest() throws Exception {
+        //given
+        String title = "수정 제목";
+        String content = "수정 내용";
+        boolean isOpened = false;
+
+        Meeting editMeeting = createMeeting();
+        editMeeting.setTitle(title);
+        editMeeting.setContent(content);
+        editMeeting.setIsOpened(isOpened);
+
+        MeetingImage meetingImage1 = new MeetingImage(++id, editMeeting, imgUrlList.get(0));
+        MeetingImage meetingImage2 = new MeetingImage(++id, editMeeting, imgUrlList.get(1));
+        MeetingImage meetingImage3 = new MeetingImage(++id, editMeeting, imgUrlList.get(2));
+        MeetingImage meetingImage4 = new MeetingImage(++id, editMeeting, imgUrlList.get(3));
+
+        List<MeetingImage> meetingImageList = Arrays.asList(meetingImage1, meetingImage2, meetingImage3, meetingImage4);
+
+        when(meetingRepository.findById(any())).thenReturn(Optional.ofNullable(editMeeting));
+        doNothing().when(meetingImageRepository).deleteByMeetingId(any());
+        when(meetingImageRepository.save(any()))
+                .thenReturn(meetingImage1)
+                .thenReturn(meetingImage2)
+                .thenReturn(meetingImage3)
+                .thenReturn(meetingImage4);
+
+        MeetingEditRespDto result = new MeetingEditRespDto(editMeeting, meetingImageList);
+
+        MeetingEditReqDto meetingEditReqDto = createMeetingEditReqDto();
+        meetingEditReqDto.setTitle(title);
+        meetingEditReqDto.setContent(content);
+        meetingEditReqDto.setIsOpened(false);
+
+        //when
+        MeetingEditRespDto meetingEditRespDto = meetingService.editMeeting(member, editMeeting.getId(), meetingEditReqDto);
+
+        //then
+        assertThat(meetingEditRespDto).isEqualTo(result);
+    }
+
 
     private MeetingMember createMeetingMember() {
         return MeetingMember.builder()
@@ -218,6 +262,24 @@ class MeetingServiceTest {
 
     private MeetingCreateReqDto createMeetingCreateReqDto() {
         return MeetingCreateReqDto.builder()
+                .title(title)
+                .content(content)
+                .doName(doName)
+                .sigungu(sigungu)
+                .sex(sex)
+                .category(category)
+                .conditions(conditions)
+                .maxAge(maxAge)
+                .minAge(minAge)
+                .endDate(endDate)
+                .meetingDate(meetingDate)
+                .maxPeople(maxPeople)
+                .imgUrlList(imgUrlList)
+                .build();
+    }
+
+    private MeetingEditReqDto createMeetingEditReqDto() {
+        return MeetingEditReqDto.builder()
                 .title(title)
                 .content(content)
                 .doName(doName)
