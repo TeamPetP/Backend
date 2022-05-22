@@ -1,6 +1,8 @@
 package petPeople.pet.domain.meeting.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
@@ -51,6 +53,65 @@ public class MeetingService {
         List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
         return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList);
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable) {
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+        return meetingSliceMapToRespDto(
+                meetingSlice,
+                findMeetingImageByMeetingIds(meetingIds),
+                findMeetingMemberByMeetingIds(meetingIds)
+        );
+    }
+
+    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
+        return meetingSlice.map(meeting ->
+            new MeetingRetrieveRespDto(
+                    meeting,
+                    getMeetingImagesByMeeting(meetingImageList, meeting),
+                    getMeetingMembersByMeeting(meetingMemberList, meeting))
+        );
+    }
+
+    private List<MeetingMember> getMeetingMembersByMeeting(List<MeetingMember> meetingMemberList, Meeting meeting) {
+        List<MeetingMember> meetingMembers = new ArrayList<>();
+        for (MeetingMember meetingMember : meetingMemberList) {
+            if (meetingMember.getMeeting() == meeting) {
+                meetingMembers.add(meetingMember);
+            }
+        }
+        return meetingMembers;
+    }
+
+    private List<MeetingImage> getMeetingImagesByMeeting(List<MeetingImage> meetingImageList, Meeting meeting) {
+        List<MeetingImage> meetingImages = new ArrayList<>();
+        for (MeetingImage meetingImage : meetingImageList) {
+            if (meetingImage.getMeeting() == meeting) {
+                meetingImages.add(meetingImage);
+            }
+        }
+        return meetingImages;
+    }
+
+    private List<MeetingMember> findMeetingMemberByMeetingIds(List<Long> meetingIds) {
+        return meetingMemberRepository.findByMeetingIds(meetingIds);
+    }
+
+    private List<MeetingImage> findMeetingImageByMeetingIds(List<Long> meetingIds) {
+        return meetingImageRepository.findByMeetingIds(meetingIds);
+    }
+
+    private Slice<Meeting> findAllMeetingSlicingWithFetchJoinMember(Pageable pageable) {
+        return meetingRepository.findAllSlicingWithFetchJoinMember(pageable);
+    }
+
+    private List<Long> getMeetingId(List<Meeting> content) {
+        List<Long> ids = new ArrayList<>();
+        for (Meeting meeting : content) {
+            ids.add(meeting.getId());
+        }
+        return ids;
     }
 
     private List<MeetingImage> findMeetingImageListByMeetingId(Long meetingId) {
@@ -123,6 +184,4 @@ public class MeetingService {
                 .isOpened(true)
                 .build();
     }
-
-
 }

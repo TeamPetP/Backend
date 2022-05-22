@@ -1,6 +1,8 @@
 package petPeople.pet.controller.meeting;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.domain.meeting.entity.Meeting;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.member.entity.Member;
 
@@ -26,10 +29,17 @@ public class MeetingController {
     }
 
     @GetMapping("/{meetingId}")
-    public ResponseEntity retrieveMeeting(@PathVariable Long meetingId) {
+    public ResponseEntity<MeetingRetrieveRespDto> retrieveMeeting(@PathVariable Long meetingId) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(meetingService.retrieveOne(meetingId));
+    }
+
+    @GetMapping("")
+    public ResponseEntity retrieveAllMeeting(Pageable pageable) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingService.retrieveAll(pageable));
     }
 
     private Member getMember(Authentication authentication) {

@@ -7,6 +7,5 @@ import petPeople.pet.domain.meeting.entity.MeetingImage;
 import java.util.List;
 import java.util.Optional;
 
-public interface MeetingImageRepository extends JpaRepository<MeetingImage, Long> {
-    List<MeetingImage> findByMeetingId(Long meetingId);
+public interface MeetingImageRepository extends JpaRepository<MeetingImage, Long>, MeetingImageCustomRepository {
 }

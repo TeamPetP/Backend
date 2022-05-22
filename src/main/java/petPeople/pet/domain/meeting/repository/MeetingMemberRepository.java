@@ -6,6 +6,5 @@ import petPeople.pet.domain.meeting.entity.MeetingMember;
 
 import java.util.List;
 
-public interface MeetingMemberRepository extends JpaRepository<MeetingMember, Long> {
-    List<MeetingMember> findByMeetingId(Long meetingId);
+public interface MeetingMemberRepository extends JpaRepository<MeetingMember, Long>, MeetingMemberCustomRepository {
 }
