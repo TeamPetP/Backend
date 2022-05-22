@@ -6,17 +6,9 @@ import lombok.*;
 @NoArgsConstructor
 @Getter @Setter
 @Builder
-public class MemberLocalRegisterRequestDto {
-
-    private String uid;
-
-    private String email;
-
-    private String name;
+public class MemberRegisterReqDto {
 
     private String nickname;
-
-    private String imgUrl;
 
     private String introduce;
 

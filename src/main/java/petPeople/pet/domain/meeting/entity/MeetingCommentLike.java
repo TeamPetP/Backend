@@ -12,7 +12,7 @@ import javax.persistence.*;
 @Builder
 public class MeetingCommentLike {
 
-    @Id @Generated
+    @Id @GeneratedValue
     @Column(name = "meeting_comment_like_id")
     private Long id;
 

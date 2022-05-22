@@ -4,8 +4,6 @@ import lombok.*;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,8 +23,8 @@ public class Post extends BaseTimeEntity {
     @Lob
     private String content;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "post", orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<Tag> tagList = new ArrayList<>();
+//    @Builder.Default
+//    @OneToMany(mappedBy = "post", orphanRemoval = true, cascade = CascadeType.ALL)
+//    private List<Tag> tagList = new ArrayList<>();
 
 }

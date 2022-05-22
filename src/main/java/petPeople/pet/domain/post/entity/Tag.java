@@ -11,12 +11,14 @@ import javax.persistence.*;
 @Builder
 public class Tag {
 
-    @Id @Generated
+    @Id @GeneratedValue
     @Column(name = "tag_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
+
+    private String tag;
 
 }

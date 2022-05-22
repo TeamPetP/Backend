@@ -39,6 +39,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         web.ignoring()
                 .antMatchers(HttpMethod.POST ,"/members/local")//로컬용 회원가입
                 .antMatchers(HttpMethod.POST, "/members")//배포용 회원가입
+                .antMatchers(HttpMethod.GET, "/posts/**")//배포용 회원가입
                 .antMatchers("/css/**")
                 .antMatchers("/static/**")
                 .antMatchers("/js/**")

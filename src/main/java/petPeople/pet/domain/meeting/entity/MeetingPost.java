@@ -13,7 +13,7 @@ import javax.persistence.*;
 @Builder
 public class MeetingPost extends BaseTimeEntity {
 
-    @Id @Generated
+    @Id @GeneratedValue
     @Column(name = "meeting_post_id")
     private Long id;
 

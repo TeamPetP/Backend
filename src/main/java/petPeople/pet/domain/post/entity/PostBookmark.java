@@ -1,25 +1,24 @@
-package petPeople.pet.domain.meeting.entity;
+package petPeople.pet.domain.post.entity;
 
 import lombok.*;
-import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Getter @Setter
 @Builder
-public class MeetingMember extends BaseTimeEntity {
+public class PostBookmark {
 
     @Id @GeneratedValue
-    @Column(name = "meeting_member_id")
+    @Column(name = "post_bookmark_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
-    private Meeting meeting;
+    @JoinColumn(name = "post_id")
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")

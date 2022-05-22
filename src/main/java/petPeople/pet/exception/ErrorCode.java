@@ -21,8 +21,9 @@ public enum ErrorCode {
     FORBIDDEN_MEMBER(HttpStatus.FORBIDDEN, "해당 요청에 권한이 없습니다."),
     INVALID_AUTHORIZATION(HttpStatus.BAD_REQUEST, "인증 정보가 부정확합니다."),
 
-    //캠핑장 예외
-    EXIST_CAMP(HttpStatus.BAD_REQUEST, "이미 좋아요한 캠핑장입니다."),
+    //북마크 예외
+    BOOKMARKED_POST(HttpStatus.BAD_REQUEST, "이미 북마크한 피드입니다."),
+    NEVER_BOOKMARKED_POST(HttpStatus.BAD_REQUEST, "북마크하지 않은 피드입니다."),
     NOT_FOUND_CAMP(HttpStatus.NOT_FOUND, "해당 캠핑장을 찾을 수 없습니다."),
     NOT_FOUND_CAMP_DETAIL(HttpStatus.NOT_FOUND, "상세검색에 해당하는 캠핑장을 찾을 수 없습니다."),
 
