@@ -18,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Getter @Setter
-public class Comment {
+public class Comment extends BaseTimeEntity{
 
     @Id @GeneratedValue
     @Column(name = "comment_id")
