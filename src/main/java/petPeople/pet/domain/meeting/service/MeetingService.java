@@ -38,8 +38,8 @@ public class MeetingService {
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
         validateEndDateBeforeMeetingDate(meetingCreateReqDto.getMeetingDate(), meetingCreateReqDto.getEndDate());
 
-        Meeting saveMeeting = saveMeeting(member, meetingCreateReqDto);
-        saveMeetingMember(member, saveMeeting);
+        Meeting saveMeeting = saveMeeting(createMeeting(member, meetingCreateReqDto));
+        saveMeetingMember(createMeetingMember(member, saveMeeting));
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
         for (String url : meetingCreateReqDto.getImgUrlList()) {
@@ -81,6 +81,24 @@ public class MeetingService {
         validateAgeCondition(member.getAge(), meeting);//나이 가입조건에 해당하는지
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
+    }
+
+    public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList);
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable) {
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+        return meetingSliceMapToRespDto(
+                meetingSlice,
+                findMeetingImageByMeetingIds(meetingIds),
+                findMeetingMemberByMeetingIds(meetingIds)
+        );
     }
 
     private MeetingWaitingMember saveMeetingWaitingMember(MeetingWaitingMember meetingWaitingMember) {
@@ -146,24 +164,6 @@ public class MeetingService {
 
     private void deleteMeetingImageByMeetingId(Long meetingId) {
         meetingImageRepository.deleteByMeetingId(meetingId);
-    }
-
-    public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
-        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
-        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
-
-        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList);
-    }
-
-    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable) {
-        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
-        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-        return meetingSliceMapToRespDto(
-                meetingSlice,
-                findMeetingImageByMeetingIds(meetingIds),
-                findMeetingMemberByMeetingIds(meetingIds)
-        );
     }
 
     private Slice<MeetingRetrieveRespDto> meetingSliceMapToRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
@@ -252,12 +252,12 @@ public class MeetingService {
                 .build();
     }
 
-    private MeetingMember saveMeetingMember(Member member, Meeting meeting) {
-        return meetingMemberRepository.save(createMeetingMember(member, meeting));
+    private MeetingMember saveMeetingMember(MeetingMember meetingMember) {
+        return meetingMemberRepository.save(meetingMember);
     }
 
-    private Meeting saveMeeting(Member member, MeetingCreateReqDto meetingCreateReqDto) {
-        return meetingRepository.save(createMeeting(member, meetingCreateReqDto));
+    private Meeting saveMeeting(Meeting meeting) {
+        return meetingRepository.save(meeting);
     }
 
     private MeetingMember createMeetingMember(Member member, Meeting meeting) {
