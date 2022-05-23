@@ -10,12 +10,11 @@ import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
-import petPeople.pet.domain.meeting.entity.Meeting;
-import petPeople.pet.domain.meeting.entity.MeetingImage;
-import petPeople.pet.domain.meeting.entity.MeetingMember;
+import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
 import petPeople.pet.domain.meeting.repository.MeetingRepository;
+import petPeople.pet.domain.meeting.repository.WaitingMemberRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
@@ -33,6 +32,7 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
+    private final WaitingMemberRepository waitingMemberRepository;
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
@@ -79,6 +79,20 @@ public class MeetingService {
         validateDuplicatedJoin(member, meetingId);//중복 가입인지
         validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원이 다 찼는지
         validateAgeCondition(member.getAge(), meeting);//나이 가입조건에 해당하는지
+
+        saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
+    }
+
+    private MeetingWaitingMember saveMeetingWaitingMember(MeetingWaitingMember meetingWaitingMember) {
+        return waitingMemberRepository.save(meetingWaitingMember);
+    }
+
+    private MeetingWaitingMember createMeetingWaitingMember(Member member, Meeting meeting) {
+        return MeetingWaitingMember.builder()
+                .member(member)
+                .meeting(meeting)
+                .joinRequestStatus(JoinRequestStatus.WAITING)
+                .build();
     }
 
     private void validateAgeCondition(Integer age, Meeting meeting) {
