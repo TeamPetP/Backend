@@ -1,6 +1,7 @@
 package petPeople.pet.domain.meeting.entity;
 
 import lombok.*;
+import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 public class Meeting extends BaseTimeEntity {
 
-    @Id @Generated
+    @Id @GeneratedValue
     @Column(name = "meeting_id")
     private Long id;
 
@@ -30,7 +31,7 @@ public class Meeting extends BaseTimeEntity {
 
     private LocalDateTime meetingDate;
 
-    private String condition;
+    private String conditions;
 
     private Integer maxPeople;
 
@@ -49,5 +50,20 @@ public class Meeting extends BaseTimeEntity {
     private String content;
 
     private Boolean isOpened;
+
+    public void edit(MeetingEditReqDto meetingEditReqDto) {
+        this.setDoName(meetingEditReqDto.getDoName());
+        this.setSigungu(meetingEditReqDto.getSigungu());
+        this.setEndDate(meetingEditReqDto.getEndDate());
+        this.setConditions(meetingEditReqDto.getConditions());
+        this.setMaxPeople(meetingEditReqDto.getMaxPeople());
+        this.setSex(meetingEditReqDto.getSex());
+        this.setCategory(meetingEditReqDto.getCategory());
+        this.setMaxAge(meetingEditReqDto.getMaxAge());
+        this.setMinAge(meetingEditReqDto.getMinAge());
+        this.setTitle(meetingEditReqDto.getTitle());
+        this.setContent(meetingEditReqDto.getContent());
+        this.setIsOpened(meetingEditReqDto.getIsOpened());
+    }
 
 }

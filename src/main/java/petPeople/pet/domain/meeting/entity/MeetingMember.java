@@ -13,7 +13,7 @@ import javax.persistence.*;
 @Builder
 public class MeetingMember extends BaseTimeEntity {
 
-    @Id @Generated
+    @Id @GeneratedValue
     @Column(name = "meeting_member_id")
     private Long id;
 
@@ -24,5 +24,7 @@ public class MeetingMember extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+
 
 }

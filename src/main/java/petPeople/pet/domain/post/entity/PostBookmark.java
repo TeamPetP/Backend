@@ -1,4 +1,4 @@
-package petPeople.pet.domain.meeting.entity;
+package petPeople.pet.domain.post.entity;
 
 import lombok.*;
 import petPeople.pet.domain.member.entity.Member;
@@ -6,21 +6,22 @@ import petPeople.pet.domain.member.entity.Member;
 import javax.persistence.*;
 
 @Entity
-@Getter @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Getter @Setter
 @Builder
-public class MeetingPostLike {
+public class PostBookmark {
 
     @Id @GeneratedValue
-    @Column(name = "meeting_post_like_id")
+    @Column(name = "post_bookmark_id")
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_post_id")
-    private MeetingPost meetingPost;
 }

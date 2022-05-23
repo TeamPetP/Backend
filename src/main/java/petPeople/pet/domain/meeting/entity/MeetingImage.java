@@ -13,13 +13,9 @@ import javax.persistence.*;
 @Builder
 public class MeetingImage extends BaseTimeEntity {
 
-    @Id @Generated
+    @Id @GeneratedValue
     @Column(name = "meeting_image_id")
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
-    private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
