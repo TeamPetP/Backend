@@ -50,10 +50,10 @@ public class MeetingService {
     }
 
     @Transactional
-    public MeetingEditRespDto editMeeting(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
+    public MeetingEditRespDto edit(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
         validateEndDateBeforeMeetingDate(meetingEditReqDto.getMeetingDate(), meetingEditReqDto.getEndDate());
 
-        Meeting findMeeting = validateOptionalPost(findOptionalMeetingByMeetingId(meetingId));
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
         validateMemberAuthorization(member, findMeeting.getMember());
 
@@ -66,6 +66,48 @@ public class MeetingService {
         }
 
         return new MeetingEditRespDto(findMeeting, meetingImageList);
+    }
+
+    // TODO: 2022-05-23 가입조건 로직 추가
+    @Transactional
+    public void join(Member member, Long meetingId) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        validateExpiredMeetingJoin(meeting.getIsOpened());
+        validateDuplicatedMeetingJoin(member, meetingId);
+        validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));
+
+        saveMeetingMember(member, meeting);
+    }
+
+    private void validateDuplicatedMeetingJoin(Member member, Long meetingId) {
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+        for (MeetingMember meetingMember : meetingMemberList) {
+            if (meetingMember.getMember() == member) {
+                throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+            }
+        }
+    }
+
+    private void validateExpiredMeetingJoin(Boolean status) {
+        if (!status) {
+            throwException(ErrorCode.EXPIRED_MEETING, "모집이 마감된 모임입니다.");
+        }
+    }
+
+    private void validateFullMeeting(Integer maxPeople, Long joinMemberCount) {
+        if (isFull(maxPeople, joinMemberCount)) {
+            throwException(ErrorCode.FULL_MEMBER_MEETING, "해당 모임에 인원이 다 찼습니다.");
+        }
+    }
+
+    private boolean isFull(Integer maxPeople, Long joinMemberCount) {
+        return maxPeople <= joinMemberCount;
+    }
+
+    private Long countMeetingMember(Long meetingId) {
+        Long joinMember = meetingMemberRepository.countByMeetingId(meetingId);
+        return joinMember;
     }
 
     private void editMeeting(MeetingEditReqDto meetingEditReqDto, Meeting meeting) {
@@ -87,7 +129,7 @@ public class MeetingService {
     }
 
     public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
-        Meeting meeting = validateOptionalPost(findOptionalMeetingByMeetingId(meetingId));
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
         List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
@@ -161,7 +203,7 @@ public class MeetingService {
         return meetingMemberRepository.findByMeetingId(meetingId);
     }
 
-    private Meeting validateOptionalPost(Optional<Meeting> optionalMeeting) {
+    private Meeting validateOptionalMeeting(Optional<Meeting> optionalMeeting) {
         return optionalMeeting.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
     }
 

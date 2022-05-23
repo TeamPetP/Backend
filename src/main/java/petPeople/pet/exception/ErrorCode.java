@@ -38,6 +38,9 @@ public enum ErrorCode {
 
     //모임 예외
     NOT_FOUND_MEETING(HttpStatus.NOT_FOUND, "해당 모임을 찾을 수 없습니다."),
+    FULL_MEMBER_MEETING(HttpStatus.BAD_REQUEST, "해당 모임에 인원이 다 찼습니다."),
+    EXPIRED_MEETING(HttpStatus.BAD_REQUEST, "모집이 마감되었습니다."),
+    DUPLICATED_JOIN_MEETING(HttpStatus.BAD_REQUEST, "이미 가입한 모임입니다."),
 
     //댓글 예외
     NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다.");

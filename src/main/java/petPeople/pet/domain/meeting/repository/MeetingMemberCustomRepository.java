@@ -7,4 +7,5 @@ import java.util.List;
 public interface MeetingMemberCustomRepository {
     List<MeetingMember> findByMeetingIds(List<Long> meetingIds);
     List<MeetingMember> findByMeetingId(Long meetingId);
+    Long countByMeetingId(Long meetingId);
 }

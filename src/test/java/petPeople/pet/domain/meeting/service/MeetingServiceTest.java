@@ -8,7 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
@@ -16,7 +15,6 @@ import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
-import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
@@ -211,6 +209,7 @@ class MeetingServiceTest {
     }
 
     @Test
+    @DisplayName("미팅 수정 테스트")
     public void meetingEditTest() throws Exception {
         //given
         String title = "수정 제목";
@@ -245,7 +244,7 @@ class MeetingServiceTest {
         meetingEditReqDto.setIsOpened(false);
 
         //when
-        MeetingEditRespDto meetingEditRespDto = meetingService.editMeeting(member, editMeeting.getId(), meetingEditReqDto);
+        MeetingEditRespDto meetingEditRespDto = meetingService.edit(member, editMeeting.getId(), meetingEditReqDto);
 
         //then
         assertThat(meetingEditRespDto).isEqualTo(result);
