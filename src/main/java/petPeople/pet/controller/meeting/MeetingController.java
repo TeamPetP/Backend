@@ -51,8 +51,7 @@ public class MeetingController {
 
     @PostMapping("/{meetingId}")
     public ResponseEntity joinMeeting(Authentication authentication, @PathVariable Long meetingId) {
-        Member member = getMember(authentication);
-        meetingService.join(member, meetingId);
+        meetingService.joinRequest(getMember(authentication), meetingId);
 
         return ResponseEntity.noContent().build();
     }

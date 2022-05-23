@@ -24,6 +24,8 @@ public class MemberRegisterDto {
 
     private String introduce;
 
+    private Integer age;
+
     public MemberRegisterDto(MemberLocalRegisterReqDto memberLocalRegisterReqDto) {
         this.uid = memberLocalRegisterReqDto.getUid();
         this.name = memberLocalRegisterReqDto.getName();
@@ -31,6 +33,7 @@ public class MemberRegisterDto {
         this.nickname = memberLocalRegisterReqDto.getNickname();
         this.imgUrl = memberLocalRegisterReqDto.getImgUrl();
         this.introduce = memberLocalRegisterReqDto.getIntroduce();
+        this.age = memberLocalRegisterReqDto.getAge();
     }
 
     public MemberRegisterDto(FirebaseToken firebaseToken, MemberRegisterReqDto memberRegisterReqDto) {
@@ -40,5 +43,6 @@ public class MemberRegisterDto {
         this.nickname = memberRegisterReqDto.getNickname();
         this.imgUrl = firebaseToken.getPicture();
         this.introduce = memberRegisterReqDto.getIntroduce();
+        this.age = memberRegisterReqDto.getAge();
     }
 }

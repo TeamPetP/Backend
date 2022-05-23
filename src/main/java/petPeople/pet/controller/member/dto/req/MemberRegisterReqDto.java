@@ -12,4 +12,5 @@ public class MemberRegisterReqDto {
 
     private String introduce;
 
+    private Integer age;
 }

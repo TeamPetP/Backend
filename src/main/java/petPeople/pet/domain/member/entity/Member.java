@@ -33,6 +33,8 @@ public class Member extends BaseTimeEntity implements UserDetails {
 
     private String introduce;
 
+    private Integer age;
+
     public void changeNickname(String nickname) {
         this.nickname = nickname;
     }

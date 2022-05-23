@@ -24,8 +24,6 @@ public enum ErrorCode {
     //북마크 예외
     BOOKMARKED_POST(HttpStatus.BAD_REQUEST, "이미 북마크한 피드입니다."),
     NEVER_BOOKMARKED_POST(HttpStatus.BAD_REQUEST, "북마크하지 않은 피드입니다."),
-    NOT_FOUND_CAMP(HttpStatus.NOT_FOUND, "해당 캠핑장을 찾을 수 없습니다."),
-    NOT_FOUND_CAMP_DETAIL(HttpStatus.NOT_FOUND, "상세검색에 해당하는 캠핑장을 찾을 수 없습니다."),
 
     //리뷰 예외
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, "해당 리뷰를 찾을 수 없습니다."),
@@ -41,6 +39,7 @@ public enum ErrorCode {
     FULL_MEMBER_MEETING(HttpStatus.BAD_REQUEST, "해당 모임에 인원이 다 찼습니다."),
     EXPIRED_MEETING(HttpStatus.BAD_REQUEST, "모집이 마감되었습니다."),
     DUPLICATED_JOIN_MEETING(HttpStatus.BAD_REQUEST, "이미 가입한 모임입니다."),
+    NOT_VALID_AGE(HttpStatus.BAD_REQUEST, "가입조건에 해당하지 않는 나이입니다."),
 
     //댓글 예외
     NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다.");

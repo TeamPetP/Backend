@@ -25,6 +25,8 @@ public class MemberRegisterRespDto {
 
     private String introduce;
 
+    private Integer age;
+
     public MemberRegisterRespDto(Member member) {
         this.memberId = member.getId();
         this.uid = member.getUid();
@@ -33,6 +35,7 @@ public class MemberRegisterRespDto {
         this.nickname = member.getNickname();
         this.imgUrl = member.getImgUrl();
         this.introduce = member.getIntroduce();
+        this.age = member.getAge();
     }
 
 }

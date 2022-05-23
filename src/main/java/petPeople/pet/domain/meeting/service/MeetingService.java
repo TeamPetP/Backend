@@ -68,19 +68,26 @@ public class MeetingService {
         return new MeetingEditRespDto(findMeeting, meetingImageList);
     }
 
-    // TODO: 2022-05-23 가입조건 로직 추가
+    // TODO: 2022-05-23 모임에 max 회원 도달 경우 자동으로 isOpened 바꿀지(가입 후 max에 찰 경우 자동으로 마감 처리)
+    // TODO: 2022-05-23 모집 기간이 지난 모임 가입 가입 불가로(모집 마감 시간이 넘을 경우 프론트에서 마감으로 처리하기)
     @Transactional
-    public void join(Member member, Long meetingId) {
+    public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Long joinMemberCount = countMeetingMember(meetingId);
 
-        validateExpiredMeetingJoin(meeting.getIsOpened());
-        validateDuplicatedMeetingJoin(member, meetingId);
-        validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));
-
-        saveMeetingMember(member, meeting);
+        validateOpenedMeeting(meeting.getIsOpened());//모집 상태인지
+        validateDuplicatedJoin(member, meetingId);//중복 가입인지
+        validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원이 다 찼는지
+        validateAgeCondition(member.getAge(), meeting);//나이 가입조건에 해당하는지
     }
 
-    private void validateDuplicatedMeetingJoin(Member member, Long meetingId) {
+    private void validateAgeCondition(Integer age, Meeting meeting) {
+        if (age < meeting.getMinAge() || age > meeting.getMaxAge()) {
+            throwException(ErrorCode.NOT_VALID_AGE, "해당 모임에 가입조건에 해당하지 않는 나이입닏.");
+        }
+    }
+
+    private void validateDuplicatedJoin(Member member, Long meetingId) {
         List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
         for (MeetingMember meetingMember : meetingMemberList) {
             if (meetingMember.getMember() == member) {
@@ -89,7 +96,7 @@ public class MeetingService {
         }
     }
 
-    private void validateExpiredMeetingJoin(Boolean status) {
+    private void validateOpenedMeeting(Boolean status) {
         if (!status) {
             throwException(ErrorCode.EXPIRED_MEETING, "모집이 마감된 모임입니다.");
         }
@@ -106,8 +113,7 @@ public class MeetingService {
     }
 
     private Long countMeetingMember(Long meetingId) {
-        Long joinMember = meetingMemberRepository.countByMeetingId(meetingId);
-        return joinMember;
+        return meetingMemberRepository.countByMeetingId(meetingId);
     }
 
     private void editMeeting(MeetingEditReqDto meetingEditReqDto, Meeting meeting) {

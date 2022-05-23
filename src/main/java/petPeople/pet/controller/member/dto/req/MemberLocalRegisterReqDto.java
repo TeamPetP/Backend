@@ -19,4 +19,6 @@ public class MemberLocalRegisterReqDto {
     private String imgUrl;
 
     private String introduce;
+
+    private Integer age;
 }
