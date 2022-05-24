@@ -8,7 +8,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -270,7 +269,7 @@ class PostServiceTest {
         List<PostImage> allPostImageList = addAllPostImageList(imgUrls1, imgUrls2, imgUrls3, postList);
         List<PostLike> allPostLikeList = Arrays.asList(postLike1, postLike2, postLike3);
 
-        when(postRepository.findAllPostSlicing(any())).thenReturn(postSlice);
+        when(postRepository.findAllSlicing(any())).thenReturn(postSlice);
         when(tagRepository.findTagsByPostIds(any())).thenReturn(allTagList);
         when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(allPostImageList);
         when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(allPostLikeList);
@@ -322,7 +321,7 @@ class PostServiceTest {
         List<PostImage> allPostImageList = addAllPostImageList(imgUrls1, imgUrls2, imgUrls3, postList);
         List<PostLike> allPostLikeList = Arrays.asList(postLike1, postLike2, postLike3);
 
-        when(postRepository.findAllPostSlicing(any())).thenReturn(postSlice);
+        when(postRepository.findAllSlicing(any())).thenReturn(postSlice);
         when(tagRepository.findTagsByPostIds(any())).thenReturn(allTagList);
         when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(allPostImageList);
         when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(allPostLikeList);

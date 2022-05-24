@@ -39,4 +39,24 @@ public class MeetingCustomRepositoryImpl implements MeetingCustomRepository{
 
         return new SliceImpl<>(content, pageable, hasNext);
     }
+
+    @Override
+    public Slice<Meeting> findAllSlicingByMemberId(Pageable pageable, Long memberId) {
+        List<Meeting> content = queryFactory
+                .select(meeting)
+                .from(meeting)
+                .where(meeting.member.id.eq(memberId))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1)
+                .orderBy(meeting.createdDate.desc())
+                .fetch();
+
+        boolean hasNext = false;
+        if (content.size() > pageable.getPageSize()) {
+            content.remove(pageable.getPageSize());
+            hasNext = true;
+        }
+
+        return new SliceImpl<>(content, pageable, hasNext);
+    }
 }

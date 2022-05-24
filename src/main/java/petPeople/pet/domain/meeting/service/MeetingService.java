@@ -81,6 +81,7 @@ public class MeetingService {
         validateAgeCondition(member.getAge(), meeting);//나이 가입조건에 해당하는지
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
+
     }
 
     public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
@@ -99,6 +100,20 @@ public class MeetingService {
                 findMeetingImageByMeetingIds(meetingIds),
                 findMeetingMemberByMeetingIds(meetingIds)
         );
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveMemberMeeting(Member member, Pageable pageable) {
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingByMemberId(member, pageable);
+        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+        return meetingSliceMapToRespDto(
+                meetingSlice,
+                findMeetingImageByMeetingIds(meetingIds),
+                findMeetingMemberByMeetingIds(meetingIds)
+        );
+    }
+
+    private Slice<Meeting> findAllMeetingSlicingByMemberId(Member member, Pageable pageable) {
+        return meetingRepository.findAllSlicingByMemberId(pageable, member.getId());
     }
 
     private MeetingWaitingMember saveMeetingWaitingMember(MeetingWaitingMember meetingWaitingMember) {
