@@ -3,10 +3,7 @@ package petPeople.pet.controller.meeting.dto.resp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import petPeople.pet.domain.meeting.entity.Category;
-import petPeople.pet.domain.meeting.entity.Meeting;
-import petPeople.pet.domain.meeting.entity.MeetingImage;
-import petPeople.pet.domain.meeting.entity.Sex;
+import petPeople.pet.domain.meeting.entity.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,17 +24,17 @@ public class MeetingCreateRespDto {
 
     private String sigungu;
 
-    private Sex sex;
+    private String location;
+
+    private String sex;
 
     private String conditions;
 
-    private Category category;
+    private String category;
 
-    private Integer minAge;
+    private String meetingType;
 
-    private Integer maxAge;
-
-    private LocalDateTime endDate;
+    private String period;
 
     private LocalDateTime meetingDate;
 
@@ -55,15 +52,14 @@ public class MeetingCreateRespDto {
         this.content = meeting.getContent();
         this.doName = meeting.getDoName();
         this.sigungu = meeting.getSigungu();
-        this.sex = meeting.getSex();
+        this.location = meeting.getLocation();
+        this.sex = meeting.getSex().getDetail();
         this.conditions = meeting.getConditions();
-        this.category = meeting.getCategory();
-        this.minAge = meeting.getMinAge();
-        this.maxAge = meeting.getMaxAge();
-        this.endDate = meeting.getEndDate();
+        this.category = meeting.getCategory().getDetail();
+        this.meetingType = meeting.getMeetingType().getDetail();
+        this.period = meeting.getPeriod();
         this.meetingDate = meeting.getMeetingDate();
         this.maxPeople = meeting.getMaxPeople();
-
         for (MeetingImage meetingImage : meetingImageList) {
             imgUrlList.add(meetingImage.getImgUrl());
         }

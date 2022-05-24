@@ -94,9 +94,7 @@ public class MemberController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(meetingService.retrieveMemberMeeting(getMember(authentication), pageable));
-
     }
-
 
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();

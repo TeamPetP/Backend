@@ -19,7 +19,6 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +35,6 @@ public class MeetingService {
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
-        validateEndDateBeforeMeetingDate(meetingCreateReqDto.getMeetingDate(), meetingCreateReqDto.getEndDate());
 
         Meeting saveMeeting = saveMeeting(createMeeting(member, meetingCreateReqDto));
         saveMeetingMember(createMeetingMember(member, saveMeeting));
@@ -51,8 +49,6 @@ public class MeetingService {
 
     @Transactional
     public MeetingEditRespDto edit(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
-        validateEndDateBeforeMeetingDate(meetingEditReqDto.getMeetingDate(), meetingEditReqDto.getEndDate());
-
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
         validateMemberAuthorization(member, findMeeting.getMember());
@@ -78,7 +74,6 @@ public class MeetingService {
         validateOpenedMeeting(meeting.getIsOpened());//모집 상태인지
         validateDuplicatedJoin(member, meetingId);//중복 가입인지
         validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원이 다 찼는지
-        validateAgeCondition(member.getAge(), meeting);//나이 가입조건에 해당하는지
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
 
@@ -126,12 +121,6 @@ public class MeetingService {
                 .meeting(meeting)
                 .joinRequestStatus(JoinRequestStatus.WAITING)
                 .build();
-    }
-
-    private void validateAgeCondition(Integer age, Meeting meeting) {
-        if (age < meeting.getMinAge() || age > meeting.getMaxAge()) {
-            throwException(ErrorCode.NOT_VALID_AGE, "해당 모임에 가입조건에 해당하지 않는 나이입닏.");
-        }
     }
 
     private void validateDuplicatedJoin(Member member, Long meetingId) {
@@ -246,12 +235,6 @@ public class MeetingService {
         return meetingRepository.findById(meetingId);
     }
 
-    private void validateEndDateBeforeMeetingDate(LocalDateTime meetingDate, LocalDateTime endDate) {
-        if (meetingDate.isBefore(endDate)) {
-            throwException(ErrorCode.BAD_REQUEST_PARAM, "모집 마감 시간을 미팅 시간 이전으로 선택하여야 합니다!");
-        }
-    }
-
     private void throwException(ErrorCode errorCode, String message) {
         throw new CustomException(errorCode, message);
     }
@@ -287,14 +270,14 @@ public class MeetingService {
                 .member(member)
                 .doName(meetingCreateReqDto.getDoName())
                 .sigungu(meetingCreateReqDto.getSigungu())
-                .endDate(meetingCreateReqDto.getEndDate())
+                .location(meetingCreateReqDto.getLocation())
                 .meetingDate(meetingCreateReqDto.getMeetingDate())
                 .conditions(meetingCreateReqDto.getConditions())
                 .maxPeople(meetingCreateReqDto.getMaxPeople())
                 .sex(meetingCreateReqDto.getSex())
                 .category(meetingCreateReqDto.getCategory())
-                .maxAge(meetingCreateReqDto.getMaxAge())
-                .minAge(meetingCreateReqDto.getMinAge())
+                .meetingType(meetingCreateReqDto.getMeetingType())
+                .period(meetingCreateReqDto.getPeriod())
                 .title(meetingCreateReqDto.getTitle())
                 .content(meetingCreateReqDto.getContent())
                 .isOpened(true)

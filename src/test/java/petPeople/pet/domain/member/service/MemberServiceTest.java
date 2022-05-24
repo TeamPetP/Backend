@@ -76,7 +76,7 @@ class MemberServiceTest {
     public void memberRegisterTest() throws Exception {
         //given
         MemberRegisterRespDto result = new MemberRegisterRespDto(member);
-        MemberLocalRegisterReqDto memberLocalRegisterReqDto = new MemberLocalRegisterReqDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE, AGE);
+        MemberLocalRegisterReqDto memberLocalRegisterReqDto = new MemberLocalRegisterReqDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE);
 
         when(memberRepository.save(any())).thenReturn(member);
         when(memberRepository.findByUid(any())).thenReturn(Optional.empty());

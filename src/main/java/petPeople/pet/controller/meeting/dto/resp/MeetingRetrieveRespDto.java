@@ -15,22 +15,42 @@ import java.util.List;
 public class MeetingRetrieveRespDto {
 
     private Long meetingId;
-    private Long memberId;
-    private String nickname;
-    private Boolean status;
-    private String doName;
-    private String sigungu;
-    private String category;
-    private String title;
-    private String content;
-    private LocalDateTime endDate;
-    private String conditions;
-    private Integer maxPeople;
-    private Integer joinPeople;
-    private LocalDateTime createDate;
-    private List<String> imgUrlList = new ArrayList<>();
-    private List<String> joinMembers = new ArrayList<>();
 
+    private Long memberId;
+
+    private String nickname;
+
+    private Boolean status;
+
+    private String doName;
+
+    private String sigungu;
+
+    private String location;
+
+    private String category;
+
+    private String meetingType;
+
+    private String period;
+
+    private String title;
+
+    private String content;
+
+    private String conditions;
+
+    private String sex;
+
+    private Integer maxPeople;
+
+    private Integer joinPeople;
+
+    private LocalDateTime createDate;
+
+    private List<String> imgUrlList = new ArrayList<>();
+
+    private List<String> joinMembers = new ArrayList<>();
 
     public MeetingRetrieveRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
         this.meetingId = meeting.getId();
@@ -39,11 +59,14 @@ public class MeetingRetrieveRespDto {
         this.status = meeting.getIsOpened();
         this.doName = meeting.getDoName();
         this.sigungu = meeting.getSigungu();
+        this.location = meeting.getLocation();
         this.category = meeting.getCategory().getDetail();
+        this.meetingType = meeting.getMeetingType().getDetail();
+        this.period = meeting.getPeriod();
         this.title = meeting.getTitle();
         this.content = meeting.getContent();
-        this.endDate = meeting.getEndDate();
         this.conditions = meeting.getConditions();
+        this.sex = meeting.getSex().getDetail();
         this.maxPeople = meeting.getMaxPeople();
         this.joinPeople = meetingMemberList.size();
         this.createDate = meeting.getCreatedDate();

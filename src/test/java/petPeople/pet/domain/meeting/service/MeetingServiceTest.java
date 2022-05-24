@@ -50,16 +50,18 @@ class MeetingServiceTest {
     final Sex sex = Sex.MALE;
     final Category category = Category.WALK;
     final String conditions = "탈모아닌사람만";
-    final Integer maxAge = 25;
-    final Integer minAge = 20;
-    final LocalDateTime endDate = LocalDateTime.of(2022, 05, 15, 5, 15);
     final LocalDateTime meetingDate = LocalDateTime.of(2022, 05, 15, 5, 15);
     final Integer maxPeople = 5;
     final List<String> imgUrlList = Arrays.asList("www.abc.com", "www.abc.com", "www.abc.com", "www.abc.com");
+    final String period = "주 2회";
+    final String 올림픽_공원 = "올림픽 공원";
+    final MeetingType meetingType =MeetingType.REGULAR;
+
 
     Long id;
     Member member;
     Meeting meeting;
+
 
     @BeforeEach
     void beforeEach() {
@@ -103,19 +105,6 @@ class MeetingServiceTest {
 
         //then
         assertThat(respDto).isEqualTo(result);
-    }
-
-    @Test
-    @DisplayName("미팅 날짜가 모집 마감 날짜 이후 테스트")
-    public void endDateAfterMeetingDateTest() throws Exception {
-        //given
-        //when
-
-        //then
-        MeetingCreateReqDto meetingCreateReqDto = createMeetingCreateReqDto();
-        meetingCreateReqDto.setEndDate(LocalDateTime.of(2022, 1, 30, 15, 00));
-        meetingCreateReqDto.setMeetingDate(LocalDateTime.of(2022, 1, 30, 14, 00));
-        assertThrows(CustomException.class, () -> meetingService.create(member, meetingCreateReqDto));
     }
 
     @Test
@@ -165,15 +154,33 @@ class MeetingServiceTest {
         //given
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Meeting meeting1 = Meeting.builder().id(++id).member(member).category(Category.AMITY).build();
+        Meeting meeting1 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
 
-        Meeting meeting2 = Meeting.builder().id(++id).member(member).category(Category.EVENT).build();
+        Meeting meeting2 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
 
-        Meeting meeting3 = Meeting.builder().id(++id).member(member).category(Category.WALK).build();
+        Meeting meeting3 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
 
@@ -256,15 +263,33 @@ class MeetingServiceTest {
         //given
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Meeting meeting1 = Meeting.builder().id(++id).member(member).category(Category.AMITY).build();
+        Meeting meeting1 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
 
-        Meeting meeting2 = Meeting.builder().id(++id).member(member).category(Category.EVENT).build();
+        Meeting meeting2 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
 
-        Meeting meeting3 = Meeting.builder().id(++id).member(new Member()).category(Category.WALK).build();
+        Meeting meeting3 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
 
@@ -316,9 +341,6 @@ class MeetingServiceTest {
                 .sex(sex)
                 .category(category)
                 .conditions(conditions)
-                .maxAge(maxAge)
-                .minAge(minAge)
-                .endDate(endDate)
                 .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .imgUrlList(imgUrlList)
@@ -334,9 +356,6 @@ class MeetingServiceTest {
                 .sex(sex)
                 .category(category)
                 .conditions(conditions)
-                .maxAge(maxAge)
-                .minAge(minAge)
-                .endDate(endDate)
                 .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .imgUrlList(imgUrlList)
@@ -363,12 +382,12 @@ class MeetingServiceTest {
                 .content(content)
                 .doName(doName)
                 .sigungu(sigungu)
+                .location(올림픽_공원)
                 .sex(sex)
                 .category(category)
+                .meetingType(meetingType)
+                .period(period)
                 .conditions(conditions)
-                .maxAge(maxAge)
-                .minAge(minAge)
-                .endDate(endDate)
                 .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .isOpened(true)

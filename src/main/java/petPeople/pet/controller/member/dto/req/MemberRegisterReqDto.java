@@ -11,6 +11,4 @@ public class MemberRegisterReqDto {
     private String nickname;
 
     private String introduce;
-
-    private Integer age;
 }

@@ -66,7 +66,6 @@ public class MemberService implements UserDetailsService {
                 .nickname(memberRegisterDto.getNickname())
                 .imgUrl(memberRegisterDto.getImgUrl())
                 .introduce(memberRegisterDto.getIntroduce())
-                .age(memberRegisterDto.getAge())
                 .build();
     }
 }

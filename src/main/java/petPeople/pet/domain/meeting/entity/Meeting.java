@@ -27,7 +27,7 @@ public class Meeting extends BaseTimeEntity {
 
     private String sigungu;
 
-    private LocalDateTime endDate;
+    private String location;
 
     private LocalDateTime meetingDate;
 
@@ -41,9 +41,10 @@ public class Meeting extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    private Integer maxAge;
+    @Enumerated(EnumType.STRING)
+    private MeetingType meetingType;
 
-    private Integer minAge;
+    private String period;
 
     private String title;
 
@@ -52,18 +53,15 @@ public class Meeting extends BaseTimeEntity {
     private Boolean isOpened;
 
     public void edit(MeetingEditReqDto meetingEditReqDto) {
-        this.setDoName(meetingEditReqDto.getDoName());
-        this.setSigungu(meetingEditReqDto.getSigungu());
-        this.setEndDate(meetingEditReqDto.getEndDate());
-        this.setConditions(meetingEditReqDto.getConditions());
-        this.setMaxPeople(meetingEditReqDto.getMaxPeople());
-        this.setSex(meetingEditReqDto.getSex());
-        this.setCategory(meetingEditReqDto.getCategory());
-        this.setMaxAge(meetingEditReqDto.getMaxAge());
-        this.setMinAge(meetingEditReqDto.getMinAge());
-        this.setTitle(meetingEditReqDto.getTitle());
-        this.setContent(meetingEditReqDto.getContent());
-        this.setIsOpened(meetingEditReqDto.getIsOpened());
+        this.doName = meetingEditReqDto.getDoName();
+        this.sigungu = meetingEditReqDto.getSigungu();
+        this.conditions = meetingEditReqDto.getConditions();
+        this.maxPeople = meetingEditReqDto.getMaxPeople();
+        this.sex = meetingEditReqDto.getSex();
+        this.category = meetingEditReqDto.getCategory();
+        this.title = meetingEditReqDto.getTitle();
+        this.content = meetingEditReqDto.getContent();
+        this.isOpened = meetingEditReqDto.getIsOpened();
     }
 
 }
