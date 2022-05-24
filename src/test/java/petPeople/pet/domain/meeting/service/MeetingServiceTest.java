@@ -250,6 +250,54 @@ class MeetingServiceTest {
         assertThat(meetingEditRespDto).isEqualTo(result);
     }
 
+    @Test
+    @DisplayName("회원 미팅 전체 조회 테스트")
+    public void retrieveMemberMeetingTest() throws Exception {
+        //given
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        Meeting meeting1 = Meeting.builder().id(++id).member(member).category(Category.AMITY).build();
+        List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
+
+        Meeting meeting2 = Meeting.builder().id(++id).member(member).category(Category.EVENT).build();
+        List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
+
+        Meeting meeting3 = Meeting.builder().id(++id).member(new Member()).category(Category.WALK).build();
+        List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
+
+        MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1);
+        MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2);
+        MeetingRetrieveRespDto result3 = new MeetingRetrieveRespDto(meeting3, meetingImageList3, meetingMemberList3);
+
+        List<Meeting> meetingList = Arrays.asList(meeting1, meeting2, meeting3);
+        List<MeetingRetrieveRespDto> content = Arrays.asList(result1, result2, result3);
+
+        SliceImpl<Meeting> meetingSlice = new SliceImpl<>(meetingList, pageRequest, false);
+        SliceImpl<MeetingRetrieveRespDto> result = new SliceImpl<>(content, pageRequest, false);
+
+        List<MeetingImage> meetingImageList = new ArrayList<>();
+        meetingImageList.addAll(meetingImageList1);
+        meetingImageList.addAll(meetingImageList2);
+        meetingImageList.addAll(meetingImageList3);
+
+        List<MeetingMember> meetingMemberList = new ArrayList<>();
+        meetingMemberList.addAll(meetingMemberList1);
+        meetingMemberList.addAll(meetingMemberList2);
+        meetingMemberList.addAll(meetingMemberList3);
+
+        when(meetingRepository.findAllSlicingByMemberId(any(), any())).thenReturn(meetingSlice);
+        when(meetingImageRepository.findByMeetingIds(any())).thenReturn(meetingImageList);
+        when(meetingMemberRepository.findByMeetingIds(any())).thenReturn(meetingMemberList);
+
+        //when
+        Slice<MeetingRetrieveRespDto> respDtoSlice = meetingService.retrieveMemberMeeting(member, pageRequest);
+
+        //then
+        assertThat(respDtoSlice).isEqualTo(result);
+    }
 
     private MeetingMember createMeetingMember() {
         return MeetingMember.builder()
