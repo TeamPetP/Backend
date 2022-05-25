@@ -62,6 +62,12 @@ public class MeetingController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{meetingId}/decline/{memberId}")
+    public ResponseEntity declineJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
+        meetingService.decline(getMember(authentication), meetingId, memberId);
+        return ResponseEntity.noContent().build();
+    }
+
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();
     }

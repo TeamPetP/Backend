@@ -70,10 +70,11 @@ public class MeetingService {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         Long joinMemberCount = countMeetingMember(meetingId);
 
-        validateOpenedMeeting(meeting.getIsOpened());//모집 상태인지
-        validateOwnMeetingJoinRequest(member, meeting.getMember());
-        validateDuplicatedJoinRequest(member, meetingId);//중복 가입인지
-//        validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원이 다 찼는지
+        validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검즘
+        validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검즘
+        validateDuplicatedJoinRequest(member, meetingId);//중복 가입 요청 회원 검즘
+        validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검즘
+//        validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원 검즘
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
 
@@ -119,13 +120,24 @@ public class MeetingService {
 
         validateMemberAuthorization(member, findMeeting.getMember());
 
-        changeMeetingWaitingMemberStatusApproved(validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId)));
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
+        changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
 
-        saveMeetingMember(createMeetingMember(member, findMeeting));
+        saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
     }
 
-    private void changeMeetingWaitingMemberStatusApproved(MeetingWaitingMember meetingWaitingMember) {
-        meetingWaitingMember.setJoinRequestStatus(JoinRequestStatus.APPROVED);
+    @Transactional
+    public void decline(Member member, Long meetingId, Long memberId) {
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        validateMemberAuthorization(member, findMeeting.getMember());
+
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
+        changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
+    }
+
+    private void changeMeetingWaitingMemberStatus(MeetingWaitingMember meetingWaitingMember, JoinRequestStatus joinRequestStatus) {
+        meetingWaitingMember.setJoinRequestStatus(joinRequestStatus);
     }
 
     private Optional<MeetingWaitingMember> findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
@@ -152,6 +164,15 @@ public class MeetingService {
         List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMeetingId(meetingId);
         for (MeetingWaitingMember meetingWaitingMember : meetingWaitingMembers) {
             if (meetingWaitingMember.getMember() == member) {
+                throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+            }
+        }
+    }
+
+    private void validateDuplicatedJoin(Member member, Long meetingId) {
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+        for (MeetingMember meetingMember : meetingMemberList) {
+            if (meetingMember.getMember() == member) {
                 throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
             }
         }
@@ -261,7 +282,7 @@ public class MeetingService {
     }
 
     private MeetingWaitingMember validateOptionalMeetingWaitingMember(Optional<MeetingWaitingMember> optionalMeetingWaitingMember) {
-        return optionalMeetingWaitingMember.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 회원 입니다."));
+        return optionalMeetingWaitingMember.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEMBER, "모임 가입을 신청한 회원이 아닙니다."));
     }
 
     private Optional<Meeting> findOptionalMeetingByMeetingId(Long meetingId) {
