@@ -90,7 +90,7 @@ public class MeetingService {
     public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable) {
         Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
         List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-        return meetingSliceMapToRespDto(
+        return meetingSliceMapToRetrieveRespDto(
                 meetingSlice,
                 findMeetingImageByMeetingIds(meetingIds),
                 findMeetingMemberByMeetingIds(meetingIds)
@@ -100,7 +100,7 @@ public class MeetingService {
     public Slice<MeetingRetrieveRespDto> retrieveMemberMeeting(Member member, Pageable pageable) {
         Slice<Meeting> meetingSlice = findAllMeetingSlicingByMemberId(member, pageable);
         List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-        return meetingSliceMapToRespDto(
+        return meetingSliceMapToRetrieveRespDto(
                 meetingSlice,
                 findMeetingImageByMeetingIds(meetingIds),
                 findMeetingMemberByMeetingIds(meetingIds)
@@ -170,7 +170,7 @@ public class MeetingService {
         meetingImageRepository.deleteByMeetingId(meetingId);
     }
 
-    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
+    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
         return meetingSlice.map(meeting ->
             new MeetingRetrieveRespDto(
                     meeting,
