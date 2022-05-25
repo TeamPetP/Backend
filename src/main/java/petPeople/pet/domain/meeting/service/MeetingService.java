@@ -65,18 +65,24 @@ public class MeetingService {
     }
 
     // TODO: 2022-05-23 모임에 max 회원 도달 경우 자동으로 isOpened 바꿀지(가입 후 max에 찰 경우 자동으로 마감 처리)
-    // TODO: 2022-05-23 모집 기간이 지난 모임 가입 가입 불가로(모집 마감 시간이 넘을 경우 프론트에서 마감으로 처리하기)
     @Transactional
     public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         Long joinMemberCount = countMeetingMember(meetingId);
 
         validateOpenedMeeting(meeting.getIsOpened());//모집 상태인지
-        validateDuplicatedJoin(member, meetingId);//중복 가입인지
-        validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원이 다 찼는지
+        validateOwnMeetingJoinRequest(member, meeting.getMember());
+        validateDuplicatedJoinRequest(member, meetingId);//중복 가입인지
+//        validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원이 다 찼는지
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
 
+    }
+
+    private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
+        if (member == targetMember) {
+            throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+        }
     }
 
     public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
@@ -142,13 +148,17 @@ public class MeetingService {
                 .build();
     }
 
-    private void validateDuplicatedJoin(Member member, Long meetingId) {
-        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
-        for (MeetingMember meetingMember : meetingMemberList) {
-            if (meetingMember.getMember() == member) {
+    private void validateDuplicatedJoinRequest(Member member, Long meetingId) {
+        List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMeetingId(meetingId);
+        for (MeetingWaitingMember meetingWaitingMember : meetingWaitingMembers) {
+            if (meetingWaitingMember.getMember() == member) {
                 throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
             }
         }
+    }
+
+    private List<MeetingWaitingMember> findMeetingWaitingMemberByMeetingId(Long meetingId) {
+        return meetingWaitingMemberRepository.findAllByMeetingId(meetingId);
     }
 
     private void validateOpenedMeeting(Boolean status) {
