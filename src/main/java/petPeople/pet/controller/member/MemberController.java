@@ -15,9 +15,11 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
 import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
+import petPeople.pet.controller.member.dto.resp.MeetingWaitingMemberRespDto;
 import petPeople.pet.controller.member.dto.resp.MemberRegisterRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.domain.meeting.service.MeetingService;
+import petPeople.pet.domain.meeting.service.MeetingWaitingMemberService;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.service.MemberRegisterDto;
 import petPeople.pet.domain.member.service.MemberService;
@@ -25,6 +27,7 @@ import petPeople.pet.domain.post.service.PostService;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -36,6 +39,7 @@ public class MemberController {
     private final PostService postService;
     private final MeetingService meetingService;
     private final FirebaseAuth firebaseAuth;
+    private final MeetingWaitingMemberService meetingWaitingMemberService;
 
     //로컬 회원 가입
     @PostMapping("/local")
@@ -52,11 +56,9 @@ public class MemberController {
     public ResponseEntity<MemberRegisterRespDto> registerMember(@RequestHeader("Authorization") String header,
                                                                 @RequestBody MemberRegisterReqDto memberRegisterReqDto) {
 
-        MemberRegisterRespDto responseDto = memberService.register(new MemberRegisterDto(decodeToken(header), memberRegisterReqDto));
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(responseDto);
+                .body(memberService.register(new MemberRegisterDto(decodeToken(header), memberRegisterReqDto)));
     }
 
     @GetMapping("/me")
@@ -95,7 +97,17 @@ public class MemberController {
                 .status(HttpStatus.OK)
                 .body(meetingService.retrieveMemberMeeting(getMember(authentication), pageable));
     }
+    
+    //내 모임에 신청 대기자 확인
+    @GetMapping("/me/meetings/{meetingId}")
+    public ResponseEntity<List<MeetingWaitingMemberRespDto>> retrieveMeetingWaitingMember(Authentication authentication, @PathVariable Long meetingId) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingWaitingMemberService.retrieveMeetingWaitingMember(getMember(authentication), meetingId));
+    }
 
+    // TODO: 2022-05-25 내가 신청한 모임 현황
+    
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();
     }

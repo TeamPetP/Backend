@@ -14,7 +14,7 @@ import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
 import petPeople.pet.domain.meeting.repository.MeetingRepository;
-import petPeople.pet.domain.meeting.repository.WaitingMemberRepository;
+import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
@@ -31,7 +31,7 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
-    private final WaitingMemberRepository waitingMemberRepository;
+    private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
@@ -112,7 +112,7 @@ public class MeetingService {
     }
 
     private MeetingWaitingMember saveMeetingWaitingMember(MeetingWaitingMember meetingWaitingMember) {
-        return waitingMemberRepository.save(meetingWaitingMember);
+        return meetingWaitingMemberRepository.save(meetingWaitingMember);
     }
 
     private MeetingWaitingMember createMeetingWaitingMember(Member member, Meeting meeting) {

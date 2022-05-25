@@ -49,7 +49,7 @@ public class MeetingController {
                 .body(meetingService.edit(getMember(authentication), meetingId, meetingEditReqDto));
     }
 
-    @PostMapping("/{meetingId}")
+    @PatchMapping("/{meetingId}")
     public ResponseEntity joinMeeting(Authentication authentication, @PathVariable Long meetingId) {
         meetingService.joinRequest(getMember(authentication), meetingId);
 

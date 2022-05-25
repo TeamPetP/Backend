@@ -1,6 +1,7 @@
 package petPeople.pet.domain.meeting.entity;
 
 import lombok.*;
+import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;
@@ -10,7 +11,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Getter @Setter
 @Builder
-public class MeetingWaitingMember {
+public class MeetingWaitingMember extends BaseTimeEntity {
 
     @Id @GeneratedValue
     @Column(name = "meeting_waiting_member_id")
