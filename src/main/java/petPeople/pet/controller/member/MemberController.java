@@ -90,7 +90,8 @@ public class MemberController {
                 .status(HttpStatus.OK)
                 .body(postService.retrieveMemberPost(getMember(authentication), pageable, header));
     }
-
+    
+    //내가 가입한 모임
     @GetMapping("/me/meetings")
     public ResponseEntity<Slice<MeetingRetrieveRespDto>> retrieveMemberMeeting(Authentication authentication, Pageable pageable) {
         return ResponseEntity
@@ -105,6 +106,7 @@ public class MemberController {
                 .status(HttpStatus.OK)
                 .body(meetingWaitingMemberService.retrieveMeetingWaitingMember(getMember(authentication), meetingId));
     }
+
 
     // TODO: 2022-05-25 내가 신청한 모임 현황
     

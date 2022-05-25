@@ -107,6 +107,25 @@ public class MeetingService {
         );
     }
 
+    @Transactional
+    public void approve(Member member, Long meetingId, Long memberId) {
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        validateMemberAuthorization(member, findMeeting.getMember());
+
+        changeMeetingWaitingMemberStatusApproved(validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId)));
+
+        saveMeetingMember(createMeetingMember(member, findMeeting));
+    }
+
+    private void changeMeetingWaitingMemberStatusApproved(MeetingWaitingMember meetingWaitingMember) {
+        meetingWaitingMember.setJoinRequestStatus(JoinRequestStatus.APPROVED);
+    }
+
+    private Optional<MeetingWaitingMember> findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
+        return meetingWaitingMemberRepository.findByMeetingIdAndMemberId(meetingId, memberId);
+    }
+
     private Slice<Meeting> findAllMeetingSlicingByMemberId(Member member, Pageable pageable) {
         return meetingRepository.findAllSlicingByMemberId(pageable, member.getId());
     }
@@ -229,6 +248,10 @@ public class MeetingService {
 
     private Meeting validateOptionalMeeting(Optional<Meeting> optionalMeeting) {
         return optionalMeeting.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
+    }
+
+    private MeetingWaitingMember validateOptionalMeetingWaitingMember(Optional<MeetingWaitingMember> optionalMeetingWaitingMember) {
+        return optionalMeetingWaitingMember.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 회원 입니다."));
     }
 
     private Optional<Meeting> findOptionalMeetingByMeetingId(Long meetingId) {

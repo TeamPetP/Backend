@@ -49,10 +49,16 @@ public class MeetingController {
                 .body(meetingService.edit(getMember(authentication), meetingId, meetingEditReqDto));
     }
 
-    @PatchMapping("/{meetingId}")
+    @PostMapping("/{meetingId}")
     public ResponseEntity joinMeeting(Authentication authentication, @PathVariable Long meetingId) {
         meetingService.joinRequest(getMember(authentication), meetingId);
 
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{meetingId}/approve/{memberId}")
+    public ResponseEntity approveJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
+        meetingService.approve(getMember(authentication), meetingId, memberId);
         return ResponseEntity.noContent().build();
     }
 
