@@ -1,8 +1,11 @@
 package petPeople.pet.domain.meeting.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import petPeople.pet.controller.member.dto.resp.MeetingJoinApplyRespDto;
 import petPeople.pet.controller.member.dto.resp.MeetingWaitingMemberRespDto;
 import petPeople.pet.domain.meeting.entity.Meeting;
 import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
@@ -29,26 +32,64 @@ public class MeetingWaitingMemberService {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         validateAuthorization(member.getId(), findMeeting.getMember().getId());
 
-        return finMeetingWaitingMemberByMeetingId(meetingId).stream()
-                .map(mwm ->
-                        new MeetingWaitingMemberRespDto(
-                                mwm.getMember().getId(), mwm.getMeeting().getId(), mwm.getMember().getNickname(), mwm.getCreatedDate())
-                )
+        return finMeetingWaitingMemberByMeetingIdFetchJoinMember(meetingId).stream()
+                .map(mwm -> createMeetingWaitingMemberRespDto(mwm))
                 .collect(Collectors.toList());
     }
 
-    private List<MeetingWaitingMember> finMeetingWaitingMemberByMeetingId(Long meetingId) {
-        return meetingWaitingMemberRepository.findAllByMeetingId(meetingId);
+    public Slice<MeetingJoinApplyRespDto> retrieveMeetingWaitingMemberApply(Pageable pageable, Member member) {
+        Slice<MeetingWaitingMember> MeetingWaitingMemberSlicing = findMeetingWaitingMemberByMemberIdFetchJoinMemberAndMeeting(pageable, member);
+        return meetingWaitingMemberSlicingMapToRespDto(MeetingWaitingMemberSlicing);
+    }
+
+    private Slice<MeetingJoinApplyRespDto> meetingWaitingMemberSlicingMapToRespDto(Slice<MeetingWaitingMember> meetingWaitingMemberSlice) {
+        return meetingWaitingMemberSlice.map(mwm -> createMeetingJoinApplyRespDto(mwm));
+    }
+
+    private MeetingJoinApplyRespDto createMeetingJoinApplyRespDto(MeetingWaitingMember mwm) {
+        return MeetingJoinApplyRespDto.builder()
+                .meetingId(mwm.getMeeting().getId())
+                .doName(mwm.getMeeting().getDoName())
+                .sigungu(mwm.getMeeting().getSigungu())
+                .location(mwm.getMeeting().getLocation())
+                .meetingDate(mwm.getMeeting().getMeetingDate())
+                .conditions(mwm.getMeeting().getConditions())
+                .maxPeople(mwm.getMeeting().getMaxPeople())
+                .sex(mwm.getMeeting().getSex().getDetail())
+                .category(mwm.getMeeting().getCategory().getDetail())
+                .meetingType(mwm.getMeeting().getMeetingType().getDetail())
+                .period(mwm.getMeeting().getPeriod())
+                .title(mwm.getMeeting().getTitle())
+                .content(mwm.getMeeting().getContent())
+                .isOpened(mwm.getMeeting().getIsOpened())
+                .joinRequestStatus(mwm.getJoinRequestStatus().getDetail())
+                .build();
+    }
+
+
+    private MeetingWaitingMemberRespDto createMeetingWaitingMemberRespDto(MeetingWaitingMember meetingWaitingMember) {
+        return MeetingWaitingMemberRespDto.builder()
+                .memberId(meetingWaitingMember.getMember().getId())
+                .meetingId(meetingWaitingMember.getMeeting().getId())
+                .nickname(meetingWaitingMember.getMember().getNickname())
+                .introduce(meetingWaitingMember.getMember().getIntroduce())
+                .joinRequestStatus(meetingWaitingMember.getJoinRequestStatus().getDetail())
+                .createDate(meetingWaitingMember.getCreatedDate())
+                .build();
+    }
+
+    private Slice<MeetingWaitingMember> findMeetingWaitingMemberByMemberIdFetchJoinMemberAndMeeting(Pageable pageable, Member member) {
+        return meetingWaitingMemberRepository.findAllByMemberIdFetchJoinMemberAndMeeting(pageable, member.getId());
+    }
+
+    private List<MeetingWaitingMember> finMeetingWaitingMemberByMeetingIdFetchJoinMember(Long meetingId) {
+        return meetingWaitingMemberRepository.findAllByMeetingIdFetchJoinMember(meetingId);
     }
 
     private void validateAuthorization(Long id, Long targetId) {
-        if (isaNotSame(id, targetId)) {
+        if (id != targetId) {
             throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 모임에 권한이 없습니다.");
         }
-    }
-
-    private boolean isaNotSame(Long id, Long targetId) {
-        return id != targetId;
     }
 
     private void throwException(ErrorCode errorCode, String message) {
@@ -57,10 +98,10 @@ public class MeetingWaitingMemberService {
 
     private Optional<Meeting> findOptionalMeetingByMeetingId(Long meetingId) {
         return meetingRepository.findById(meetingId);
+
     }
 
     private Meeting validateOptionalMeeting(Optional<Meeting> optionalMeeting) {
         return optionalMeeting.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
     }
-
 }

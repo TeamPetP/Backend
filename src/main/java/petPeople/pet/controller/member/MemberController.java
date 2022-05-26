@@ -15,9 +15,11 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
 import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
+import petPeople.pet.controller.member.dto.resp.MeetingJoinApplyRespDto;
 import petPeople.pet.controller.member.dto.resp.MeetingWaitingMemberRespDto;
 import petPeople.pet.controller.member.dto.resp.MemberRegisterRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
+import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.meeting.service.MeetingWaitingMemberService;
 import petPeople.pet.domain.member.entity.Member;
@@ -98,7 +100,7 @@ public class MemberController {
                 .status(HttpStatus.OK)
                 .body(meetingService.retrieveMemberMeeting(getMember(authentication), pageable));
     }
-    
+
     //내 모임에 신청 대기자 확인
     @GetMapping("/me/meetings/{meetingId}")
     public ResponseEntity<List<MeetingWaitingMemberRespDto>> retrieveMeetingWaitingMember(Authentication authentication, @PathVariable Long meetingId) {
@@ -106,10 +108,15 @@ public class MemberController {
                 .status(HttpStatus.OK)
                 .body(meetingWaitingMemberService.retrieveMeetingWaitingMember(getMember(authentication), meetingId));
     }
-
-
-    // TODO: 2022-05-25 내가 신청한 모임 현황
     
+    //내가 가입 신청한 모임 현황
+    @GetMapping("/me/meetings/apply")
+    public ResponseEntity<Slice<MeetingJoinApplyRespDto>> retrieveJoinRequestMeeting(Authentication authentication, Pageable pageable) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingWaitingMemberService.retrieveMeetingWaitingMemberApply(pageable, getMember(authentication)));
+    }
+
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();
     }

@@ -16,5 +16,9 @@ public class MeetingWaitingMemberRespDto {
 
     private String nickname;
 
+    private String introduce;
+
+    private String joinRequestStatus;
+
     private LocalDateTime createDate;
 }

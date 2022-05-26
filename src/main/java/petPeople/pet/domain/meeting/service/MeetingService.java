@@ -141,7 +141,7 @@ public class MeetingService {
     }
 
     private Optional<MeetingWaitingMember> findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
-        return meetingWaitingMemberRepository.findByMeetingIdAndMemberId(meetingId, memberId);
+        return meetingWaitingMemberRepository.findByMeetingIdAndMemberIdFetchJoinMember(meetingId, memberId);
     }
 
     private Slice<Meeting> findAllMeetingSlicingByMemberId(Member member, Pageable pageable) {
@@ -179,7 +179,7 @@ public class MeetingService {
     }
 
     private List<MeetingWaitingMember> findMeetingWaitingMemberByMeetingId(Long meetingId) {
-        return meetingWaitingMemberRepository.findAllByMeetingId(meetingId);
+        return meetingWaitingMemberRepository.findAllByMeetingIdFetchJoinMember(meetingId);
     }
 
     private void validateOpenedMeeting(Boolean status) {

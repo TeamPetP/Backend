@@ -56,13 +56,13 @@ public class MeetingController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{meetingId}/approve/{memberId}")
+    @PatchMapping("/{meetingId}/members/{memberId}/approve")
     public ResponseEntity approveJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
         meetingService.approve(getMember(authentication), meetingId, memberId);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{meetingId}/decline/{memberId}")
+    @PatchMapping("/{meetingId}/members/{memberId}/decline")
     public ResponseEntity declineJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
         meetingService.decline(getMember(authentication), meetingId, memberId);
         return ResponseEntity.noContent().build();

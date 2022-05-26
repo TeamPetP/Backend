@@ -22,9 +22,17 @@ public class QMeetingWaitingMember extends EntityPathBase<MeetingWaitingMember> 
 
     public static final QMeetingWaitingMember meetingWaitingMember = new QMeetingWaitingMember("meetingWaitingMember");
 
+    public final petPeople.pet.domain.base.QBaseTimeEntity _super = new petPeople.pet.domain.base.QBaseTimeEntity(this);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdDate = _super.createdDate;
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final EnumPath<JoinRequestStatus> joinRequestStatus = createEnum("joinRequestStatus", JoinRequestStatus.class);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> lastModifiedDate = _super.lastModifiedDate;
 
     public final QMeeting meeting;
 
