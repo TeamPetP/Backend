@@ -39,6 +39,7 @@ class MemberServiceTest {
     private static final String NICKNAME = "abcd";
     private static final String IMG_URL = "https://www.balladang.com";
     private static final String INTRODUCE = "잘지내요 우리";
+    private static final Integer AGE = 23;
 
     @BeforeEach
     void before() {
@@ -96,7 +97,7 @@ class MemberServiceTest {
         //when
         //then
         assertThrows(CustomException.class,
-                () -> memberService.register(new MemberRegisterDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE)));
+                () -> memberService.register(new MemberRegisterDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE, AGE)));
     }
     
     @Test

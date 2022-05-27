@@ -136,6 +136,17 @@ public class PostService {
         }
     }
 
+    public Slice<PostRetrieveRespDto> retrieveMemberPost(Member member, Pageable pageable, String header) {
+        Slice<Post> postSlice = findAllPostByMemberIdSlicing(member, pageable);
+        List<Long> ids = getPostId(postSlice.getContent());
+        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
+        return postSliceMapToRespDtoWithLogin(header, postSlice, postChildList);
+    }
+
+    private Slice<Post> findAllPostByMemberIdSlicing(Member member, Pageable pageable) {
+        return postRepository.findAllByMemberIdSlicing(member.getId(), pageable);
+    }
+
     private void savePostBookmark(PostBookmark postBookmark) {
         postBookmarkRepository.save(postBookmark);
     }
@@ -192,7 +203,7 @@ public class PostService {
     }
 
     private Slice<Post> findAllPostByTagSlicing(Pageable pageable, String tag) {
-        return postRepository.findAllPostSlicingByTag(pageable, tag);
+        return postRepository.findPostSlicingByTag(pageable, tag);
     }
 
     private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostChildList postChildList) {
@@ -318,7 +329,7 @@ public class PostService {
     }
 
     private Slice<Post> findAllPostSlicing(Pageable pageable) {
-        return postRepository.findAllPostSlicing(pageable);
+        return postRepository.findAllSlicing(pageable);
     }
 
     private Long countPostLikeByPostId(Long postId) {
@@ -417,6 +428,5 @@ public class PostService {
                 .content(content)
                 .build();
     }
-
 
 }

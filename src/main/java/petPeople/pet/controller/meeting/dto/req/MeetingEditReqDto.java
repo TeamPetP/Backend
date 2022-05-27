@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import petPeople.pet.domain.meeting.entity.Category;
+import petPeople.pet.domain.meeting.entity.MeetingType;
 import petPeople.pet.domain.meeting.entity.Sex;
 
 import java.time.LocalDateTime;
@@ -25,17 +26,17 @@ public class MeetingEditReqDto {
 
     private String sigungu;
 
+    private String location;
+
     private Sex sex;
 
     private String conditions;
 
     private Category category;
 
-    private Integer minAge;
+    private MeetingType meetingType;
 
-    private Integer maxAge;
-
-    private LocalDateTime endDate;
+    private String period;
 
     private LocalDateTime meetingDate;
 

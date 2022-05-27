@@ -29,4 +29,13 @@ public class MeetingMemberCustomRepositoryImpl implements MeetingMemberCustomRep
                 .where(meetingMember.meeting.id.eq(meetingId))
                 .fetch();
     }
+
+    @Override
+    public Long countByMeetingId(Long meetingId) {
+        return queryFactory
+                .select(meetingMember.count())
+                .from(meetingMember)
+                .where(meetingMember.meeting.id.eq(meetingId))
+                .fetchOne();
+    }
 }

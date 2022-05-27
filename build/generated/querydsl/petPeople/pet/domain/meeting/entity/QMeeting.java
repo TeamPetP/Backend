@@ -35,8 +35,6 @@ public class QMeeting extends EntityPathBase<Meeting> {
 
     public final StringPath doName = createString("doName");
 
-    public final DateTimePath<java.time.LocalDateTime> endDate = createDateTime("endDate", java.time.LocalDateTime.class);
-
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final BooleanPath isOpened = createBoolean("isOpened");
@@ -44,15 +42,17 @@ public class QMeeting extends EntityPathBase<Meeting> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> lastModifiedDate = _super.lastModifiedDate;
 
-    public final NumberPath<Integer> maxAge = createNumber("maxAge", Integer.class);
+    public final StringPath location = createString("location");
 
     public final NumberPath<Integer> maxPeople = createNumber("maxPeople", Integer.class);
 
     public final DateTimePath<java.time.LocalDateTime> meetingDate = createDateTime("meetingDate", java.time.LocalDateTime.class);
 
+    public final EnumPath<MeetingType> meetingType = createEnum("meetingType", MeetingType.class);
+
     public final petPeople.pet.domain.member.entity.QMember member;
 
-    public final NumberPath<Integer> minAge = createNumber("minAge", Integer.class);
+    public final StringPath period = createString("period");
 
     public final EnumPath<Sex> sex = createEnum("sex", Sex.class);
 
