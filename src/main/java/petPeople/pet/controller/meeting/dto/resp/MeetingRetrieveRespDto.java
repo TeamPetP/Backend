@@ -20,7 +20,7 @@ public class MeetingRetrieveRespDto {
 
     private String nickname;
 
-    private Boolean status;
+    private Boolean isOpened;
 
     private String doName;
 
@@ -56,7 +56,7 @@ public class MeetingRetrieveRespDto {
         this.meetingId = meeting.getId();
         this.memberId = meeting.getMember().getId();
         this.nickname = meeting.getMember().getNickname();
-        this.status = meeting.getIsOpened();
+        this.isOpened = meeting.getIsOpened();
         this.doName = meeting.getDoName();
         this.sigungu = meeting.getSigungu();
         this.location = meeting.getLocation();

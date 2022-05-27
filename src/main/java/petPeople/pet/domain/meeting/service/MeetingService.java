@@ -68,13 +68,12 @@ public class MeetingService {
     @Transactional
     public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-        Long joinMemberCount = countMeetingMember(meetingId);
 
         validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검즘
         validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검즘
         validateDuplicatedJoinRequest(member, meetingId);//중복 가입 요청 회원 검즘
         validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검즘
-//        validateFullMeeting(meeting.getMaxPeople(), joinMemberCount);//인원 검즘
+        validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검즘
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
 
@@ -117,13 +116,23 @@ public class MeetingService {
     @Transactional
     public void approve(Member member, Long meetingId, Long memberId) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Long joinMemberCount = countMeetingMember(meetingId);
 
-        validateMemberAuthorization(member, findMeeting.getMember());
+        validateMemberAuthorization(member, findMeeting.getMember());//권한 검증
+        validateFullMeeting(findMeeting.getMaxPeople(), joinMemberCount);//인원 검즘
 
         MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
 
         saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
+
+        if (isOccupiedMeeting(findMeeting.getMaxPeople(), joinMemberCount)) {
+            findMeeting.setIsOpened(false);
+        }
+    }
+
+    private boolean isOccupiedMeeting(Integer maxPeople, Long joinMemberCount) {
+        return joinMemberCount + 1 >= maxPeople;
     }
 
     @Transactional
