@@ -6,12 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import petPeople.pet.config.auth.AuthFilterContainer;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.service.PostService;
+import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,6 +25,7 @@ import java.util.Optional;
 public class PostController {
 
     private final PostService postService;
+    private final AuthFilterContainer authFilterContainer;
 
     @PostMapping("")
     public ResponseEntity<PostWriteRespDto> writePost(Authentication authentication, @RequestBody PostWriteReqDto postWriteReqDto) {
@@ -37,7 +40,7 @@ public class PostController {
     public ResponseEntity<PostRetrieveRespDto> retrievePost(@PathVariable Long postId, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
 
-        if (isLocalProfile()) {
+        if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(postService.localRetrieveOne(postId, Optional.ofNullable(header)));
@@ -51,7 +54,7 @@ public class PostController {
     @GetMapping("")
     public ResponseEntity retrieveAllPost(Pageable pageable, @RequestParam(required = false) String tag, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
-        if (isLocalProfile())
+        if (authFilterContainer.getFilter() instanceof MockJwtFilter)
             return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
         else
             return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
@@ -97,14 +100,6 @@ public class PostController {
         postService.deleteBookmark(getMember(authentication), postId);
 
         return ResponseEntity.noContent().build();
-    }
-
-    private boolean isLocalProfile() {
-        return getProfile().equals("local");
-    }
-
-    private String getProfile() {
-        return System.getProperty("spring.profiles.active");
     }
 
     private Member getMember(Authentication authentication) {
