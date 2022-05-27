@@ -1,6 +1,5 @@
 package petPeople.pet.domain.post.repository;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +65,7 @@ class PostCustomRepositoryImplTest {
         List<Post> result = Arrays.asList(post2, post1);
 
         //when
-        List<Post> postList = postRepository.findAllPostSlicingByTag(pageRequest, "A").getContent();
+        List<Post> postList = postRepository.findPostSlicingByTag(pageRequest, "A").getContent();
 
         //then
         assertThat(result).isEqualTo(postList);

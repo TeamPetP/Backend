@@ -10,17 +10,15 @@ import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
-import petPeople.pet.domain.meeting.entity.Meeting;
-import petPeople.pet.domain.meeting.entity.MeetingImage;
-import petPeople.pet.domain.meeting.entity.MeetingMember;
+import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
 import petPeople.pet.domain.meeting.repository.MeetingRepository;
+import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,13 +31,13 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
+    private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
-        validateEndDateBeforeMeetingDate(meetingCreateReqDto.getMeetingDate(), meetingCreateReqDto.getEndDate());
 
-        Meeting saveMeeting = saveMeeting(member, meetingCreateReqDto);
-        saveMeetingMember(member, saveMeeting);
+        Meeting saveMeeting = saveMeeting(createMeeting(member, meetingCreateReqDto));
+        saveMeetingMember(createMeetingMember(member, saveMeeting));
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
         for (String url : meetingCreateReqDto.getImgUrlList()) {
@@ -50,10 +48,8 @@ public class MeetingService {
     }
 
     @Transactional
-    public MeetingEditRespDto editMeeting(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
-        validateEndDateBeforeMeetingDate(meetingEditReqDto.getMeetingDate(), meetingEditReqDto.getEndDate());
-
-        Meeting findMeeting = validateOptionalPost(findOptionalMeetingByMeetingId(meetingId));
+    public MeetingEditRespDto edit(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
         validateMemberAuthorization(member, findMeeting.getMember());
 
@@ -66,6 +62,153 @@ public class MeetingService {
         }
 
         return new MeetingEditRespDto(findMeeting, meetingImageList);
+    }
+
+    // TODO: 2022-05-23 모임에 max 회원 도달 경우 자동으로 isOpened 바꿀지(가입 후 max에 찰 경우 자동으로 마감 처리)
+    @Transactional
+    public void joinRequest(Member member, Long meetingId) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검즘
+        validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검즘
+        validateDuplicatedJoinRequest(member, meetingId);//중복 가입 요청 회원 검즘
+        validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검즘
+        validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검즘
+
+        saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
+
+    }
+
+    private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
+        if (member == targetMember) {
+            throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+        }
+    }
+
+    public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList);
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable) {
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+        return meetingSliceMapToRetrieveRespDto(
+                meetingSlice,
+                findMeetingImageByMeetingIds(meetingIds),
+                findMeetingMemberByMeetingIds(meetingIds)
+        );
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveMemberMeeting(Member member, Pageable pageable) {
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingByMemberId(member, pageable);
+        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+        return meetingSliceMapToRetrieveRespDto(
+                meetingSlice,
+                findMeetingImageByMeetingIds(meetingIds),
+                findMeetingMemberByMeetingIds(meetingIds)
+        );
+    }
+
+    @Transactional
+    public void approve(Member member, Long meetingId, Long memberId) {
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Long joinMemberCount = countMeetingMember(meetingId);
+
+        validateMemberAuthorization(member, findMeeting.getMember());//권한 검증
+        validateFullMeeting(findMeeting.getMaxPeople(), joinMemberCount);//인원 검즘
+
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
+        changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
+
+        saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
+
+        if (isOccupiedMeeting(findMeeting.getMaxPeople(), joinMemberCount)) {
+            findMeeting.setIsOpened(false);
+        }
+    }
+
+    private boolean isOccupiedMeeting(Integer maxPeople, Long joinMemberCount) {
+        return joinMemberCount + 1 >= maxPeople;
+    }
+
+    @Transactional
+    public void decline(Member member, Long meetingId, Long memberId) {
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        validateMemberAuthorization(member, findMeeting.getMember());
+
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
+        changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
+    }
+
+    private void changeMeetingWaitingMemberStatus(MeetingWaitingMember meetingWaitingMember, JoinRequestStatus joinRequestStatus) {
+        meetingWaitingMember.setJoinRequestStatus(joinRequestStatus);
+    }
+
+    private Optional<MeetingWaitingMember> findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
+        return meetingWaitingMemberRepository.findByMeetingIdAndMemberIdFetchJoinMember(meetingId, memberId);
+    }
+
+    private Slice<Meeting> findAllMeetingSlicingByMemberId(Member member, Pageable pageable) {
+        return meetingRepository.findAllSlicingByMemberId(pageable, member.getId());
+    }
+
+    private MeetingWaitingMember saveMeetingWaitingMember(MeetingWaitingMember meetingWaitingMember) {
+        return meetingWaitingMemberRepository.save(meetingWaitingMember);
+    }
+
+    private MeetingWaitingMember createMeetingWaitingMember(Member member, Meeting meeting) {
+        return MeetingWaitingMember.builder()
+                .member(member)
+                .meeting(meeting)
+                .joinRequestStatus(JoinRequestStatus.WAITING)
+                .build();
+    }
+
+    private void validateDuplicatedJoinRequest(Member member, Long meetingId) {
+        List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMeetingId(meetingId);
+        for (MeetingWaitingMember meetingWaitingMember : meetingWaitingMembers) {
+            if (meetingWaitingMember.getMember() == member) {
+                throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+            }
+        }
+    }
+
+    private void validateDuplicatedJoin(Member member, Long meetingId) {
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+        for (MeetingMember meetingMember : meetingMemberList) {
+            if (meetingMember.getMember() == member) {
+                throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+            }
+        }
+    }
+
+    private List<MeetingWaitingMember> findMeetingWaitingMemberByMeetingId(Long meetingId) {
+        return meetingWaitingMemberRepository.findAllByMeetingIdFetchJoinMember(meetingId);
+    }
+
+    private void validateOpenedMeeting(Boolean status) {
+        if (!status) {
+            throwException(ErrorCode.EXPIRED_MEETING, "모집이 마감된 모임입니다.");
+        }
+    }
+
+    private void validateFullMeeting(Integer maxPeople, Long joinMemberCount) {
+        if (isFull(maxPeople, joinMemberCount)) {
+            throwException(ErrorCode.FULL_MEMBER_MEETING, "해당 모임에 인원이 다 찼습니다.");
+        }
+    }
+
+    private boolean isFull(Integer maxPeople, Long joinMemberCount) {
+        return maxPeople <= joinMemberCount;
+    }
+
+    private Long countMeetingMember(Long meetingId) {
+        return meetingMemberRepository.countByMeetingId(meetingId);
     }
 
     private void editMeeting(MeetingEditReqDto meetingEditReqDto, Meeting meeting) {
@@ -86,25 +229,7 @@ public class MeetingService {
         meetingImageRepository.deleteByMeetingId(meetingId);
     }
 
-    public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
-        Meeting meeting = validateOptionalPost(findOptionalMeetingByMeetingId(meetingId));
-        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
-        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
-
-        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList);
-    }
-
-    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable) {
-        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
-        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-        return meetingSliceMapToRespDto(
-                meetingSlice,
-                findMeetingImageByMeetingIds(meetingIds),
-                findMeetingMemberByMeetingIds(meetingIds)
-        );
-    }
-
-    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
+    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
         return meetingSlice.map(meeting ->
             new MeetingRetrieveRespDto(
                     meeting,
@@ -161,18 +286,16 @@ public class MeetingService {
         return meetingMemberRepository.findByMeetingId(meetingId);
     }
 
-    private Meeting validateOptionalPost(Optional<Meeting> optionalMeeting) {
+    private Meeting validateOptionalMeeting(Optional<Meeting> optionalMeeting) {
         return optionalMeeting.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
+    }
+
+    private MeetingWaitingMember validateOptionalMeetingWaitingMember(Optional<MeetingWaitingMember> optionalMeetingWaitingMember) {
+        return optionalMeetingWaitingMember.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEMBER, "모임 가입을 신청한 회원이 아닙니다."));
     }
 
     private Optional<Meeting> findOptionalMeetingByMeetingId(Long meetingId) {
         return meetingRepository.findById(meetingId);
-    }
-
-    private void validateEndDateBeforeMeetingDate(LocalDateTime meetingDate, LocalDateTime endDate) {
-        if (meetingDate.isBefore(endDate)) {
-            throwException(ErrorCode.BAD_REQUEST_PARAM, "모집 마감 시간을 미팅 시간 이전으로 선택하여야 합니다!");
-        }
     }
 
     private void throwException(ErrorCode errorCode, String message) {
@@ -190,12 +313,12 @@ public class MeetingService {
                 .build();
     }
 
-    private MeetingMember saveMeetingMember(Member member, Meeting meeting) {
-        return meetingMemberRepository.save(createMeetingMember(member, meeting));
+    private MeetingMember saveMeetingMember(MeetingMember meetingMember) {
+        return meetingMemberRepository.save(meetingMember);
     }
 
-    private Meeting saveMeeting(Member member, MeetingCreateReqDto meetingCreateReqDto) {
-        return meetingRepository.save(createMeeting(member, meetingCreateReqDto));
+    private Meeting saveMeeting(Meeting meeting) {
+        return meetingRepository.save(meeting);
     }
 
     private MeetingMember createMeetingMember(Member member, Meeting meeting) {
@@ -210,14 +333,14 @@ public class MeetingService {
                 .member(member)
                 .doName(meetingCreateReqDto.getDoName())
                 .sigungu(meetingCreateReqDto.getSigungu())
-                .endDate(meetingCreateReqDto.getEndDate())
+                .location(meetingCreateReqDto.getLocation())
                 .meetingDate(meetingCreateReqDto.getMeetingDate())
                 .conditions(meetingCreateReqDto.getConditions())
                 .maxPeople(meetingCreateReqDto.getMaxPeople())
                 .sex(meetingCreateReqDto.getSex())
                 .category(meetingCreateReqDto.getCategory())
-                .maxAge(meetingCreateReqDto.getMaxAge())
-                .minAge(meetingCreateReqDto.getMinAge())
+                .meetingType(meetingCreateReqDto.getMeetingType())
+                .period(meetingCreateReqDto.getPeriod())
                 .title(meetingCreateReqDto.getTitle())
                 .content(meetingCreateReqDto.getContent())
                 .isOpened(true)

@@ -8,7 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
@@ -16,7 +15,6 @@ import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
-import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
@@ -52,16 +50,18 @@ class MeetingServiceTest {
     final Sex sex = Sex.MALE;
     final Category category = Category.WALK;
     final String conditions = "탈모아닌사람만";
-    final Integer maxAge = 25;
-    final Integer minAge = 20;
-    final LocalDateTime endDate = LocalDateTime.of(2022, 05, 15, 5, 15);
     final LocalDateTime meetingDate = LocalDateTime.of(2022, 05, 15, 5, 15);
     final Integer maxPeople = 5;
     final List<String> imgUrlList = Arrays.asList("www.abc.com", "www.abc.com", "www.abc.com", "www.abc.com");
+    final String period = "주 2회";
+    final String 올림픽_공원 = "올림픽 공원";
+    final MeetingType meetingType =MeetingType.REGULAR;
+
 
     Long id;
     Member member;
     Meeting meeting;
+
 
     @BeforeEach
     void beforeEach() {
@@ -105,19 +105,6 @@ class MeetingServiceTest {
 
         //then
         assertThat(respDto).isEqualTo(result);
-    }
-
-    @Test
-    @DisplayName("미팅 날짜가 모집 마감 날짜 이후 테스트")
-    public void endDateAfterMeetingDateTest() throws Exception {
-        //given
-        //when
-
-        //then
-        MeetingCreateReqDto meetingCreateReqDto = createMeetingCreateReqDto();
-        meetingCreateReqDto.setEndDate(LocalDateTime.of(2022, 1, 30, 15, 00));
-        meetingCreateReqDto.setMeetingDate(LocalDateTime.of(2022, 1, 30, 14, 00));
-        assertThrows(CustomException.class, () -> meetingService.create(member, meetingCreateReqDto));
     }
 
     @Test
@@ -167,15 +154,33 @@ class MeetingServiceTest {
         //given
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Meeting meeting1 = Meeting.builder().id(++id).member(member).category(Category.AMITY).build();
+        Meeting meeting1 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
 
-        Meeting meeting2 = Meeting.builder().id(++id).member(member).category(Category.EVENT).build();
+        Meeting meeting2 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
 
-        Meeting meeting3 = Meeting.builder().id(++id).member(member).category(Category.WALK).build();
+        Meeting meeting3 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
         List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
 
@@ -211,6 +216,7 @@ class MeetingServiceTest {
     }
 
     @Test
+    @DisplayName("미팅 수정 테스트")
     public void meetingEditTest() throws Exception {
         //given
         String title = "수정 제목";
@@ -245,12 +251,78 @@ class MeetingServiceTest {
         meetingEditReqDto.setIsOpened(false);
 
         //when
-        MeetingEditRespDto meetingEditRespDto = meetingService.editMeeting(member, editMeeting.getId(), meetingEditReqDto);
+        MeetingEditRespDto meetingEditRespDto = meetingService.edit(member, editMeeting.getId(), meetingEditReqDto);
 
         //then
         assertThat(meetingEditRespDto).isEqualTo(result);
     }
 
+    @Test
+    @DisplayName("회원 미팅 전체 조회 테스트")
+    public void retrieveMemberMeetingTest() throws Exception {
+        //given
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        Meeting meeting1 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
+        List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
+
+        Meeting meeting2 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
+        List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
+
+        Meeting meeting3 = Meeting.builder()
+                .id(++id)
+                .member(member)
+                .category(Category.AMITY)
+                .meetingType(MeetingType.ONCE)
+                .sex(Sex.ALL)
+                .build();
+        List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
+        List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
+
+        MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1);
+        MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2);
+        MeetingRetrieveRespDto result3 = new MeetingRetrieveRespDto(meeting3, meetingImageList3, meetingMemberList3);
+
+        List<Meeting> meetingList = Arrays.asList(meeting1, meeting2, meeting3);
+        List<MeetingRetrieveRespDto> content = Arrays.asList(result1, result2, result3);
+
+        SliceImpl<Meeting> meetingSlice = new SliceImpl<>(meetingList, pageRequest, false);
+        SliceImpl<MeetingRetrieveRespDto> result = new SliceImpl<>(content, pageRequest, false);
+
+        List<MeetingImage> meetingImageList = new ArrayList<>();
+        meetingImageList.addAll(meetingImageList1);
+        meetingImageList.addAll(meetingImageList2);
+        meetingImageList.addAll(meetingImageList3);
+
+        List<MeetingMember> meetingMemberList = new ArrayList<>();
+        meetingMemberList.addAll(meetingMemberList1);
+        meetingMemberList.addAll(meetingMemberList2);
+        meetingMemberList.addAll(meetingMemberList3);
+
+        when(meetingRepository.findAllSlicingByMemberId(any(), any())).thenReturn(meetingSlice);
+        when(meetingImageRepository.findByMeetingIds(any())).thenReturn(meetingImageList);
+        when(meetingMemberRepository.findByMeetingIds(any())).thenReturn(meetingMemberList);
+
+        //when
+        Slice<MeetingRetrieveRespDto> respDtoSlice = meetingService.retrieveMemberMeeting(member, pageRequest);
+
+        //then
+        assertThat(respDtoSlice).isEqualTo(result);
+    }
 
     private MeetingMember createMeetingMember() {
         return MeetingMember.builder()
@@ -269,9 +341,6 @@ class MeetingServiceTest {
                 .sex(sex)
                 .category(category)
                 .conditions(conditions)
-                .maxAge(maxAge)
-                .minAge(minAge)
-                .endDate(endDate)
                 .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .imgUrlList(imgUrlList)
@@ -287,9 +356,6 @@ class MeetingServiceTest {
                 .sex(sex)
                 .category(category)
                 .conditions(conditions)
-                .maxAge(maxAge)
-                .minAge(minAge)
-                .endDate(endDate)
                 .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .imgUrlList(imgUrlList)
@@ -316,12 +382,12 @@ class MeetingServiceTest {
                 .content(content)
                 .doName(doName)
                 .sigungu(sigungu)
+                .location(올림픽_공원)
                 .sex(sex)
                 .category(category)
+                .meetingType(meetingType)
+                .period(period)
                 .conditions(conditions)
-                .maxAge(maxAge)
-                .minAge(minAge)
-                .endDate(endDate)
                 .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .isOpened(true)

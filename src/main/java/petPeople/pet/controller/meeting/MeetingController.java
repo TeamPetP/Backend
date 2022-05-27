@@ -2,7 +2,6 @@ package petPeople.pet.controller.meeting;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.member.entity.Member;
@@ -43,10 +43,29 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}")
-    public ResponseEntity editMeeting(Authentication authentication, @PathVariable Long meetingId, @RequestBody MeetingEditReqDto meetingEditReqDto) {
+    public ResponseEntity<MeetingEditRespDto> editMeeting(Authentication authentication, @PathVariable Long meetingId, @RequestBody MeetingEditReqDto meetingEditReqDto) {
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(meetingService.editMeeting(getMember(authentication), meetingId, meetingEditReqDto));
+                .body(meetingService.edit(getMember(authentication), meetingId, meetingEditReqDto));
+    }
+
+    @PostMapping("/{meetingId}")
+    public ResponseEntity joinMeeting(Authentication authentication, @PathVariable Long meetingId) {
+        meetingService.joinRequest(getMember(authentication), meetingId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{meetingId}/members/{memberId}/approve")
+    public ResponseEntity approveJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
+        meetingService.approve(getMember(authentication), meetingId, memberId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{meetingId}/members/{memberId}/decline")
+    public ResponseEntity declineJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
+        meetingService.decline(getMember(authentication), meetingId, memberId);
+        return ResponseEntity.noContent().build();
     }
 
     private Member getMember(Authentication authentication) {

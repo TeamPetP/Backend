@@ -24,6 +24,8 @@ public class MemberRegisterDto {
 
     private String introduce;
 
+    private Integer age;
+
     public MemberRegisterDto(MemberLocalRegisterReqDto memberLocalRegisterReqDto) {
         this.uid = memberLocalRegisterReqDto.getUid();
         this.name = memberLocalRegisterReqDto.getName();

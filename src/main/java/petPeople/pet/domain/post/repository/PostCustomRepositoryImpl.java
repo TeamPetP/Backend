@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.QPost;
-import petPeople.pet.domain.post.entity.QTag;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +30,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
     }
 
     @Override
-    public Slice<Post> findAllPostSlicing(Pageable pageable) {
+    public Slice<Post> findAllSlicing(Pageable pageable) {
 
         List<Post> content = queryFactory
                 .selectFrom(post)
@@ -50,12 +49,33 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
     }
 
     @Override
-    public Slice<Post> findAllPostSlicingByTag(Pageable pageable, String tag) {
+    public Slice<Post> findPostSlicingByTag(Pageable pageable, String tag) {
         List<Post> content = queryFactory
                 .select(post)
                 .from(tag1)
                 .join(tag1.post, post)
                 .where(tag1.tag.eq(tag))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1)
+                .groupBy(post.id)
+                .orderBy(post.createdDate.desc())
+                .fetch();
+
+        boolean hasNext = false;
+        if (content.size() > pageable.getPageSize()) {
+            content.remove(pageable.getPageSize());
+            hasNext = true;
+        }
+
+        return new SliceImpl<>(content, pageable, hasNext);
+    }
+
+    @Override
+    public Slice<Post> findAllByMemberIdSlicing(Long memberId, Pageable pageable) {
+        List<Post> content = queryFactory
+                .select(post)
+                .from(post)
+                .where(post.member.id.eq(memberId))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize() + 1)
                 .orderBy(post.createdDate.desc())
