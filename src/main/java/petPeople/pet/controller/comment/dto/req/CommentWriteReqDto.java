@@ -1,10 +1,9 @@
 package petPeople.pet.controller.comment.dto.req;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
+@EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommentWriteReqDto {

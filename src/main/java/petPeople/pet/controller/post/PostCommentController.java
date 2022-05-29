@@ -13,6 +13,8 @@ import petPeople.pet.controller.comment.dto.resp.CommentWriteRespDto;
 import petPeople.pet.controller.post.dto.resp.CommentRetrieveRespDto;
 import petPeople.pet.domain.comment.service.CommentService;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.exception.CustomException;
+import petPeople.pet.exception.ErrorCode;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;

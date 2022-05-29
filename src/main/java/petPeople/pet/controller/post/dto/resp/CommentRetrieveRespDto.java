@@ -1,13 +1,11 @@
 package petPeople.pet.controller.post.dto.resp;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import petPeople.pet.domain.comment.entity.Comment;
 
 import java.time.LocalDateTime;
 
-@Getter
+@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommentRetrieveRespDto {

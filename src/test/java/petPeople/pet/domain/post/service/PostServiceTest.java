@@ -284,6 +284,7 @@ class PostServiceTest {
             return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()), null);
         });
 
+
         //when
         Slice<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, Optional.empty(),Optional.empty());
 

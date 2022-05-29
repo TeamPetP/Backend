@@ -1,6 +1,7 @@
 package petPeople.pet.controller.comment.dto.resp;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import petPeople.pet.domain.comment.entity.Comment;
@@ -8,7 +9,7 @@ import petPeople.pet.domain.comment.entity.Comment;
 import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
+@Data
 public class CommentEditRespDto {
     private Long commentId;
 

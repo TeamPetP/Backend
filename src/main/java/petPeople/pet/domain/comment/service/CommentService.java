@@ -41,7 +41,7 @@ public class CommentService {
     @Transactional
     public CommentWriteRespDto write(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId) {
 
-        Post findPost = validateOptionalPost(postId);
+        Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
         Comment saveComment = saveComment(createComment(member, findPost, commentWriteRequestDto));
 
         return new CommentWriteRespDto(saveComment);
@@ -184,15 +184,16 @@ public class CommentService {
         return commentRepository.findAllByIdWithFetchJoinMemberPaging(postId, pageable);
     }
 
-    private Post validateOptionalPost(Long postId) {
-        return postRepository.findById(postId)
-                .orElseThrow(() -> {
-                    throw new CustomException(ErrorCode.NOT_FOUND_POST, "존재하지 않는 게시글입니다.");
-                });
+    private Optional<Post> findOptionalPostWithId(Long postId) {
+        return postRepository.findById(postId);
     }
 
     private Comment validateOptionalComment(Optional<Comment> optionalComment) {
         return optionalComment.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT, "존재하지 않는 댓글입니다."));
+    }
+
+    private Post validateOptionalPost(Optional<Post> optionalPost) {
+        return optionalPost.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "존재하지 않은 게시글입니다."));
     }
 
     private void editCommentContent(String content, Comment findComment) {
