@@ -14,6 +14,8 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.member.entity.Member;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/meetings")

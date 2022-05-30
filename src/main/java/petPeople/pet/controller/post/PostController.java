@@ -47,7 +47,7 @@ public class PostController {
         } else {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(postService.localRetrieveOne(postId, Optional.ofNullable(header)));
+                    .body(postService.retrieveOne(postId, Optional.ofNullable(header)));
         }
     }
 
@@ -57,8 +57,7 @@ public class PostController {
         if (authFilterContainer.getFilter() instanceof MockJwtFilter)
             return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
         else
-            return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
-
+            return ResponseEntity.ok().body(postService.retrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
     }
 
     @PutMapping("/{postId}")
