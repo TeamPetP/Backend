@@ -3,7 +3,7 @@
 REPOSITORY=/home/ubuntu/Backend
 cd $REPOSITORY
 
-APP_NAME=camping
+APP_NAME=pet
 JAR_NAME=$(ls $REPOSITORY/build/libs/ | grep '.jar' | tail -n 1)
 JAR_PATH=$REPOSITORY/build/libs/$JAR_NAME
 
