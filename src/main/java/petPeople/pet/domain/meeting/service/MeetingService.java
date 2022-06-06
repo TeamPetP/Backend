@@ -14,6 +14,7 @@ import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
@@ -29,6 +30,7 @@ import petPeople.pet.util.RequestUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -232,11 +234,13 @@ public class MeetingService {
     }
 
 
-
-
-//    public void retrieveAllImage(Long meetingId, String header) {
-//
-//    }
+    public List<MeetingImageRetrieveRespDto> retrieveAllImage(Long meetingId) {
+        return findMeetingImageListByMeetingId(meetingId).stream()
+                .map(meetingImage ->
+                        new MeetingImageRetrieveRespDto(
+                                meetingImage.getId(), meetingImage.getMeeting().getId(), meetingImage.getImgUrl())
+                ).collect(Collectors.toList());
+    }
 
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);

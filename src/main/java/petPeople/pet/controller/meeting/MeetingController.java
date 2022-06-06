@@ -11,13 +11,16 @@ import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.domain.meeting.entity.MeetingImage;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -91,12 +94,13 @@ public class MeetingController {
         return ResponseEntity.noContent().build();
     }
 
-//    @GetMapping("/{meetingId}/images")
-//    public ResponseEntity retrieveAllMeetingImage(@PathVariable Long meetingId, HttpServletRequest request) {
-//        String header = RequestUtil.getAuthorizationToken(request);
-//
-//        meetingService.retrieveAllImage(meetingId, header);
-//    }
+    @GetMapping("/{meetingId}/images")
+    public ResponseEntity<List<MeetingImageRetrieveRespDto>> retrieveAllMeetingImage(@PathVariable Long meetingId) {
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingService.retrieveAllImage(meetingId));
+    }
 
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();
