@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  backend:
+    name: CI with Gradle
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: 체크아웃 Github-Action
+        uses: actions/checkout@v2
+
+      - name: 자바 JDK 11 설치
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: gradlew 권한 부여
+        run: chmod +x ./gradlew
+
+      - name: Gradle 빌드
+        run: ./gradlew build --exclude-task test
+        shell: bash
+
+      - name: Make zip file
+        run: zip -r ./$GITHUB_SHA.zip .
+        shell: bash
+
+      - name: AWS 설정
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Upload to S3
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://petp-s3/$GITHUB_SHA.zip
+
+      - name: Code Deploy
+        run: aws deploy create-deployment --application-name camp-deploy-app-new --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name dev --s3-location bucket=petp-s3,bundleType=zip,key=$GITHUB_SHA.zip

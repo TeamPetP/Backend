@@ -45,6 +45,7 @@ public class PostService {
     private final MemberRepository memberRepository;
 
 
+    //의도와 구현을 분리
     @Transactional
     public PostWriteRespDto write(Member member, PostWriteReqDto postWriteReqDto) {
         Post savePost = savePost(createPost(member, postWriteReqDto.getContent()));

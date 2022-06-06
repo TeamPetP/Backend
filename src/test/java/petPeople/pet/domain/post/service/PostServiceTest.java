@@ -46,7 +46,7 @@ class PostServiceTest {
 
     final String content = "게시글 및 피드입니다.";
 
-    @Mock
+    @Mock //mock 객체를 생성함
     PostRepository postRepository;
     @Mock
     TagRepository tagRepository;
@@ -59,7 +59,8 @@ class PostServiceTest {
     @Mock
     PostBookmarkRepository postBookmarkRepository;
 
-    @InjectMocks
+    @InjectMocks //생성한 mock 객체를 @InjectMocks이 붙은 객체에 주입
+    //주로 @InjectMocks(Service) @Mock(Repository) 이러한 식으로 Service 테스트 목객체에 DAO 목객체를 주입시켜 사용함
     PostService postService;
 
     Long id;
@@ -281,6 +282,7 @@ class PostServiceTest {
 
             return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()), null);
         });
+
 
         //when
         Slice<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, Optional.empty(),Optional.empty());

@@ -1,12 +1,14 @@
 package petPeople.pet.domain.comment.entity;
 
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.entity.Post;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Getter @Setter
-public class Comment extends BaseTimeEntity {
+public class Comment extends BaseTimeEntity{
 
     @Id @GeneratedValue
     @Column(name = "comment_id")
@@ -41,4 +43,7 @@ public class Comment extends BaseTimeEntity {
     @Lob
     private String content;
 
+    @Column(updatable = false)
+    @CreatedDate
+    private LocalDateTime createdDate;
 }
