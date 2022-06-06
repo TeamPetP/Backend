@@ -59,10 +59,14 @@ public class MeetingService {
     @Transactional
     public MeetingEditRespDto edit(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Long joinedMemberCount = countMeetingMember(meetingId);
 
-        validateMemberAuthorization(member, findMeeting.getMember());
+        validateMemberAuthorization(member, findMeeting.getMember());//회원 권한 검증
+        validateEditMeetingMaxPeopleNumber(joinedMemberCount, meetingEditReqDto.getMaxPeople());//최대 인원을 현재 가입한 인원보다 낮게 수정할 경우
+        validateOpenStatusChange(meetingEditReqDto, findMeeting, joinedMemberCount);//모집중이라 바꾸고 현재 꽉차 있으면서 바꾸고자하는 인원이 max people 보다 이하일 경우
 
-        editMeeting(meetingEditReqDto, findMeeting);
+        editMeeting(meetingEditReqDto, findMeeting);//모임 수정
+
         deleteMeetingImageByMeetingId(meetingId);
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
@@ -71,6 +75,18 @@ public class MeetingService {
         }
 
         return new MeetingEditRespDto(findMeeting, meetingImageList);
+    }
+
+    private void validateOpenStatusChange(MeetingEditReqDto meetingEditReqDto, Meeting findMeeting, Long joinedMemberCount) {
+        if (meetingEditReqDto.getIsOpened() == true && isFull(findMeeting.getMaxPeople(), joinedMemberCount) && (meetingEditReqDto.getMaxPeople() <= findMeeting.getMaxPeople())) {
+            throwException(ErrorCode.FULL_MEMBER_MEETING, "모임 인원이 다 꽉찬 상태를 모집중으로 바꿀 수 없습니다.(모집인원을 늘려주세요)");
+        }
+    }
+
+    private void validateEditMeetingMaxPeopleNumber(Long joinedMemberCount, Integer editMaxPeople) {
+        if (editMaxPeople < joinedMemberCount) {
+            throwException(ErrorCode.BAD_REQUEST, "현재 가입한 회원의 수 보다 낮게 수정 할 수 없습니다.");
+        }
     }
 
     // TODO: 2022-05-23 모임에 max 회원 도달 경우 자동으로 isOpened 바꿀지(가입 후 max에 찰 경우 자동으로 마감 처리)
@@ -86,12 +102,6 @@ public class MeetingService {
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
 
-    }
-
-    private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
-        if (member == targetMember) {
-            throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
-        }
     }
 
     public MeetingRetrieveRespDto localRetrieveOne(Long meetingId, Optional<String> optionalHeader) {
@@ -131,16 +141,6 @@ public class MeetingService {
 
             return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null);
         }
-    }
-
-    private Optional<Member> findOptionalMemberByUid(String uid) {
-        return memberRepository.findByUid(uid);
-    }
-
-    private Member validateOptionalMember(Optional<Member> optionalMember) {
-        return optionalMember
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
     }
 
     public Slice<MeetingRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalHeader) {
@@ -232,10 +232,26 @@ public class MeetingService {
     }
 
 
+
+
 //    public void retrieveAllImage(Long meetingId, String header) {
 //
-
 //    }
+
+    private Optional<Member> findOptionalMemberByUid(String uid) {
+        return memberRepository.findByUid(uid);
+    }
+
+    private Member validateOptionalMember(Optional<Member> optionalMember) {
+        return optionalMember
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
+    }
+    private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
+    if (member == targetMember) {
+        throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+    }
+}
 
     public FirebaseToken decodeToken(String header) {
         try {
