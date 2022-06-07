@@ -1,5 +1,6 @@
 package petPeople.pet.exception;
 
+import com.google.api.Http;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ public enum ErrorCode {
     EXIST_MEMBER(HttpStatus.BAD_REQUEST, "이미 등록된 유저입니다."),
 
     //인증 인가 예외
-    FORBIDDEN_MEMBER(HttpStatus.FORBIDDEN, "해당 요청에 권한이 없습니다."),
+    FORBIDDEN_MEMBER(HttpStatus.UNAUTHORIZED, "해당 요청에 권한이 없습니다."),
     INVALID_AUTHORIZATION(HttpStatus.BAD_REQUEST, "인증 정보가 부정확합니다."),
 
     //북마크 예외

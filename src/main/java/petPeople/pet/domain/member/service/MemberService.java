@@ -19,7 +19,8 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class MemberService implements UserDetailsService {
 
-    private final MemberRepository memberRepository;
+    private final MemberRepository memberRepository
+            ;
 
     @Override
     public UserDetails loadUserByUsername(final String uid) throws UsernameNotFoundException {
