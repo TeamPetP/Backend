@@ -27,6 +27,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests() // 요청에 대한 권한 지정
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Preflight Request 허용해주기
+                .antMatchers(HttpMethod.GET, "/meetings/**/posts/**").authenticated()
+                .antMatchers(HttpMethod.GET, "/meetings/**").permitAll()
                 .anyRequest().authenticated() // 모든 요청이 인증되어야한다.
                 .and()
                 .addFilterBefore(authFilterContainer.getFilter(),
@@ -40,7 +42,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST ,"/members/local")//로컬용 회원가입
                 .antMatchers(HttpMethod.POST, "/members")//배포용 회원가입
                 .antMatchers(HttpMethod.GET, "/posts/**")
-                .antMatchers(HttpMethod.GET, "/meetings/**")
                 .antMatchers("/css/**")
                 .antMatchers("/static/**")
                 .antMatchers("/js/**")

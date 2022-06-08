@@ -52,7 +52,9 @@ public class MeetingRetrieveRespDto {
 
     private List<String> joinMembers = new ArrayList<>();
 
-    public MeetingRetrieveRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
+    private Boolean isJoined;
+
+    public MeetingRetrieveRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList, Boolean isJoined) {
         this.meetingId = meeting.getId();
         this.memberId = meeting.getMember().getId();
         this.nickname = meeting.getMember().getNickname();
@@ -77,5 +79,6 @@ public class MeetingRetrieveRespDto {
         for (MeetingImage meetingImage : meetingImageList) {
             imgUrlList.add(meetingImage.getImgUrl());
         }
+        this.isJoined = isJoined;
     }
 }

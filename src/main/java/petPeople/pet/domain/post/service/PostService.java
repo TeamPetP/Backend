@@ -1,22 +1,29 @@
 package petPeople.pet.domain.post.service;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
-import petPeople.pet.domain.datastructure.PostChildList;
+import petPeople.pet.datastructure.PostChildList;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.post.entity.*;
 import petPeople.pet.domain.post.repository.*;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
+import petPeople.pet.util.RequestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +41,9 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final UserDetailsService userDetailsService;
     private final PostBookmarkRepository postBookmarkRepository;
+    private final FirebaseAuth firebaseAuth;
+    private final MemberRepository memberRepository;
+
 
     //의도와 구현을 분리
     @Transactional
@@ -66,7 +76,60 @@ public class PostService {
         return respDto;
     }
 
+    public PostRetrieveRespDto retrieveOne(Long postId, Optional<String> optionalHeader) {
+
+        Post post = validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId));
+        List<Tag> tagList = findTagList(postId);
+        List<PostImage> postImageList = findPostImageList(postId);
+        Long likeCnt = countPostLikeByPostId(postId);
+
+        PostRetrieveRespDto respDto;
+
+        if (isLogined(optionalHeader)) {
+            String uid = decodeToken(optionalHeader.get()).getUid();
+            Member member = validateOptionalMember(findOptionalMemberByUid(uid));
+
+            boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId));
+            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent);
+        } else {
+            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt);
+        }
+
+        return respDto;
+    }
+
+    private Member validateOptionalMember(Optional<Member> optionalMember) {
+        return optionalMember
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
+    }
+
+    private Optional<Member> findOptionalMemberByUid(String uid) {
+        return memberRepository.findByUid(uid);
+    }
+
+    public FirebaseToken decodeToken(String header) {
+        try {
+            String token = RequestUtil.getAuthorizationToken(header);
+            return firebaseAuth.verifyIdToken(token);
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "{\"code\":\"INVALID_TOKEN\", \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
     public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
+
+        Slice<Post> postSlice;
+        if (isSearchTag(optionalTag)) {
+            postSlice = findAllPostByTagSlicing(pageable, optionalTag.get());
+        } else {
+            postSlice = findAllPostSlicing(pageable);
+        }
+        return postSliceMapToRespDtoSlice(optionalHeader, postSlice);
+    }
+
+    public Slice<PostRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
 
         Slice<Post> postSlice;
         if (isSearchTag(optionalTag)) {
@@ -208,7 +271,8 @@ public class PostService {
     }
 
     private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostChildList postChildList) {
-        Member member = getLocalMemberByHeader(header);
+        FirebaseToken firebaseToken = decodeToken(header);
+        Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
         return postPage.map(post -> {
             List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
             List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
