@@ -44,12 +44,13 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)//테스트 클래스가 Mockito를 사용함을 의미
 class CommentServiceTest {
 
-    final String uid = "jang";
+    final String uid = "jangg";
     final String email = "789456jang@naver.com";
     final String name = "장대영";
     final String nickname = "longstick0";
@@ -190,8 +191,6 @@ class CommentServiceTest {
 
         List<Comment> commentSliceContent = commentSlice.getContent();
 
-        List<Long> commentIdList = getCommentId(commentSliceContent);
-
         when(commentRepository.findAllByIdWithFetchJoinMemberPaging(any(), any())).thenReturn(commentSlice);
         when(commentLikeRepository.findCommentLikesByCommentIds(any())).thenReturn(commentLikeList);
 
@@ -240,7 +239,7 @@ class CommentServiceTest {
         Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false));
 
         //when
-        Slice<CommentRetrieveRespDto> reqsDto = commentService.retrieveAll(post.getId(), null, pageRequest);
+        Slice<CommentRetrieveRespDto> reqsDto = commentService.retrieveAll(post.getId(), member.getUid(), pageRequest);
 
         //then
         assertThat(reqsDto).isEqualTo(result);
@@ -255,7 +254,32 @@ class CommentServiceTest {
     }
 
     @Test
-    void deleteComment() {
+    @DisplayName("댓글 삭제 테스트")
+    void deleteCommentTest() {
+        //given
+        when(commentRepository.findById(any())).thenReturn(Optional.ofNullable(comment));
+
+        doNothing().when(commentLikeRepository).deleteByCommentId(any());
+        doNothing().when(commentRepository).deleteById(any());
+
+        //when
+        commentService.deleteComment(member, comment.getId());
+
+        //then
+        verify(commentLikeRepository, times(1)).deleteByCommentId(any());
+        verify(commentRepository, times(1)).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("권한이 없는 댓글 삭제 테스트")
+    void nonAuthorizationCommentDeleteTest() {
+        //given
+        Member commentMember = createMember(uid, email, name, nickname, imgUrl, introduce);
+        when(commentRepository.findById(any())).thenReturn(Optional.ofNullable(comment));
+
+        //when
+        //then
+        assertThrows(CustomException.class, () -> commentService.deleteComment(commentMember, comment.getId()));
     }
 
     @Test

@@ -3,7 +3,7 @@
 REPOSITORY=/home/ubuntu/Backend
 cd $REPOSITORY
 
-APP_NAME=camping
+APP_NAME=pet
 JAR_NAME=$(ls $REPOSITORY/build/libs/ | grep '.jar' | tail -n 1)
 JAR_PATH=$REPOSITORY/build/libs/$JAR_NAME
 
@@ -21,4 +21,4 @@ fi
 echo "> $JAR_PATH 배포"
 s
 #23412
-nohup java -jar $JAR_PATH --spring.profiles.active=prod /dev/null 2> /dev/null < /dev/null &
+nohup java -jar $JAR_PATH --spring.profiles.active=prod > $REPOSITORY/nohup.out 2>&1 &
