@@ -4,6 +4,7 @@ import lombok.*;
 import petPeople.pet.domain.meeting.entity.MeetingPost;
 import petPeople.pet.domain.meeting.entity.MeetingPostImage;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,11 +24,14 @@ public class MeetingPostWriteRespDto {
 
     private List<String> imgUrlList = new ArrayList<>();
 
+    private LocalDateTime createdDate;
+
     public MeetingPostWriteRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList) {
         this.meetingPostId = meetingPost.getId();
         this.meetingId = meetingPost.getMeeting().getId();
         this.title = meetingPost.getTitle();
         this.content = meetingPost.getContent();
+        this.createdDate = meetingPost.getCreatedDate();
 
         for (MeetingPostImage meetingPostImage : meetingPostImageList) {
             imgUrlList.add(meetingPostImage.getImgUrl());

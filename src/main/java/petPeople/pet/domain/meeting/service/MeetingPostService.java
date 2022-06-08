@@ -1,6 +1,8 @@
 package petPeople.pet.domain.meeting.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.meeting.dto.req.MeetingPostWriteReqDto;
@@ -40,6 +42,67 @@ public class MeetingPostService {
         List<MeetingPostImage> saveMeetingPostImageList = saveMeetingPostImageList(member, saveMeetingPost, meetingPostWriteReqDto.getImgUrlList());
 
         return new MeetingPostWriteRespDto(saveMeetingPost, saveMeetingPostImageList);
+    }
+
+    public MeetingPostWriteRespDto retrieveOne(Long meetingId, Long meetingPostId, Member member) {
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        MeetingPost findMeetingPost = validateOptionalMeetingPost(findMeetingPostByMeetingPostId(meetingPostId));
+
+        List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostId(meetingPostId);
+
+        return new MeetingPostWriteRespDto(findMeetingPost, findMeetingPostImageList);
+    }
+
+    public Slice<MeetingPostWriteRespDto> retrieveAll(Long meetingId, Pageable pageable, Member member) {
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        Slice<MeetingPost> meetingPostSlice = findAllMeetingPostSliceByMeetingId(meetingId, pageable);
+
+        List<Long> meetingPostIds = getMeetingPostId(meetingPostSlice.getContent());
+
+        List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostIds(meetingPostIds);
+
+        return meetingPostSlice.map(meetingPost -> {
+            List<MeetingPostImage> meetingPostImageList = getMeetingPostImagesByMeetingPost(findMeetingPostImageList, meetingPost);
+            return new MeetingPostWriteRespDto(meetingPost, meetingPostImageList);
+        });
+    }
+
+    private List<MeetingPostImage> getMeetingPostImagesByMeetingPost(List<MeetingPostImage> findMeetingPostImageList, MeetingPost meetingPost) {
+        List<MeetingPostImage> meetingPostImageList = new ArrayList<>();
+        for (MeetingPostImage meetingPostImage : findMeetingPostImageList) {
+            if (meetingPostImage.getMeetingPost() == meetingPost) {
+                meetingPostImageList.add(meetingPostImage);
+            }
+        }
+        return meetingPostImageList;
+    }
+
+    private List<MeetingPostImage> findAllMeetingPostImageByMeetingPostIds(List<Long> meetingPostIds) {
+        return meetingPostImageRepository.findAllByMeetingPostIds(meetingPostIds);
+    }
+
+    private Slice<MeetingPost> findAllMeetingPostSliceByMeetingId(Long meetingId, Pageable pageable) {
+        return meetingPostRepository.findAllSliceByMeetingId(meetingId, pageable);
+    }
+
+    private List<Long> getMeetingPostId(List<MeetingPost> content) {
+        List<Long> ids = new ArrayList<>();
+        for (MeetingPost meetingPost : content) {
+            ids.add(meetingPost.getId());
+        }
+        return ids;
+    }
+
+    private List<MeetingPostImage> findAllMeetingPostImageByMeetingPostId(Long meetingPostId) {
+        return meetingPostImageRepository.findAllMeetingPostImageByMeetingPostId(meetingPostId);
+    }
+
+    private Optional<MeetingPost> findMeetingPostByMeetingPostId(Long meetingPostId) {
+        return meetingPostRepository.findById(meetingPostId);
     }
 
     private void validateJoinedMember(boolean isJoined) {
@@ -109,4 +172,7 @@ public class MeetingPostService {
         return optionalMeeting.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
     }
 
+    private MeetingPost validateOptionalMeetingPost(Optional<MeetingPost> optionalMeetingPost) {
+        return optionalMeetingPost.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
+    }
 }

@@ -38,6 +38,8 @@ public class QMeetingPost extends EntityPathBase<MeetingPost> {
 
     public final petPeople.pet.domain.member.entity.QMember member;
 
+    public final StringPath title = createString("title");
+
     public QMeetingPost(String variable) {
         this(MeetingPost.class, forVariable(variable), INITS);
     }
