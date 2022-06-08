@@ -1,14 +1,20 @@
 package petPeople.pet.domain.meeting.service;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
@@ -16,12 +22,15 @@ import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
 import petPeople.pet.domain.meeting.repository.MeetingRepository;
 import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberRepository;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
+import petPeople.pet.util.RequestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +41,8 @@ public class MeetingService {
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
     private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
+    private final MemberRepository memberRepository;
+    private final FirebaseAuth firebaseAuth;
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
@@ -50,10 +61,14 @@ public class MeetingService {
     @Transactional
     public MeetingEditRespDto edit(Member member, Long meetingId, MeetingEditReqDto meetingEditReqDto) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Long joinedMemberCount = countMeetingMember(meetingId);
 
-        validateMemberAuthorization(member, findMeeting.getMember());
+        validateMemberAuthorization(member, findMeeting.getMember());//회원 권한 검증
+        validateEditMeetingMaxPeopleNumber(joinedMemberCount, meetingEditReqDto.getMaxPeople());//최대 인원을 현재 가입한 인원보다 낮게 수정할 경우
+        validateOpenStatusChange(meetingEditReqDto, findMeeting, joinedMemberCount);//모집중이라 바꾸고 현재 꽉차 있으면서 바꾸고자하는 인원이 max people 보다 이하일 경우
 
-        editMeeting(meetingEditReqDto, findMeeting);
+        editMeeting(meetingEditReqDto, findMeeting);//모임 수정
+
         deleteMeetingImageByMeetingId(meetingId);
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
@@ -62,6 +77,18 @@ public class MeetingService {
         }
 
         return new MeetingEditRespDto(findMeeting, meetingImageList);
+    }
+
+    private void validateOpenStatusChange(MeetingEditReqDto meetingEditReqDto, Meeting findMeeting, Long joinedMemberCount) {
+        if (meetingEditReqDto.getIsOpened() == true && isFull(findMeeting.getMaxPeople(), joinedMemberCount) && (meetingEditReqDto.getMaxPeople() <= findMeeting.getMaxPeople())) {
+            throwException(ErrorCode.FULL_MEMBER_MEETING, "모임 인원이 다 꽉찬 상태를 모집중으로 바꿀 수 없습니다.(모집인원을 늘려주세요)");
+        }
+    }
+
+    private void validateEditMeetingMaxPeopleNumber(Long joinedMemberCount, Integer editMaxPeople) {
+        if (editMaxPeople < joinedMemberCount) {
+            throwException(ErrorCode.BAD_REQUEST, "현재 가입한 회원의 수 보다 낮게 수정 할 수 없습니다.");
+        }
     }
 
     // TODO: 2022-05-23 모임에 max 회원 도달 경우 자동으로 isOpened 바꿀지(가입 후 max에 찰 경우 자동으로 마감 처리)
@@ -79,34 +106,99 @@ public class MeetingService {
 
     }
 
-    private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
-        if (member == targetMember) {
-            throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+    public MeetingRetrieveRespDto localRetrieveOne(Long meetingId, Optional<String> optionalHeader) {
+
+        if (isLogined(optionalHeader)) {
+            Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
+
+            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList));
+        } else {
+            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null);
         }
     }
 
-    public MeetingRetrieveRespDto retrieveOne(Long meetingId) {
-        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
-        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+    public MeetingRetrieveRespDto retrieveOne(Long meetingId, Optional<String> optionalHeader) {
 
-        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList);
+        if (isLogined(optionalHeader)) {
+            FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
+            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+
+            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList));
+        } else {
+            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null);
+        }
     }
 
-    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable) {
-        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
-        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-        return meetingSliceMapToRetrieveRespDto(
-                meetingSlice,
-                findMeetingImageByMeetingIds(meetingIds),
-                findMeetingMemberByMeetingIds(meetingIds)
-        );
+    public Slice<MeetingRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalHeader) {
+
+        if (isLogined(optionalHeader)) {
+            Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
+
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+            return meetingSliceMapToRetrieveRespDto(
+                    member,
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+        } else {
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+            return meetingSliceMapToRetrieveNoLoginRespDto(
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+        }
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalHeader) {
+
+        if (isLogined(optionalHeader)) {
+            FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
+            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+            return meetingSliceMapToRetrieveRespDto(
+                    member,
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+        } else {
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
+            return meetingSliceMapToRetrieveNoLoginRespDto(
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+        }
     }
 
     public Slice<MeetingRetrieveRespDto> retrieveMemberMeeting(Member member, Pageable pageable) {
         Slice<Meeting> meetingSlice = findAllMeetingSlicingByMemberId(member, pageable);
         List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
         return meetingSliceMapToRetrieveRespDto(
+                member,
                 meetingSlice,
                 findMeetingImageByMeetingIds(meetingIds),
                 findMeetingMemberByMeetingIds(meetingIds)
@@ -131,10 +223,6 @@ public class MeetingService {
         }
     }
 
-    private boolean isOccupiedMeeting(Integer maxPeople, Long joinMemberCount) {
-        return joinMemberCount + 1 >= maxPeople;
-    }
-
     @Transactional
     public void decline(Member member, Long meetingId, Long memberId) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
@@ -145,8 +233,61 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
     }
 
+
+    public List<MeetingImageRetrieveRespDto> retrieveAllImage(Long meetingId) {
+        return findMeetingImageListByMeetingId(meetingId).stream()
+                .map(meetingImage ->
+                        new MeetingImageRetrieveRespDto(
+                                meetingImage.getId(), meetingImage.getMeeting().getId(), meetingImage.getImgUrl())
+                ).collect(Collectors.toList());
+    }
+
+    private Optional<Member> findOptionalMemberByUid(String uid) {
+        return memberRepository.findByUid(uid);
+    }
+
+    private Member validateOptionalMember(Optional<Member> optionalMember) {
+        return optionalMember
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
+    }
+    private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
+    if (member == targetMember) {
+        throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+    }
+}
+
+    public FirebaseToken decodeToken(String header) {
+        try {
+            String token = RequestUtil.getAuthorizationToken(header);
+            return firebaseAuth.verifyIdToken(token);
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "{\"code\":\"INVALID_TOKEN\", \"message\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    private boolean isJoined(Member member, List<MeetingMember> meetingMemberList) {
+        boolean isJoined = false;
+        for (MeetingMember meetingMember : meetingMemberList) {
+            if (meetingMember.getMember().getId() == member.getId()) {
+                isJoined = true;
+                break;
+            }
+        }
+        return isJoined;
+    }
+
+    private boolean isLogined(Optional<String> optionalHeader) {
+        return optionalHeader.isPresent();
+    }
+
     private void changeMeetingWaitingMemberStatus(MeetingWaitingMember meetingWaitingMember, JoinRequestStatus joinRequestStatus) {
         meetingWaitingMember.setJoinRequestStatus(joinRequestStatus);
+    }
+
+    private boolean isOccupiedMeeting(Integer maxPeople, Long joinMemberCount) {
+        return joinMemberCount + 1 >= maxPeople;
     }
 
     private Optional<MeetingWaitingMember> findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
@@ -229,12 +370,23 @@ public class MeetingService {
         meetingImageRepository.deleteByMeetingId(meetingId);
     }
 
-    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
+    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveRespDto(Member member, Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
         return meetingSlice.map(meeting ->
             new MeetingRetrieveRespDto(
                     meeting,
                     getMeetingImagesByMeeting(meetingImageList, meeting),
-                    getMeetingMembersByMeeting(meetingMemberList, meeting))
+                    getMeetingMembersByMeeting(meetingMemberList, meeting),
+                    isJoined(member, getMeetingMembersByMeeting(meetingMemberList, meeting)))
+        );
+    }
+
+    private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveNoLoginRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
+        return meetingSlice.map(meeting ->
+                new MeetingRetrieveRespDto(
+                        meeting,
+                        getMeetingImagesByMeeting(meetingImageList, meeting),
+                        getMeetingMembersByMeeting(meetingMemberList, meeting),
+                        null)
         );
     }
 

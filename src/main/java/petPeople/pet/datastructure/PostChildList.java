@@ -1,9 +1,7 @@
-package petPeople.pet.domain.datastructure;
+package petPeople.pet.datastructure;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import petPeople.pet.domain.post.entity.PostImage;
 import petPeople.pet.domain.post.entity.PostLike;
 import petPeople.pet.domain.post.entity.Tag;

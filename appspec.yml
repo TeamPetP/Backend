@@ -4,6 +4,9 @@ os: linux
 files:
   - source: /
     destination: /home/ubuntu/Backend
+    overwrite: yes
+file_exists_behavior: OVERWRITE
+
 permissions:
   - object: /home/ubuntu/Backend
     owner: ubuntu

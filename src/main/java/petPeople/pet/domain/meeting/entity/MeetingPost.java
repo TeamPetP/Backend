@@ -25,6 +25,8 @@ public class MeetingPost extends BaseTimeEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    private String title;
+
     private String content;
 
 }

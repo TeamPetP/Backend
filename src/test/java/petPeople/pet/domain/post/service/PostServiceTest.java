@@ -503,6 +503,7 @@ class PostServiceTest {
         when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
         when(postBookmarkRepository.save(any())).thenReturn(postBookMark);
 
+
         //when
         postService.bookmark(member, post.getId());
         //then
