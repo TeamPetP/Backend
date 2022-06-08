@@ -82,6 +82,13 @@ public class MeetingController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{meetingId}")
+    public ResponseEntity resignMeeting(@PathVariable Long meetingId, Authentication authentication) {
+        Member member = getMember(authentication);
+        meetingService.resign(meetingId, member);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{meetingId}/members/{memberId}/approve")
     public ResponseEntity approveJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
         meetingService.approve(getMember(authentication), meetingId, memberId);

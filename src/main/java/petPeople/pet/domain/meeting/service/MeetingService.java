@@ -106,6 +106,32 @@ public class MeetingService {
 
     }
 
+    @Transactional
+    public void resign(Long meetingId, Member member) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        validateOwnMeetingResign(member, meeting.getMember());
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+
+        deleteMeetingMemberByMeetingIdAndMemberId(meetingId, member);
+    }
+
+    private void validateOwnMeetingResign(Member member, Member targetMember) {
+        if (targetMember == member) {
+            throwException(ErrorCode.BAD_REQUEST, "자신의 모임은 탈퇴할 수 없습니다.");
+        }
+    }
+
+    private void deleteMeetingMemberByMeetingIdAndMemberId(Long meetingId, Member member) {
+        meetingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, member.getId());
+    }
+
+    private void validateJoinedMember(boolean isJoined) {
+        if (!isJoined) {
+            throwException(ErrorCode.FORBIDDEN_MEMBER, "모임에 가입한 회원이 아닙니다.");
+        }
+    }
+
     public MeetingRetrieveRespDto localRetrieveOne(Long meetingId, Optional<String> optionalHeader) {
 
         if (isLogined(optionalHeader)) {
@@ -245,12 +271,12 @@ public class MeetingService {
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
     }
-
     private Member validateOptionalMember(Optional<Member> optionalMember) {
         return optionalMember
                 .orElseThrow(() ->
                         new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
     }
+
     private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
     if (member == targetMember) {
         throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
@@ -357,12 +383,12 @@ public class MeetingService {
     }
 
     private void validateMemberAuthorization(Member member, Member targetMember) {
-        if (isaNotSameMember(member, targetMember)) {
+        if (isNotSameMember(member, targetMember)) {
             throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 모임에 권한이 없습니다.");
         }
     }
 
-    private boolean isaNotSameMember(Member member, Member postMember) {
+    private boolean isNotSameMember(Member member, Member postMember) {
         return member != postMember;
     }
 
