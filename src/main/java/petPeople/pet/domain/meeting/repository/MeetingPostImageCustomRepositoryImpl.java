@@ -29,4 +29,12 @@ public class MeetingPostImageCustomRepositoryImpl implements MeetingPostImageCus
                 .where(meetingPostImage.meetingPost.id.in(meetingPostIds))
                 .fetch();
     }
+
+    @Override
+    public void deleteByMeetingPostId(Long meetingPostId) {
+        queryFactory
+                .delete(meetingPostImage)
+                .where(meetingPostImage.meetingPost.id.eq(meetingPostId))
+                .execute();
+    }
 }

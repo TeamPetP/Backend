@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import petPeople.pet.controller.meeting.dto.req.MeetingPostWriteReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingPostWriteRespDto;
+import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.domain.meeting.service.MeetingPostService;
 import petPeople.pet.domain.member.entity.Member;
 
@@ -19,7 +20,7 @@ public class MeetingPostController {
 
     private final MeetingPostService meetingPostService;
 
-    @PostMapping("/{meetingId}/posts")
+    @PostMapping("/{meetingId}/meetingPosts")
     public ResponseEntity<MeetingPostWriteRespDto> writeMeetingPost(@RequestBody MeetingPostWriteReqDto meetingPostWriteReqDto,
                                            @PathVariable Long meetingId,
                                            Authentication authentication) {
@@ -30,7 +31,7 @@ public class MeetingPostController {
                 .body(meetingPostService.write(member, meetingPostWriteReqDto, meetingId));
     }
 
-    @GetMapping("/{meetingId}/posts/{meetingPostId}")
+    @GetMapping("/{meetingId}/meetingPosts/{meetingPostId}")
     public ResponseEntity<MeetingPostWriteRespDto> retrieveOneMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
         Member member = getMember(authentication);
 
@@ -39,13 +40,22 @@ public class MeetingPostController {
                 .body(meetingPostService.retrieveOne(meetingId, meetingPostId, member));
     }
 
-    @GetMapping("/{meetingId}/posts")
+    @GetMapping("/{meetingId}/meetingPosts")
     public ResponseEntity<Slice<MeetingPostWriteRespDto>> retrieveAllMeetingPost(@PathVariable Long meetingId, Pageable pageable, Authentication authentication) {
         Member member = getMember(authentication);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(meetingPostService.retrieveAll(meetingId, pageable, member));
+    }
+
+    @PutMapping("/{meetingId}/meetingPosts/{meetingPostId}")
+    public ResponseEntity<MeetingPostWriteRespDto> editMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId,
+                                                                           @RequestBody MeetingPostWriteReqDto meetingPostWriteReqDto, Authentication authentication) {
+        Member member = getMember(authentication);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingPostService.edit(meetingId, meetingPostId, meetingPostWriteReqDto, member));
     }
 
     private Member getMember(Authentication authentication) {

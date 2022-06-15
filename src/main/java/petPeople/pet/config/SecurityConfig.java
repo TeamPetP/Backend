@@ -27,7 +27,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests() // 요청에 대한 권한 지정
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Preflight Request 허용해주기
-                .antMatchers(HttpMethod.GET, "/meetings/**/posts/**").authenticated()
+                .antMatchers(HttpMethod.GET, "/meetings/**/meetingPosts/**").authenticated()
                 .antMatchers(HttpMethod.GET, "/meetings/**").permitAll()
                 .anyRequest().authenticated() // 모든 요청이 인증되어야한다.
                 .and()

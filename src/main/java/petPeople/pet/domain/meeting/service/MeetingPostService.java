@@ -71,6 +71,27 @@ public class MeetingPostService {
         });
     }
 
+    @Transactional
+    public MeetingPostWriteRespDto edit(Long meetingId, Long meetingPostId, MeetingPostWriteReqDto meetingPostWriteReqDto, Member member) {
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        MeetingPost findMeetingPost = validateOptionalMeetingPost(findMeetingPostByMeetingPostId(meetingPostId));
+
+        findMeetingPost.setTitle(meetingPostWriteReqDto.getTitle());
+        findMeetingPost.setContent(meetingPostWriteReqDto.getContent());
+
+        deleteByMeetingPostId(meetingPostId);
+
+        List<MeetingPostImage> saveMeetingPostImageList = saveMeetingPostImageList(member, findMeetingPost, meetingPostWriteReqDto.getImgUrlList());
+
+        return new MeetingPostWriteRespDto(findMeetingPost, saveMeetingPostImageList);
+    }
+
+    private void deleteByMeetingPostId(Long meetingPostId) {
+        meetingPostImageRepository.deleteByMeetingPostId(meetingPostId);
+    }
+
     private List<MeetingPostImage> getMeetingPostImagesByMeetingPost(List<MeetingPostImage> findMeetingPostImageList, MeetingPost meetingPost) {
         List<MeetingPostImage> meetingPostImageList = new ArrayList<>();
         for (MeetingPostImage meetingPostImage : findMeetingPostImageList) {

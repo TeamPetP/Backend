@@ -18,6 +18,10 @@ public class MeetingPostWriteRespDto {
 
     private Long meetingId;
 
+    private Long memberId;
+
+    private String nickname;
+
     private String title;
 
     private String content;
@@ -29,6 +33,8 @@ public class MeetingPostWriteRespDto {
     public MeetingPostWriteRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList) {
         this.meetingPostId = meetingPost.getId();
         this.meetingId = meetingPost.getMeeting().getId();
+        this.memberId = meetingPost.getMember().getId();
+        this.nickname = meetingPost.getMember().getNickname();
         this.title = meetingPost.getTitle();
         this.content = meetingPost.getContent();
         this.createdDate = meetingPost.getCreatedDate();
