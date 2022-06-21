@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import petPeople.pet.config.auth.AuthFilterContainer;
 import petPeople.pet.controller.meeting.dto.req.MeetingPostWriteReqDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingPostRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingPostWriteRespDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.domain.meeting.service.MeetingPostService;
@@ -34,7 +35,7 @@ public class MeetingPostController {
     }
 
     @GetMapping("/{meetingId}/meetingPosts/{meetingPostId}")
-    public ResponseEntity<MeetingPostWriteRespDto> retrieveOneMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
+    public ResponseEntity<MeetingPostRetrieveRespDto> retrieveOneMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
         Member member = getMember(authentication);
 
         return ResponseEntity
@@ -43,7 +44,7 @@ public class MeetingPostController {
     }
 
     @GetMapping("/{meetingId}/meetingPosts")
-    public ResponseEntity<Slice<MeetingPostWriteRespDto>> retrieveAllMeetingPost(@PathVariable Long meetingId, Pageable pageable, Authentication authentication) {
+    public ResponseEntity<Slice<MeetingPostRetrieveRespDto>> retrieveAllMeetingPost(@PathVariable Long meetingId, Pageable pageable, Authentication authentication) {
         Member member = getMember(authentication);
 
         return ResponseEntity
@@ -61,7 +62,7 @@ public class MeetingPostController {
     }
 
     @PatchMapping("/{meetingId}/meetingPosts/{meetingPostId}")
-    public ResponseEntity likeMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
+    public ResponseEntity<Long> likeMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
 
         Member member = getMember(authentication);
 

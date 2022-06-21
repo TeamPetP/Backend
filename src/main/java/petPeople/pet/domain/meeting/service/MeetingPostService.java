@@ -6,6 +6,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.meeting.dto.req.MeetingPostWriteReqDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingPostRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingPostWriteRespDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.*;
@@ -39,7 +40,7 @@ public class MeetingPostService {
         return new MeetingPostWriteRespDto(saveMeetingPost, saveMeetingPostImageList);
     }
 
-    public MeetingPostWriteRespDto retrieveOne(Long meetingId, Long meetingPostId, Member member) {
+    public MeetingPostRetrieveRespDto retrieveOne(Long meetingId, Long meetingPostId, Member member) {
         validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
         validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
@@ -47,10 +48,12 @@ public class MeetingPostService {
 
         List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostId(meetingPostId);
 
-        return new MeetingPostWriteRespDto(findMeetingPost, findMeetingPostImageList);
+        long likeCnt = countMeetingPostLikeByMeetingPostsId(meetingPostId);
+
+        return new MeetingPostRetrieveRespDto(findMeetingPost, findMeetingPostImageList, likeCnt);
     }
 
-    public Slice<MeetingPostWriteRespDto> retrieveAll(Long meetingId, Pageable pageable, Member member) {
+    public Slice<MeetingPostRetrieveRespDto> retrieveAll(Long meetingId, Pageable pageable, Member member) {
         validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
         validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
@@ -59,11 +62,17 @@ public class MeetingPostService {
         List<Long> meetingPostIds = getMeetingPostId(meetingPostSlice.getContent());
 
         List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostIds(meetingPostIds);
+        List<MeetingPostLike> findMeetingPostLikeList = finAllMeetingPostLikeByMeetingPostIds(meetingPostIds);
 
         return meetingPostSlice.map(meetingPost -> {
             List<MeetingPostImage> meetingPostImageList = getMeetingPostImagesByMeetingPost(findMeetingPostImageList, meetingPost);
-            return new MeetingPostWriteRespDto(meetingPost, meetingPostImageList);
+            List<MeetingPostLike> meetingPostLikesByMeetingPost = getMeetingPostLikesByMeetingPost(findMeetingPostLikeList, meetingPost);
+            return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()));
         });
+    }
+
+    private List<MeetingPostLike> finAllMeetingPostLikeByMeetingPostIds(List<Long> meetingPostIds) {
+        return meetingPostLikeRepository.findByMeetingPostIds(meetingPostIds);
     }
 
     @Transactional
@@ -156,6 +165,16 @@ public class MeetingPostService {
             }
         }
         return meetingPostImageList;
+    }
+
+    private List<MeetingPostLike> getMeetingPostLikesByMeetingPost(List<MeetingPostLike> findMeetingPostLikeList, MeetingPost meetingPost) {
+        List<MeetingPostLike> meetingPostLikeList = new ArrayList<>();
+        for (MeetingPostLike meetingPostLike : findMeetingPostLikeList) {
+            if (meetingPostLike.getMeetingPost() == meetingPost) {
+                meetingPostLikeList.add(meetingPostLike);
+            }
+        }
+        return meetingPostLikeList;
     }
 
     private List<MeetingPostImage> findAllMeetingPostImageByMeetingPostIds(List<Long> meetingPostIds) {

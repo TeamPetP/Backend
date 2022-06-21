@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import petPeople.pet.domain.meeting.entity.MeetingPostLike;
 import petPeople.pet.domain.meeting.entity.QMeetingPostLike;
 
+import java.util.List;
 import java.util.Optional;
 
 import static petPeople.pet.domain.meeting.entity.QMeetingPostLike.*;
@@ -40,5 +41,13 @@ public class MeetingPostLikeCustomRepositoryImpl implements MeetingPostLikeCusto
                 .from(meetingPostLike)
                 .where(meetingPostLike.meetingPost.id.eq(meetingPostId))
                 .fetchOne();
+    }
+
+    @Override
+    public List<MeetingPostLike> findByMeetingPostIds(List<Long> meetingPostIds) {
+        return queryFactory
+                .selectFrom(meetingPostLike)
+                .where(meetingPostLike.meetingPost.id.in(meetingPostIds))
+                .fetch();
     }
 }
