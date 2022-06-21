@@ -79,19 +79,6 @@ public class MeetingService {
         return new MeetingEditRespDto(findMeeting, meetingImageList);
     }
 
-    private void validateOpenStatusChange(MeetingEditReqDto meetingEditReqDto, Meeting findMeeting, Long joinedMemberCount) {
-        if (meetingEditReqDto.getIsOpened() == true && isFull(findMeeting.getMaxPeople(), joinedMemberCount) && (meetingEditReqDto.getMaxPeople() <= findMeeting.getMaxPeople())) {
-            throwException(ErrorCode.FULL_MEMBER_MEETING, "모임 인원이 다 꽉찬 상태를 모집중으로 바꿀 수 없습니다.(모집인원을 늘려주세요)");
-        }
-    }
-
-    private void validateEditMeetingMaxPeopleNumber(Long joinedMemberCount, Integer editMaxPeople) {
-        if (editMaxPeople < joinedMemberCount) {
-            throwException(ErrorCode.BAD_REQUEST, "현재 가입한 회원의 수 보다 낮게 수정 할 수 없습니다.");
-        }
-    }
-
-    // TODO: 2022-05-23 모임에 max 회원 도달 경우 자동으로 isOpened 바꿀지(가입 후 max에 찰 경우 자동으로 마감 처리)
     @Transactional
     public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
@@ -104,6 +91,16 @@ public class MeetingService {
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
 
+    }
+
+    @Transactional
+    public void resign(Long meetingId, Member member) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        validateOwnMeetingResign(member, meeting.getMember());
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+
+        deleteMeetingMemberByMeetingIdAndMemberId(meetingId, member);
     }
 
     public MeetingRetrieveRespDto localRetrieveOne(Long meetingId, Optional<String> optionalHeader) {
@@ -251,12 +248,12 @@ public class MeetingService {
                 .orElseThrow(() ->
                         new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
     }
+
     private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
     if (member == targetMember) {
         throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
     }
 }
-
     public FirebaseToken decodeToken(String header) {
         try {
             String token = RequestUtil.getAuthorizationToken(header);
@@ -310,6 +307,22 @@ public class MeetingService {
                 .build();
     }
 
+    private void validateOwnMeetingResign(Member member, Member targetMember) {
+        if (targetMember == member) {
+            throwException(ErrorCode.BAD_REQUEST, "자신의 모임은 탈퇴할 수 없습니다.");
+        }
+    }
+
+    private void deleteMeetingMemberByMeetingIdAndMemberId(Long meetingId, Member member) {
+        meetingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, member.getId());
+    }
+
+    private void validateJoinedMember(boolean isJoined) {
+        if (!isJoined) {
+            throwException(ErrorCode.FORBIDDEN_MEMBER, "모임에 가입한 회원이 아닙니다.");
+        }
+    }
+
     private void validateDuplicatedJoinRequest(Member member, Long meetingId) {
         List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMeetingId(meetingId);
         for (MeetingWaitingMember meetingWaitingMember : meetingWaitingMembers) {
@@ -357,12 +370,12 @@ public class MeetingService {
     }
 
     private void validateMemberAuthorization(Member member, Member targetMember) {
-        if (isaNotSameMember(member, targetMember)) {
+        if (isNotSameMember(member, targetMember)) {
             throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 모임에 권한이 없습니다.");
         }
     }
 
-    private boolean isaNotSameMember(Member member, Member postMember) {
+    private boolean isNotSameMember(Member member, Member postMember) {
         return member != postMember;
     }
 
@@ -478,6 +491,18 @@ public class MeetingService {
                 .meeting(meeting)
                 .member(member)
                 .build();
+    }
+
+    private void validateOpenStatusChange(MeetingEditReqDto meetingEditReqDto, Meeting findMeeting, Long joinedMemberCount) {
+        if (meetingEditReqDto.getIsOpened() == true && isFull(findMeeting.getMaxPeople(), joinedMemberCount) && (meetingEditReqDto.getMaxPeople() <= findMeeting.getMaxPeople())) {
+            throwException(ErrorCode.FULL_MEMBER_MEETING, "모임 인원이 다 꽉찬 상태를 모집중으로 바꿀 수 없습니다.(모집인원을 늘려주세요)");
+        }
+    }
+
+    private void validateEditMeetingMaxPeopleNumber(Long joinedMemberCount, Integer editMaxPeople) {
+        if (editMaxPeople < joinedMemberCount) {
+            throwException(ErrorCode.BAD_REQUEST, "현재 가입한 회원의 수 보다 낮게 수정 할 수 없습니다.");
+        }
     }
 
     private Meeting createMeeting(Member member, MeetingCreateReqDto meetingCreateReqDto) {

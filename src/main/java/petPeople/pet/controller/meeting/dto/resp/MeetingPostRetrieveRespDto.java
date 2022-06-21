@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter @Setter
 @Builder
-public class MeetingPostWriteRespDto {
+public class MeetingPostRetrieveRespDto {
 
     private Long meetingPostId;
 
@@ -30,7 +30,11 @@ public class MeetingPostWriteRespDto {
 
     private LocalDateTime createdDate;
 
-    public MeetingPostWriteRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList) {
+    private Long likeCnt;
+
+    private Boolean isLiked;
+
+    public MeetingPostRetrieveRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList, Long likeCnt, boolean isLiked) {
         this.meetingPostId = meetingPost.getId();
         this.meetingId = meetingPost.getMeeting().getId();
         this.memberId = meetingPost.getMember().getId();
@@ -42,5 +46,8 @@ public class MeetingPostWriteRespDto {
         for (MeetingPostImage meetingPostImage : meetingPostImageList) {
             imgUrlList.add(meetingPostImage.getImgUrl());
         }
+
+        this.likeCnt = likeCnt;
+        this.isLiked = isLiked;
     }
 }
