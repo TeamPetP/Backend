@@ -2,6 +2,7 @@ package petPeople.pet.controller.meeting;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -54,7 +55,7 @@ public class MeetingController {
     }
 
     @GetMapping("")
-    public ResponseEntity retrieveAllMeeting(Pageable pageable, HttpServletRequest request) {
+    public ResponseEntity<Slice<MeetingRetrieveRespDto>> retrieveAllMeeting(Pageable pageable, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
 
         if (authFilterContainer.getFilter() instanceof MockJwtFilter) {

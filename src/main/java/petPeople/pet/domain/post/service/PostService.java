@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import petPeople.pet.config.auth.AuthFilterContainer;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
@@ -23,6 +24,7 @@ import petPeople.pet.domain.post.entity.*;
 import petPeople.pet.domain.post.repository.*;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
+import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public class PostService {
     private final PostBookmarkRepository postBookmarkRepository;
     private final FirebaseAuth firebaseAuth;
     private final MemberRepository memberRepository;
+    private final AuthFilterContainer authFilterContainer;
 
 
     //의도와 구현을 분리
@@ -126,6 +129,7 @@ public class PostService {
         } else {
             postSlice = findAllPostSlicing(pageable);
         }
+
         return postSliceMapToRespDtoSlice(optionalHeader, postSlice);
     }
 
@@ -271,8 +275,18 @@ public class PostService {
     }
 
     private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostChildList postChildList) {
-        FirebaseToken firebaseToken = decodeToken(header);
-        Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+
+        if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
+            Member member = validateOptionalMember(findOptionalMemberByUid(header));
+            return getPostRetrieveRespDtos(postPage, postChildList, member);
+        } else {
+            FirebaseToken firebaseToken = decodeToken(header);
+            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+            return getPostRetrieveRespDtos(postPage, postChildList, member);
+        }
+    }
+
+    private Slice<PostRetrieveRespDto> getPostRetrieveRespDtos(Slice<Post> postPage, PostChildList postChildList, Member member) {
         return postPage.map(post -> {
             List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
             List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);

@@ -2,6 +2,7 @@ package petPeople.pet.controller.post;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,6 +18,7 @@ import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -52,11 +54,11 @@ public class PostController {
     }
 
     @GetMapping("")
-    public ResponseEntity retrieveAllPost(Pageable pageable, @RequestParam(required = false) String tag, HttpServletRequest request) {
+    public ResponseEntity<Slice<PostRetrieveRespDto>> retrieveAllPost(Pageable pageable, @RequestParam(required = false) String tag, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
-        if (authFilterContainer.getFilter() instanceof MockJwtFilter)
+        if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
             return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
-        else
+        } else
             return ResponseEntity.ok().body(postService.retrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
     }
 
