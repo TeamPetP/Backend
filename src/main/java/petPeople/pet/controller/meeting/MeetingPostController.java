@@ -71,13 +71,13 @@ public class MeetingPostController {
                 .body(meetingPostService.like(meetingId, meetingPostId, member));
     }
 
-//    @DeleteMapping("/{meetingId}/meetingPosts/{meetingPostId}")
-//    public ResponseEntity deleteMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
-//        Member member = getMember(authentication);
-//
-//        meetingPostService.delete(meetingId, meetingPostId, member);
-//        return ResponseEntity.noContent().build();
-//    }
+    @DeleteMapping("/{meetingId}/meetingPosts/{meetingPostId}")
+    public ResponseEntity deleteMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
+        Member member = getMember(authentication);
+
+        meetingPostService.delete(meetingId, meetingPostId, member);
+        return ResponseEntity.noContent().build();
+    }
 
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();

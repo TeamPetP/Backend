@@ -99,7 +99,7 @@ public class MeetingPostService {
         findMeetingPost.setTitle(meetingPostWriteReqDto.getTitle());
         findMeetingPost.setContent(meetingPostWriteReqDto.getContent());
 
-        deleteMeetingPostByMeetingPostId(meetingPostId);
+        deleteMeetingPostImageByMeetingPostId(meetingPostId);
 
         List<MeetingPostImage> saveMeetingPostImageList = saveMeetingPostImageList(member, findMeetingPost, meetingPostWriteReqDto.getImgUrlList());
 
@@ -109,16 +109,37 @@ public class MeetingPostService {
     @Transactional
     public long like(Long meetingId, Long meetingPostId, Member member) {
         validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-        MeetingPost meetingPost = validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
+        MeetingPost findMeetingPost = validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
         Optional<MeetingPostLike> optionalMeetingPostLike = findOptionalMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);
 
         if (optionalMeetingPostLike.isPresent()) {
             deleteMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);
         } else {
-            saveMeetingPostLike(createMeetingPostLike(member, meetingPost));
+            saveMeetingPostLike(createMeetingPostLike(member, findMeetingPost));
         }
 
         return countMeetingPostLikeByMeetingPostsId(meetingPostId);
+    }
+
+
+    @Transactional
+    public void delete(Long meetingId, Long meetingPostId, Member member) {
+        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        MeetingPost findMeetingPost = validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
+
+        validateMemberAuthorization(member, findMeetingPost.getMember());
+
+        deleteMeetingPostLikeByMeetingPostId(meetingPostId);
+        deleteMeetingPostImageByMeetingPostId(meetingPostId);
+        deleteMeetingPostByMeetingPostId(meetingPostId);
+    }
+
+    private void deleteMeetingPostByMeetingPostId(Long meetingPostId) {
+        meetingPostRepository.deleteById(meetingPostId);
+    }
+
+    private void deleteMeetingPostLikeByMeetingPostId(Long meetingPostId) {
+        meetingPostLikeRepository.deleteByMeetingPostId(meetingPostId);
     }
 
     private long countMeetingPostLikeByMeetingPostsId(Long meetingPostId) {
@@ -145,17 +166,6 @@ public class MeetingPostService {
         return meetingPostLikeRepository.findByMemberIdAndMeetingPostId(memberId, meetingPostId);
     }
 
-//    @Transactional
-//    public void delete(Long meetingId, Long meetingPostId, Member member) {
-//        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-//        MeetingPost findMeetingPost = validateOptionalMeetingPost(findMeetingPostByMeetingPostId(meetingPostId));
-//
-//        validateMemberAuthorization(member, findMeetingPost.getMember());
-//
-//
-////        deleteMeetingPostByMeetingPostId(meetingPostId);
-
-//    }
 
     private void validateMemberAuthorization(Member member, Member targetMember) {
         if (isaNotSameMember(member, targetMember)) {
@@ -167,7 +177,7 @@ public class MeetingPostService {
         return member != postMember;
     }
 
-    private void deleteMeetingPostByMeetingPostId(Long meetingPostId) {
+    private void deleteMeetingPostImageByMeetingPostId(Long meetingPostId) {
         meetingPostImageRepository.deleteByMeetingPostId(meetingPostId);
     }
 

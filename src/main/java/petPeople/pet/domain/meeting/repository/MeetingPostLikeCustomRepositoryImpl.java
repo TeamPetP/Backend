@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import petPeople.pet.domain.meeting.entity.MeetingPostLike;
 import petPeople.pet.domain.meeting.entity.QMeetingPostLike;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,7 @@ import static petPeople.pet.domain.meeting.entity.QMeetingPostLike.*;
 public class MeetingPostLikeCustomRepositoryImpl implements MeetingPostLikeCustomRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager em;
 
     @Override
     public Optional<MeetingPostLike> findByMemberIdAndMeetingPostId(Long memberId, Long meetingPostId) {
@@ -49,5 +51,16 @@ public class MeetingPostLikeCustomRepositoryImpl implements MeetingPostLikeCusto
                 .selectFrom(meetingPostLike)
                 .where(meetingPostLike.meetingPost.id.in(meetingPostIds))
                 .fetch();
+    }
+
+    @Override
+    public void deleteByMeetingPostId(Long meetingPostId) {
+        queryFactory
+                .delete(meetingPostLike)
+                .where(meetingPostLike.meetingPost.id.eq(meetingPostId))
+                .execute();
+
+        em.flush();
+        em.clear();
     }
 }
