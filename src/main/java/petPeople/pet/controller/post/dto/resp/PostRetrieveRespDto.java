@@ -1,9 +1,6 @@
 package petPeople.pet.controller.post.dto.resp;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostImage;
 import petPeople.pet.domain.post.entity.Tag;
@@ -11,9 +8,11 @@ import petPeople.pet.domain.post.entity.Tag;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 public class PostRetrieveRespDto {
 
     private Long postId;
