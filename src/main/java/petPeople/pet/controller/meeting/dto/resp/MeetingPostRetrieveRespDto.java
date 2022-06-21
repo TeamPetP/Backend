@@ -32,7 +32,9 @@ public class MeetingPostRetrieveRespDto {
 
     private Long likeCnt;
 
-    public MeetingPostRetrieveRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList, Long likeCnt) {
+    private Boolean isLiked;
+
+    public MeetingPostRetrieveRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList, Long likeCnt, boolean isLiked) {
         this.meetingPostId = meetingPost.getId();
         this.meetingId = meetingPost.getMeeting().getId();
         this.memberId = meetingPost.getMember().getId();
@@ -46,5 +48,6 @@ public class MeetingPostRetrieveRespDto {
         }
 
         this.likeCnt = likeCnt;
+        this.isLiked = isLiked;
     }
 }

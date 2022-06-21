@@ -101,26 +101,6 @@ public class PostService {
         return respDto;
     }
 
-    private Member validateOptionalMember(Optional<Member> optionalMember) {
-        return optionalMember
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
-    }
-
-    private Optional<Member> findOptionalMemberByUid(String uid) {
-        return memberRepository.findByUid(uid);
-    }
-
-    public FirebaseToken decodeToken(String header) {
-        try {
-            String token = RequestUtil.getAuthorizationToken(header);
-            return firebaseAuth.verifyIdToken(token);
-        } catch (IllegalArgumentException | FirebaseAuthException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "{\"code\":\"INVALID_TOKEN\", \"message\":\"" + e.getMessage() + "\"}");
-        }
-    }
-
     public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
 
         Slice<Post> postSlice;
@@ -213,6 +193,26 @@ public class PostService {
 
     private Slice<Post> findAllPostByMemberIdSlicing(Member member, Pageable pageable) {
         return postRepository.findAllByMemberIdSlicing(member.getId(), pageable);
+    }
+
+    private Member validateOptionalMember(Optional<Member> optionalMember) {
+        return optionalMember
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
+    }
+
+    private Optional<Member> findOptionalMemberByUid(String uid) {
+        return memberRepository.findByUid(uid);
+    }
+
+    public FirebaseToken decodeToken(String header) {
+        try {
+            String token = RequestUtil.getAuthorizationToken(header);
+            return firebaseAuth.verifyIdToken(token);
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "{\"code\":\"INVALID_TOKEN\", \"message\":\"" + e.getMessage() + "\"}");
+        }
     }
 
     private void savePostBookmark(PostBookmark postBookmark) {
