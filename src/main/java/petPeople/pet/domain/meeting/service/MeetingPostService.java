@@ -67,22 +67,26 @@ public class MeetingPostService {
         List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostIds(meetingPostIds);
         List<MeetingPostLike> findMeetingPostLikeList = finAllMeetingPostLikeByMeetingPostIds(meetingPostIds);
 
-
         return meetingPostSlice.map(meetingPost -> {
             List<MeetingPostImage> meetingPostImageList = getMeetingPostImagesByMeetingPost(findMeetingPostImageList, meetingPost);
             List<MeetingPostLike> meetingPostLikesByMeetingPost = getMeetingPostLikesByMeetingPost(findMeetingPostLikeList, meetingPost);
 
-            boolean isLiked = false;
-
-            for (MeetingPostLike meetingPostLike : findMeetingPostLikeList) {
-                if (meetingPostLike.getMember() == member) {
-                    isLiked = true;
-                    break;
-                }
-            }
+            boolean isLiked = isMemberLikedMeetingPost(member, meetingPostLikesByMeetingPost);
 
             return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked);
         });
+    }
+
+    private boolean isMemberLikedMeetingPost(Member member, List<MeetingPostLike> meetingPostLikesByMeetingPost) {
+        boolean isLiked = false;
+
+        for (MeetingPostLike meetingPostLike : meetingPostLikesByMeetingPost) {
+            if (meetingPostLike.getMember() == member) {
+                isLiked = true;
+                break;
+            }
+        }
+        return isLiked;
     }
 
     private List<MeetingPostLike> finAllMeetingPostLikeByMeetingPostIds(List<Long> meetingPostIds) {
