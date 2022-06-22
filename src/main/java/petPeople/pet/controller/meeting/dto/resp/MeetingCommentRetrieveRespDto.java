@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class MeetingCommentWriteRespDto {
+public class MeetingCommentRetrieveRespDto {
 
     private Long meetingCommentId;
 
@@ -16,5 +16,7 @@ public class MeetingCommentWriteRespDto {
     private Long meetingId;
 
     private String content;
+
+    private Boolean isLiked;
 
 }

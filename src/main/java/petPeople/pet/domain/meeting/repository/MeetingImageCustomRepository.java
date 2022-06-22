@@ -1,4 +1,4 @@
-package petPeople.pet.domain.meeting.repository.custom;
+package petPeople.pet.domain.meeting.repository;
 
 import petPeople.pet.domain.meeting.entity.MeetingImage;
 

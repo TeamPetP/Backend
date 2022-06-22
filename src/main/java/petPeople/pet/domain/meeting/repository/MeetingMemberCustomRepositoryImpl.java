@@ -1,9 +1,9 @@
-package petPeople.pet.domain.meeting.repository.impl;
+package petPeople.pet.domain.meeting.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import petPeople.pet.domain.meeting.entity.MeetingMember;
-import petPeople.pet.domain.meeting.repository.custom.MeetingMemberCustomRepository;
+import petPeople.pet.domain.meeting.repository.MeetingMemberCustomRepository;
 
 import javax.persistence.EntityManager;
 import java.util.List;

@@ -1,4 +1,4 @@
-package petPeople.pet.domain.meeting.repository.impl;
+package petPeople.pet.domain.meeting.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.AllArgsConstructor;
@@ -7,7 +7,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.domain.meeting.entity.JoinRequestStatus;
 import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
-import petPeople.pet.domain.meeting.repository.custom.MeetingWaitingMemberCustomRepository;
+import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberCustomRepository;
 
 import java.util.List;
 import java.util.Optional;

@@ -2,7 +2,6 @@ package petPeople.pet.domain.meeting.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import petPeople.pet.domain.meeting.entity.MeetingPostLike;
-import petPeople.pet.domain.meeting.repository.custom.MeetingPostLikeCustomRepository;
 
 public interface MeetingPostLikeRepository extends JpaRepository<MeetingPostLike, Long>, MeetingPostLikeCustomRepository {
 }

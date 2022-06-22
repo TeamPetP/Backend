@@ -1,9 +1,9 @@
-package petPeople.pet.domain.meeting.repository.impl;
+package petPeople.pet.domain.meeting.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import petPeople.pet.domain.meeting.entity.MeetingImage;
-import petPeople.pet.domain.meeting.repository.custom.MeetingImageCustomRepository;
+import petPeople.pet.domain.meeting.repository.MeetingImageCustomRepository;
 
 import java.util.List;
 
