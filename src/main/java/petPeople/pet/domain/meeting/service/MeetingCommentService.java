@@ -14,6 +14,7 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,23 +49,104 @@ public class MeetingCommentService {
         validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
 
-        List<MeetingCommentLike> meetingCommentLikeList = findMeetingCommentLikeByPostId(meetingPostId);
+        Slice<MeetingComment> meetingCommentSlice = findMeetingCommentByMeetingPostId(meetingPostId, pageable);
 
-        return findMeetingCommentByMeetingPostId(meetingPostId, pageable)
+        List<Long> meetingCommentIds = getMeetingCommentIds(meetingCommentSlice.getContent());
+
+        List<MeetingCommentLike> findMeetingCommentLikeList = findMeetingCommentLikeByMeetingCommentIds(meetingCommentIds);
+
+        return meetingCommentSlice
                 .map(meetingComment -> {
-                    boolean isLiked = false;
-                    for (MeetingCommentLike meetingCommentLike : meetingCommentLikeList) {
-                        if (meetingCommentLike.getMember() == member) {
-                            isLiked = true;
-                            break;
-                        }
-                    }
-                    return new MeetingCommentRetrieveRespDto(meetingComment.getId(), meetingPostId, meetingId, meetingComment.getContent(), isLiked);
+                    List<MeetingCommentLike> meetingCommentLikeList = getMeetingCommentLikeByMeetingComment(findMeetingCommentLikeList, meetingComment);
+
+                    return new MeetingCommentRetrieveRespDto(meetingComment.getId(), meetingPostId, meetingId, meetingComment.getContent(), isMemberLikedMeetingComment(member, meetingCommentLikeList), Long.valueOf(meetingCommentLikeList.size()));
                 });
     }
 
-    private List<MeetingCommentLike> findMeetingCommentLikeByPostId(Long meetingPostId) {
-        return meetingCommentLikeRepository.findByMeetingPostId(meetingPostId);
+    private List<Long> getMeetingCommentIds(List<MeetingComment> content) {
+        List<Long> meetingCommentIds = new ArrayList<>();
+
+        for (MeetingComment meetingComment : content) {
+            meetingCommentIds.add(meetingComment.getId());
+        }
+        return meetingCommentIds;
+    }
+
+    @Transactional
+    public Long likeComment(Long meetingId, Long meetingPostId, Long meetingCommentId, Member member) {
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+
+        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
+        MeetingComment meetingComment = validateOptionalMeetingComment(findMeetingCommentByMeetingCommentId(meetingCommentId));
+
+        Optional<MeetingCommentLike> optionalMeetingCommentLike = findMeetingCommentLikeByMeetingCommentIdAndMemberId(meetingCommentId, member.getId());
+
+        if (optionalMeetingCommentLike.isPresent()) {
+            deleteMeetingCommentLikeByMeetingCommentIdAndMemberId(meetingCommentId, member.getId());
+        } else {
+            saveMeetingCommentLike(createMeetingCommentLike(member, meetingComment));
+        }
+
+        return countMeetingCommentLikeByMeetingCommentId(meetingCommentId);
+
+    }
+
+    private boolean isMemberLikedMeetingComment(Member member, List<MeetingCommentLike> meetingCommentLikes) {
+        boolean isLiked = false;
+        for (MeetingCommentLike meetingCommentLike : meetingCommentLikes) {
+            if (meetingCommentLike.getMember() == member) {
+                isLiked = true;
+                break;
+            }
+        }
+        return isLiked;
+    }
+
+    private List<MeetingCommentLike> getMeetingCommentLikeByMeetingComment(List<MeetingCommentLike> meetingCommentLikeList, MeetingComment meetingComment) {
+        List<MeetingCommentLike> meetingCommentLikes = new ArrayList<>();
+
+        for (MeetingCommentLike meetingCommentLike : meetingCommentLikeList) {
+            if (meetingCommentLike.getMeetingComment() == meetingComment) {
+                meetingCommentLikes.add(meetingCommentLike);
+            }
+        }
+        return meetingCommentLikes;
+    }
+
+    private Long countMeetingCommentLikeByMeetingCommentId(Long meetingCommentId) {
+        return meetingCommentLikeRepository.countByMeetingCommentId(meetingCommentId);
+    }
+
+    private void deleteMeetingCommentLikeByMeetingCommentIdAndMemberId(Long meetingCommentId, Long memberId) {
+        meetingCommentLikeRepository.deleteByMeetingCommentIdAndMemberId(meetingCommentId, memberId);
+    }
+
+    private MeetingCommentLike saveMeetingCommentLike(MeetingCommentLike meetingCommentLike) {
+        return meetingCommentLikeRepository.save(meetingCommentLike);
+    }
+
+    private MeetingCommentLike createMeetingCommentLike(Member member, MeetingComment meetingComment) {
+        return MeetingCommentLike.builder()
+                .member(member)
+                .meetingComment(meetingComment)
+                .build();
+    }
+
+    private Optional<MeetingCommentLike> findMeetingCommentLikeByMeetingCommentIdAndMemberId(Long meetingCommentId, Long memberId) {
+        return meetingCommentLikeRepository.findByMeetingPostIdAndMemberId(meetingCommentId, memberId);
+    }
+
+    private MeetingComment validateOptionalMeetingComment(Optional<MeetingComment> optionalMeetingComment) {
+        return optionalMeetingComment.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 댓글입니다."));
+    }
+
+    private Optional<MeetingComment> findMeetingCommentByMeetingCommentId(Long meetingCommentId) {
+        return meetingCommentRepository.findById(meetingCommentId);
+    }
+
+    private List<MeetingCommentLike> findMeetingCommentLikeByMeetingCommentIds(List<Long> meetingCommentIds) {
+        return meetingCommentLikeRepository.findByMeetingCommentIds(meetingCommentIds);
     }
 
     private Slice<MeetingComment> findMeetingCommentByMeetingPostId(Long meetingPostId, Pageable pageable) {

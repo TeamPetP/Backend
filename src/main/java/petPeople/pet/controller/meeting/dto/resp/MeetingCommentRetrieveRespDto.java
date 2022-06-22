@@ -19,4 +19,6 @@ public class MeetingCommentRetrieveRespDto {
 
     private Boolean isLiked;
 
+    private Long likeCnt;
+
 }

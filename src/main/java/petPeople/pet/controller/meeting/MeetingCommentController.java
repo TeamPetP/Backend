@@ -40,6 +40,16 @@ public class MeetingCommentController {
                 .body(meetingCommentService.retrieveComments(meetingId, meetingPostId, member, pageable));
     }
 
+    @PatchMapping("/{meetingId}/meetingPosts/{meetingPostId}/meetingComments/{meetingCommentId}")
+    public ResponseEntity likeComment(@PathVariable Long meetingId, @PathVariable Long meetingPostId, @PathVariable Long meetingCommentId,
+                                      Authentication authentication) {
+        Member member = getMember(authentication);
+        
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingCommentService.likeComment(meetingId, meetingPostId, meetingCommentId, member));
+    }
+
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();
     }
