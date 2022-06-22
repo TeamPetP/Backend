@@ -1,4 +1,4 @@
-package petPeople.pet.domain.meeting.repository;
+package petPeople.pet.domain.meeting.repository.impl;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.domain.meeting.entity.MeetingPost;
+import petPeople.pet.domain.meeting.repository.custom.MeetingPostCustomRepository;
 
 import java.util.List;
 

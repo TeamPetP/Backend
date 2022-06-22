@@ -1,4 +1,4 @@
-package petPeople.pet.domain.meeting.repository;
+package petPeople.pet.domain.meeting.repository.custom;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
