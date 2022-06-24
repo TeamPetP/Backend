@@ -283,7 +283,12 @@ class CommentServiceTest {
     }
 
     @Test
-    void likeComment() {
+    @DisplayName("댓글 좋아요 테스트")
+    void loginLikeComment() {
+        //given
+//        when(commentRepository.findAllByIdWithFetchJoinMemberPaging(any(), any())).thenReturn();
+        //when
+        //then
     }
 
     private Member createMember(String uid, String email, String name, String nickname, String imgUrl, String introduce) {

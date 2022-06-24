@@ -6,6 +6,8 @@ import petPeople.pet.domain.comment.entity.Comment;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommentRetrieveRespDto {

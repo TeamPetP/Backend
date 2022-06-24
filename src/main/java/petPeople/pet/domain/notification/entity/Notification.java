@@ -1,4 +1,4 @@
-package petPeople.pet.domain.notification;
+package petPeople.pet.domain.notification.entity;
 
 
 import lombok.*;
@@ -29,5 +29,4 @@ public class Notification extends BaseTimeEntity {
     private Member member;
 
     private boolean isChecked;
-
 }
