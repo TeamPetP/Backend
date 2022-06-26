@@ -26,7 +26,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
                 .where(QPost.post.id.eq(postId))
                 .fetchOne();
 
-        return Optional.of(post);
+        return Optional.ofNullable(post);
     }
 
     @Override
