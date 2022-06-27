@@ -17,9 +17,9 @@ import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
 import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
 import petPeople.pet.controller.member.dto.resp.MeetingJoinApplyRespDto;
 import petPeople.pet.controller.member.dto.resp.MeetingWaitingMemberRespDto;
+import petPeople.pet.controller.member.dto.resp.MemberIntroduceRespDto;
 import petPeople.pet.controller.member.dto.resp.MemberRegisterRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
-import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.meeting.service.MeetingWaitingMemberService;
 import petPeople.pet.domain.member.entity.Member;
@@ -30,7 +30,6 @@ import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -115,6 +114,14 @@ public class MemberController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(meetingWaitingMemberService.retrieveMeetingWaitingMemberApply(pageable, getMember(authentication)));
+    }
+
+    @GetMapping("/me/info")
+    public ResponseEntity info(Authentication authentication) {
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new MemberIntroduceRespDto(getMember(authentication).getIntroduce()));
     }
 
     private Member getMember(Authentication authentication) {
