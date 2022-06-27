@@ -8,4 +8,5 @@ public interface MeetingPostCustomRepository {
 
     Slice<MeetingPost> findAllSliceByMeetingId(Long meetingId, Pageable pageable);
 
+    Slice<MeetingPost> findAllSliceByMemberId(Pageable pageable, Long memberId);
 }

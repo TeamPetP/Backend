@@ -15,11 +15,9 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
 import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
-import petPeople.pet.controller.member.dto.resp.MeetingJoinApplyRespDto;
-import petPeople.pet.controller.member.dto.resp.MeetingWaitingMemberRespDto;
-import petPeople.pet.controller.member.dto.resp.MemberIntroduceRespDto;
-import petPeople.pet.controller.member.dto.resp.MemberRegisterRespDto;
+import petPeople.pet.controller.member.dto.resp.*;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
+import petPeople.pet.domain.meeting.service.MeetingPostService;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.meeting.service.MeetingWaitingMemberService;
 import petPeople.pet.domain.member.entity.Member;
@@ -39,6 +37,7 @@ public class MemberController {
     private final MemberService memberService;
     private final PostService postService;
     private final MeetingService meetingService;
+    private final MeetingPostService meetingPostService;
     private final FirebaseAuth firebaseAuth;
     private final MeetingWaitingMemberService meetingWaitingMemberService;
 
@@ -122,6 +121,21 @@ public class MemberController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(new MemberIntroduceRespDto(getMember(authentication).getIntroduce()));
+    }
+
+    @GetMapping("/me/meetings/meetingPosts")
+    public ResponseEntity retrieveMemberMeetingPost(Authentication authentication, Pageable pageable) {
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingPostService.retrieveMemberMeetingPost(getMember(authentication), pageable));
+    }
+
+    @GetMapping("/me/bookmark")
+    public ResponseEntity retrieveMemberBookMarkPost(Authentication authentication, Pageable pageable) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(postService.retrieveMemberBookMarkPost(getMember(authentication), pageable));
     }
 
     private Member getMember(Authentication authentication) {

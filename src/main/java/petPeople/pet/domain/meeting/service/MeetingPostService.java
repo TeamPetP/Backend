@@ -77,20 +77,22 @@ public class MeetingPostService {
         });
     }
 
-    private boolean isMemberLikedMeetingPost(Member member, List<MeetingPostLike> meetingPostLikesByMeetingPost) {
-        boolean isLiked = false;
+    public Slice<MeetingPostRetrieveRespDto> retrieveMemberMeetingPost(Member member, Pageable pageable) {
+        Slice<MeetingPost> meetingPostSlice = findMeetingPostSliceByMemberId(member, pageable);
 
-        for (MeetingPostLike meetingPostLike : meetingPostLikesByMeetingPost) {
-            if (meetingPostLike.getMember() == member) {
-                isLiked = true;
-                break;
-            }
-        }
-        return isLiked;
-    }
+        List<Long> meetingPostIds = getMeetingPostId(meetingPostSlice.getContent());
 
-    private List<MeetingPostLike> finAllMeetingPostLikeByMeetingPostIds(List<Long> meetingPostIds) {
-        return meetingPostLikeRepository.findByMeetingPostIds(meetingPostIds);
+        List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostIds(meetingPostIds);
+        List<MeetingPostLike> findMeetingPostLikeList = finAllMeetingPostLikeByMeetingPostIds(meetingPostIds);
+
+        return meetingPostSlice.map(meetingPost -> {
+            List<MeetingPostImage> meetingPostImageList = getMeetingPostImagesByMeetingPost(findMeetingPostImageList, meetingPost);
+            List<MeetingPostLike> meetingPostLikesByMeetingPost = getMeetingPostLikesByMeetingPost(findMeetingPostLikeList, meetingPost);
+
+            boolean isLiked = isMemberLikedMeetingPost(member, meetingPostLikesByMeetingPost);
+
+            return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked);
+        });
     }
 
     @Transactional
@@ -138,8 +140,28 @@ public class MeetingPostService {
         deleteMeetingPostByMeetingPostId(meetingPostId);
     }
 
+    private Slice<MeetingPost> findMeetingPostSliceByMemberId(Member member, Pageable pageable) {
+        return meetingPostRepository.findAllSliceByMemberId(pageable, member.getId());
+    }
+
     private void deleteMeetingPostByMeetingPostId(Long meetingPostId) {
         meetingPostRepository.deleteById(meetingPostId);
+    }
+
+    private boolean isMemberLikedMeetingPost(Member member, List<MeetingPostLike> meetingPostLikesByMeetingPost) {
+        boolean isLiked = false;
+
+        for (MeetingPostLike meetingPostLike : meetingPostLikesByMeetingPost) {
+            if (meetingPostLike.getMember() == member) {
+                isLiked = true;
+                break;
+            }
+        }
+        return isLiked;
+    }
+
+    private List<MeetingPostLike> finAllMeetingPostLikeByMeetingPostIds(List<Long> meetingPostIds) {
+        return meetingPostLikeRepository.findByMeetingPostIds(meetingPostIds);
     }
 
     private void deleteMeetingPostLikeByMeetingPostId(Long meetingPostId) {

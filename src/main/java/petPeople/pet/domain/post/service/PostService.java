@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.config.auth.AuthFilterContainer;
+import petPeople.pet.controller.member.dto.resp.MemberPostBookMarkRespDto;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
@@ -182,6 +183,16 @@ public class PostService {
         } else {
             throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
         }
+    }
+
+    public Slice<MemberPostBookMarkRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
+
+        return findPostBookmarkByMemberId(member, pageable)
+                .map(postBookmark -> new MemberPostBookMarkRespDto(postBookmark.getId(), postBookmark.getPost().getId(), postBookmark.getPost().getContent()));
+    }
+
+    private Slice<PostBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
+        return postBookmarkRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
     }
 
     public Slice<PostRetrieveRespDto> retrieveMemberPost(Member member, Pageable pageable, String header) {
