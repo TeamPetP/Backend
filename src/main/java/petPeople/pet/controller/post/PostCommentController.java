@@ -1,5 +1,7 @@
 package petPeople.pet.controller.post;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +28,9 @@ public class PostCommentController {
     private final CommentService commentService;
 
     @PostMapping("/posts/{postId}/comments")
-    public ResponseEntity<CommentWriteRespDto> writeComment(@RequestBody CommentWriteReqDto commentWriteRequestDto,
-                                                            @PathVariable Long postId,
+    @ApiOperation(value = "댓글 작성 API", notes = "댓글 작성을 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity<CommentWriteRespDto> writeComment(@ApiParam(value = "댓글 작성 DTO", required = true) @RequestBody CommentWriteReqDto commentWriteRequestDto,
+                                                            @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
                                                             Authentication authentication) {
         CommentWriteRespDto respDto = commentService.write(getMember(authentication), commentWriteRequestDto, postId);
         return ResponseEntity.
@@ -36,7 +39,9 @@ public class PostCommentController {
     }
 
     @GetMapping("/posts/{postId}/comments")
-    public ResponseEntity<Slice<CommentRetrieveRespDto>> retrieveAllComment(@PathVariable Long postId, Pageable pageable, HttpServletRequest request) {
+    @ApiOperation(value = "댓글 전체 조회 API", notes = "댓글 조회를 위해 게시글 postId 를 경로변수에 넣어주세요(헤더에 토큰이 있을 경우 좋아요 여부를 알려줍니다.)")
+    public ResponseEntity<Slice<CommentRetrieveRespDto>> retrieveAllComment(@ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
+                                                                            Pageable pageable, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
 
         return ResponseEntity.ok(commentService.retrieveAll(postId, header, pageable));

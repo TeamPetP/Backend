@@ -1,5 +1,6 @@
 package petPeople.pet.controller.member.dto.resp;
 
+import io.swagger.annotations.ApiModel;
 import lombok.*;
 import petPeople.pet.domain.meeting.entity.Category;
 import petPeople.pet.domain.meeting.entity.MeetingType;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Getter @Setter
+@ApiModel(description = "내가 가입한 모임 신청 현황 조회 응답 DTO")
 public class MeetingJoinApplyRespDto {
 
     private Long meetingId;

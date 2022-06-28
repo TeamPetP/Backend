@@ -1,5 +1,7 @@
 package petPeople.pet.controller.meeting;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -11,7 +13,6 @@ import petPeople.pet.config.auth.AuthFilterContainer;
 import petPeople.pet.controller.meeting.dto.req.MeetingPostWriteReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingPostRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingPostWriteRespDto;
-import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.domain.meeting.service.MeetingPostService;
 import petPeople.pet.domain.member.entity.Member;
 
@@ -21,11 +22,11 @@ import petPeople.pet.domain.member.entity.Member;
 public class MeetingPostController {
 
     private final MeetingPostService meetingPostService;
-    private final AuthFilterContainer authFilterContainer;
 
     @PostMapping("/{meetingId}/meetingPosts")
-    public ResponseEntity<MeetingPostWriteRespDto> writeMeetingPost(@RequestBody MeetingPostWriteReqDto meetingPostWriteReqDto,
-                                           @PathVariable Long meetingId,
+    @ApiOperation(value = "모임 게시글 작성 API", notes = "모임 게시글 작성을 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity<MeetingPostWriteRespDto> writeMeetingPost(@ApiParam(value = "모임 게시글 작성 DTO", required = true) @RequestBody MeetingPostWriteReqDto meetingPostWriteReqDto,
+                                                                    @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
                                            Authentication authentication) {
         Member member = getMember(authentication);
 
@@ -35,7 +36,9 @@ public class MeetingPostController {
     }
 
     @GetMapping("/{meetingId}/meetingPosts/{meetingPostId}")
-    public ResponseEntity<MeetingPostRetrieveRespDto> retrieveOneMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
+    @ApiOperation(value = "모임 게시글 단건 조회 API", notes = "모임 게시글 조회 권한 검사를 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity<MeetingPostRetrieveRespDto> retrieveOneMeetingPost(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                                                             @ApiParam(value = "모임 게시글 ID", required = true) @PathVariable Long meetingPostId, Authentication authentication) {
         Member member = getMember(authentication);
 
         return ResponseEntity
@@ -44,7 +47,10 @@ public class MeetingPostController {
     }
 
     @GetMapping("/{meetingId}/meetingPosts")
-    public ResponseEntity<Slice<MeetingPostRetrieveRespDto>> retrieveAllMeetingPost(@PathVariable Long meetingId, Pageable pageable, Authentication authentication) {
+    @ApiOperation(value = "모임 게시글 전체 조회 API", notes = "모임 게시글 전체 조회 권한 검사를 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity<Slice<MeetingPostRetrieveRespDto>> retrieveAllMeetingPost(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                                                                    Pageable pageable,
+                                                                                    Authentication authentication) {
         Member member = getMember(authentication);
 
         return ResponseEntity
@@ -53,8 +59,10 @@ public class MeetingPostController {
     }
 
     @PutMapping("/{meetingId}/meetingPosts/{meetingPostId}")
-    public ResponseEntity<MeetingPostWriteRespDto> editMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId,
-                                                                           @RequestBody MeetingPostWriteReqDto meetingPostWriteReqDto, Authentication authentication) {
+    @ApiOperation(value = "모임 게시글 수정 API", notes = "모임 게시글 수정과 권한 검사를 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity<MeetingPostWriteRespDto> editMeetingPost(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                                                   @ApiParam(value = "모임 게시글 ID", required = true) @PathVariable Long meetingPostId,
+                                                                   @ApiParam(value = "모임 게시글 수정/작성 DTO", required = true) @RequestBody MeetingPostWriteReqDto meetingPostWriteReqDto, Authentication authentication) {
         Member member = getMember(authentication);
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -62,7 +70,10 @@ public class MeetingPostController {
     }
 
     @PatchMapping("/{meetingId}/meetingPosts/{meetingPostId}")
-    public ResponseEntity<Long> likeMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
+    @ApiOperation(value = "모임 게시글 좋아요 API", notes = "모임 게시글 좋아요와 권한 검사를 위해 header 에 토큰을 입력해주세요(한번 더 누를 시 취소)")
+    public ResponseEntity<Long> likeMeetingPost(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                                @ApiParam(value = "모임 게시글 ID", required = true) @PathVariable Long meetingPostId,
+                                                Authentication authentication) {
 
         Member member = getMember(authentication);
 
@@ -72,7 +83,10 @@ public class MeetingPostController {
     }
 
     @DeleteMapping("/{meetingId}/meetingPosts/{meetingPostId}")
-    public ResponseEntity deleteMeetingPost(@PathVariable Long meetingId, @PathVariable Long meetingPostId, Authentication authentication) {
+    @ApiOperation(value = "모임 게시글 삭제 API", notes = "모임 게시글 삭제와 권한 검사를 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity deleteMeetingPost(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                            @ApiParam(value = "모임 게시글 ID", required = true) @PathVariable Long meetingPostId,
+                                            Authentication authentication) {
         Member member = getMember(authentication);
 
         meetingPostService.delete(meetingId, meetingPostId, member);
