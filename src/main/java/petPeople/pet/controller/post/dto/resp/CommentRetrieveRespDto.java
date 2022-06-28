@@ -8,6 +8,8 @@ import petPeople.pet.domain.comment.entity.Comment;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ApiModel(description = "댓글 작성 응답 DTO")

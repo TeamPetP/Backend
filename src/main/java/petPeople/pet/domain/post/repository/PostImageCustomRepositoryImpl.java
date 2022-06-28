@@ -45,4 +45,5 @@ public class PostImageCustomRepositoryImpl implements PostImageCustomRepository 
                 .where(postImage.post.id.eq(postId))
                 .fetch();
     }
+
 }
