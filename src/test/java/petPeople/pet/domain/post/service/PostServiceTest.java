@@ -131,6 +131,7 @@ class PostServiceTest {
         //given
         long likeCnt = 3L;
 
+
         String uid = "abcd";
 
         when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
