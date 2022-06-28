@@ -20,6 +20,9 @@ import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.datastructure.PostChildList;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
+import petPeople.pet.domain.notification.entity.Notification;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
+import petPeople.pet.domain.notification.service.NotificationService;
 import petPeople.pet.domain.post.entity.*;
 import petPeople.pet.domain.post.repository.*;
 import petPeople.pet.exception.CustomException;
@@ -46,7 +49,7 @@ public class PostService {
     private final FirebaseAuth firebaseAuth;
     private final MemberRepository memberRepository;
     private final AuthFilterContainer authFilterContainer;
-
+    private final NotificationRepository notificationRepository;
 
     //의도와 구현을 분리
     @Transactional
@@ -146,12 +149,14 @@ public class PostService {
     @Transactional
     public Long like(Member member, Long postId) {
 
+        Post findPost = findPostOrElseThrow(postId);
+
         if (isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId))) {
             deletePostLikeByPostIdAndMemberId(postId, member.getId());
         } else {
             savePostLike(createPostLike(member, validateOptionalPost(findOptionalPost(postId))));
+            saveNotification(postId, member, findPost);
         }
-
         return countPostLikeByPostId(postId);
     }
 
@@ -173,6 +178,30 @@ public class PostService {
         } else {
             savePostBookmark(createPostBookmark(member, validateOptionalPost(findOptionalPost(postId))));
         }
+    }
+
+    private void saveNotification(Long postId, Member member, Post findPost) {
+        if (isNotSameMember(member, findPost.getMember())) {
+            if (!isExistMemberLikePostNotification(findPost.getId(), member)) {
+                saveNotification(createNotification(member, findPost));
+            }
+        }
+    }
+
+    private Notification createNotification(Member member, Post post) {
+        return Notification.builder()
+                .post(post)
+                .ownerMember(post.getMember()) //게시글 작성자
+                .member(member) //게시글에 좋아요한 사용자
+                .build();
+    }
+
+    private boolean isExistMemberLikePostNotification(Long postId, Member member) {
+        return notificationRepository.findByMemberIdAndPostId(member.getId(), postId).isPresent();
+    }
+
+    private void saveNotification(Notification notification) {
+        notificationRepository.save(notification);
     }
 
     @Transactional
@@ -416,12 +445,12 @@ public class PostService {
     }
 
     private void validateMemberAuthorization(Member member, Member targetMember) {
-        if (isaNotSameMember(member, targetMember)) {
+        if (isNotSameMember(member, targetMember)) {
             throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 게시글에 권한이 없습니다.");
         }
     }
 
-    private boolean isaNotSameMember(Member member, Member postMember) {
+    private boolean isNotSameMember(Member member, Member postMember) {
         return member != postMember;
     }
 
@@ -506,6 +535,13 @@ public class PostService {
                 .member(member)
                 .content(content)
                 .build();
+    }
+
+    private Post findPostOrElseThrow(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    throw new CustomException(ErrorCode.NOT_FOUND_POST, "게시글 ID 에 맞는 게시글이 없습니다.");
+                });
     }
 
 }

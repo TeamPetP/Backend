@@ -17,6 +17,8 @@ import petPeople.pet.domain.comment.entity.CommentLike;
 import petPeople.pet.domain.comment.repository.CommentLikeRepository;
 import petPeople.pet.domain.comment.repository.CommentRepository;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.notification.entity.Notification;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.repository.PostRepository;
 import petPeople.pet.exception.CustomException;
@@ -37,12 +39,15 @@ public class CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
     private final UserDetailsService userDetailsService;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public CommentWriteRespDto write(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId) {
 
         Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
         Comment saveComment = saveComment(createComment(member, findPost, commentWriteRequestDto));
+
+        saveNotification(saveComment, member, findPost);
 
         return new CommentWriteRespDto(saveComment);
     }
@@ -99,12 +104,53 @@ public class CommentService {
 
     @Transactional
     public Long likeComment(Member member, Long commentId) {
+        Comment findComment = validateOptionalComment(findOptionalComment(commentId));
+
         if(isOptionalCommentLikePresent(member, commentId)){
             deleteCommentLikeByCommentIdAndMemberId(member, commentId);
         } else {
             savePostLike(member, commentId);
+            saveNotification(member, commentId, findComment);
         }
         return commentLikeRepository.countByCommentId(commentId);
+    }
+
+    private void saveNotification(Member member, Long commentId, Comment findComment) {
+        if (isNotSameMember(member, findComment.getMember())) {
+            Optional<Notification> optionalNotification = notificationRepository.findByMemberIdAndCommentId(member.getId(), commentId);
+            createLikeCommentNotification(member, findComment, optionalNotification);
+        }
+    }
+
+    private void createLikeCommentNotification(Member member, Comment findComment, Optional<Notification> optionalNotification) {
+        if (!optionalNotification.isPresent()) {
+            Notification notification = Notification.builder()
+                    .comment(findComment)//댓글 엔티티
+                    .member(member)//좋아요를 누른 회원 엔티티
+                    .ownerMember(findComment.getMember())//게시글의 회원
+                    .build();
+
+            notificationRepository.save(notification);
+        }
+    }
+
+    private void saveNotification(Comment saveComment, Member member, Post findPost) {
+        if (isNotSameMember(member, findPost.getMember())) {
+            saveRepositoryNotification(createNotification(member, findPost, saveComment));
+        }
+    }
+
+    private Notification createNotification(Member member, Post post, Comment comment) {
+        return Notification.builder()
+                .comment(comment)
+                .post(post)
+                .ownerMember(post.getMember()) //게시글 작성자
+                .member(member) //게시글에 댓글을 단 사용자
+                .build();
+    }
+
+    private void saveRepositoryNotification(Notification notification) {
+        notificationRepository.save(notification);
     }
 
     private void savePostLike(Member member, Long commentId) {
@@ -201,13 +247,13 @@ public class CommentService {
     }
 
     private void validateAuthorization(Member member, Comment findComment) {
-        if (isNotSameMember(member, findComment)) {
+        if (isNotSameMember(member, findComment.getMember())) {
             throw new CustomException(ErrorCode.FORBIDDEN_MEMBER, "해당 댓글에 대한 권한이 없습니다.");
         }
     }
 
-    private boolean isNotSameMember(Member member, Comment findComment) {
-        return findComment.getMember() != member;
+    private boolean isNotSameMember(Member member, Member findMember) {
+        return findMember != member;
     }
 
     private Optional<Comment> findOptionalComment(Long commentId) {
