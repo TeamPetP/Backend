@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.domain.meeting.entity.MeetingPost;
+import petPeople.pet.domain.meeting.repository.MeetingPostCustomRepository;
 
 import java.util.List;
 

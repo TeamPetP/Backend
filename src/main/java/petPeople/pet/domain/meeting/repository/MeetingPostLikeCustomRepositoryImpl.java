@@ -3,7 +3,7 @@ package petPeople.pet.domain.meeting.repository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import petPeople.pet.domain.meeting.entity.MeetingPostLike;
-import petPeople.pet.domain.meeting.entity.QMeetingPostLike;
+import petPeople.pet.domain.meeting.repository.MeetingPostLikeCustomRepository;
 
 import javax.persistence.EntityManager;
 import java.util.List;
