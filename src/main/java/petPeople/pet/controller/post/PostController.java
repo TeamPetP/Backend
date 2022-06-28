@@ -1,5 +1,6 @@
 package petPeople.pet.controller.post;
 
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -29,6 +30,7 @@ public class PostController {
     private final PostService postService;
     private final AuthFilterContainer authFilterContainer;
 
+    @ApiOperation(value = "게시글 작성 API", notes = "게시글 작성")
     @PostMapping("")
     public ResponseEntity<PostWriteRespDto> writePost(Authentication authentication, @RequestBody PostWriteReqDto postWriteReqDto) {
         PostWriteRespDto respDto = postService.write(getMember(authentication), postWriteReqDto);
