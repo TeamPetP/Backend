@@ -89,4 +89,13 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
 
         return new SliceImpl<>(content, pageable, hasNext);
     }
+
+    @Override
+    public Long countByMemberId(Long memberId) {
+        return queryFactory
+                .select(post.count())
+                .from(post)
+                .where(post.member.id.eq(memberId))
+                .fetchOne();
+    }
 }

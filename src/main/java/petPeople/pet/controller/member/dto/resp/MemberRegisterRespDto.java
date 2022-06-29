@@ -35,6 +35,28 @@ public class MemberRegisterRespDto {
     @ApiModelProperty(required = true, value = "회원 한줄 소개", example = "저는 개입니다.")
     private String introduce;
 
+    @ApiModelProperty(required = true, value = "회원 게시글 수", example = "2")
+    private Long postCnt;
+
+    @ApiModelProperty(required = true, value = "회원 가입 모임 수", example = "10")
+    private Long meetingCnt;
+
+    @ApiModelProperty(required = true, value = "회원 알림 수", example = "5")
+    private Long notificationCnt;
+    
+    public MemberRegisterRespDto(Member member, Long postCnt, Long meetingCnt, Long notificationCnt) {
+        this.memberId = member.getId();
+        this.uid = member.getUid();
+        this.email = member.getEmail();
+        this.name = member.getName();
+        this.nickname = member.getNickname();
+        this.imgUrl = member.getImgUrl();
+        this.introduce = member.getIntroduce();
+        this.postCnt = postCnt;
+        this.meetingCnt = meetingCnt;
+        this.notificationCnt = notificationCnt;
+    }
+
     public MemberRegisterRespDto(Member member) {
         this.memberId = member.getId();
         this.uid = member.getUid();
