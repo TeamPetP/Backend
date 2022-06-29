@@ -7,4 +7,5 @@ import petPeople.pet.domain.meeting.entity.Meeting;
 public interface MeetingCustomRepository {
     Slice<Meeting> findAllSlicingWithFetchJoinMember(Pageable pageable);
     Slice<Meeting> findAllSlicingByMemberId(Pageable pageable, Long memberId);
+    Long countByMemberId(Long memberId);
 }
