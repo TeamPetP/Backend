@@ -5,10 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import petPeople.pet.controller.member.dto.resp.MemberNotificationResponseDto;
-import petPeople.pet.controller.member.dto.resp.NotificationCommentRetrieveResponseDto;
-import petPeople.pet.controller.member.dto.resp.NotificationCommentWriteRetrieveResponseDto;
-import petPeople.pet.controller.member.dto.resp.NotificationPostRetrieveResponseDto;
+import petPeople.pet.controller.member.dto.resp.*;
 import petPeople.pet.domain.comment.repository.CommentRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.notification.entity.Notification;
@@ -34,13 +31,15 @@ public class NotificationService {
     public Slice<MemberNotificationResponseDto> retrieveNotifications(Long memberId, Pageable pageable) {
         return notificationRepository.findByOwnerMemberId(pageable, memberId)
                 .map(notification -> {
-                    List<PostImage> postImageList = getPostImage(getPostId(notification));
-
+                    List<PostImage> postImageList = null;
                     if (notification.getComment() != null)
                         return new NotificationCommentRetrieveResponseDto(notification, postImageList);
                     else if (notification.getPost() != null)
                         return new NotificationPostRetrieveResponseDto(notification, postImageList);
-                    else
+                    else if (notification.getWriteComment() != null) {
+                        return new NotificationMeetingCommentWriteRetrieveResponseDto(notification);
+                    } else {
+                    }
                         return new NotificationCommentWriteRetrieveResponseDto(notification, postImageList);
                 });
     }

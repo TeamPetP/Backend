@@ -8,9 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.meeting.dto.req.MeetingCommentWriteReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCommentRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCommentWriteRespDto;
+import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.notification.entity.Notification;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
+import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
@@ -28,6 +32,7 @@ public class MeetingCommentService {
     private final MeetingMemberRepository meetingMemberRepository;
     private final MeetingCommentRepository meetingCommentRepository;
     private final MeetingCommentLikeRepository meetingCommentLikeRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public MeetingCommentWriteRespDto write(Long meetingId, Long meetingPostId, MeetingCommentWriteReqDto meetingCommentWriteReqDto, Member member) {
@@ -38,6 +43,8 @@ public class MeetingCommentService {
         MeetingPost findMeetingPost = validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
 
         MeetingComment saveMeetingComment = saveMeetingComment(meetingCommentWriteReqDto, member, findMeetingPost);
+
+        saveNotification(member, findMeetingPost, saveMeetingComment);
 
         return new MeetingCommentWriteRespDto(saveMeetingComment.getId(), meetingPostId, meetingId, meetingCommentWriteReqDto.getContent());
     }
@@ -112,6 +119,29 @@ public class MeetingCommentService {
             }
         }
         return meetingCommentLikes;
+    }
+
+    private void saveNotification(Member member, MeetingPost findMeetingPost, MeetingComment saveMeetingComment) {
+        if (isNotSameMember(member, findMeetingPost.getMember())) {
+            saveRepositoryNotification(createNotification(member, findMeetingPost, saveMeetingComment));
+        }
+    }
+
+    private boolean isNotSameMember(Member member, Member findMember) {
+        return findMember != member;
+    }
+
+    private Notification createNotification(Member member, MeetingPost findMeetingPost, MeetingComment saveMeetingComment) {
+        return Notification.builder()
+                .meetingComment(saveMeetingComment)
+                .meetingPost(findMeetingPost)
+                .ownerMember(findMeetingPost.getMember()) //게시글 작성자
+                .member(member) //게시글에 댓글을 단 사용자
+                .build();
+    }
+
+    private void saveRepositoryNotification(Notification notification) {
+        notificationRepository.save(notification);
     }
 
     private Long countMeetingCommentLikeByMeetingCommentId(Long meetingCommentId) {
