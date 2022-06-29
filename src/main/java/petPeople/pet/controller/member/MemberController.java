@@ -11,8 +11,10 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import petPeople.pet.config.auth.AuthFilterContainer;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
@@ -26,6 +28,7 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.service.MemberRegisterDto;
 import petPeople.pet.domain.member.service.MemberService;
 import petPeople.pet.domain.post.service.PostService;
+import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +45,7 @@ public class MemberController {
     private final MeetingPostService meetingPostService;
     private final FirebaseAuth firebaseAuth;
     private final MeetingWaitingMemberService meetingWaitingMemberService;
+    private final AuthFilterContainer authFilterContainer;
 
     //로컬 회원 가입
     @ApiOperation(value = "로컬 회원 가입", notes = "배포용으로 쓰이지 않습니다. 로컬에서 회원 가입 용입니다.")
@@ -69,10 +73,13 @@ public class MemberController {
     @ApiOperation(value = "로그인 API", notes = "파이어베이스 인증 토큰을 Header 에 넣어 로그인을 요청합니다.")
     public ResponseEntity<MemberRegisterRespDto> login(Authentication authentication) {
         Member member = getMember(authentication);
+        Long countMemberPost = postService.countMemberPost(member);
+        Long countMemberMeeting = meetingService.countMemberMeeting(member);
+        // TODO: 2022-06-29 알림 개수
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(new MemberRegisterRespDto(member));
+                .body(new MemberRegisterRespDto(member, countMemberPost, countMemberMeeting, 0L));
     }
 
     @PatchMapping("/me")
@@ -129,9 +136,13 @@ public class MemberController {
     @GetMapping("/me/info")
     public ResponseEntity info(Authentication authentication) {
 
+        Member member = getMember(authentication);
+        long countMemberPost = postService.countMemberPost(member);
+        Long countMemberMeeting = meetingService.countMemberMeeting(member);
+        // TODO: 2022-06-29 알림 개수
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(new MemberIntroduceRespDto(getMember(authentication).getIntroduce()));
+                .body(new MemberCountDto(countMemberPost, countMemberMeeting, 0L));
     }
 
     @ApiOperation(value = "회원이 작성한 모임 게시글 조회 API", notes = "회원이 작성한 모임 게시글 조회")

@@ -181,6 +181,25 @@ public class PostService {
         }
     }
 
+    @Transactional
+    public void deleteBookmark(Member member, Long postId) {
+        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
+            postBookmarkRepository.deleteByMemberIdAndPostId(member.getId(), postId);
+        } else {
+            throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
+        }
+    }
+
+    public Slice<MemberPostBookMarkRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
+
+        return findPostBookmarkByMemberId(member, pageable)
+                .map(postBookmark -> new MemberPostBookMarkRespDto(postBookmark.getId(), postBookmark.getPost().getId(), postBookmark.getPost().getContent()));
+    }
+
+    public long countMemberPost(Member member) {
+        return postRepository.countByMemberId(member.getId());
+    }
+
     private void saveNotification(Long postId, Member member, Post findPost) {
         if (isNotSameMember(member, findPost.getMember())) {
             if (!isExistMemberLikePostNotification(findPost.getId(), member)) {
@@ -203,21 +222,6 @@ public class PostService {
 
     private void saveNotification(Notification notification) {
         notificationRepository.save(notification);
-    }
-
-    @Transactional
-    public void deleteBookmark(Member member, Long postId) {
-        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
-            postBookmarkRepository.deleteByMemberIdAndPostId(member.getId(), postId);
-        } else {
-            throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
-        }
-    }
-
-    public Slice<MemberPostBookMarkRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
-
-        return findPostBookmarkByMemberId(member, pageable)
-                .map(postBookmark -> new MemberPostBookMarkRespDto(postBookmark.getId(), postBookmark.getPost().getId(), postBookmark.getPost().getContent()));
     }
 
     private Slice<PostBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {

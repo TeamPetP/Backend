@@ -239,6 +239,10 @@ public class MeetingService {
                 ).collect(Collectors.toList());
     }
 
+    public Long countMemberMeeting(Member member) {
+        return meetingRepository.countByMemberId(member.getId());
+    }
+
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
     }
@@ -248,12 +252,12 @@ public class MeetingService {
                 .orElseThrow(() ->
                         new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
     }
-
     private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
     if (member == targetMember) {
         throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
     }
 }
+
     public FirebaseToken decodeToken(String header) {
         try {
             String token = RequestUtil.getAuthorizationToken(header);
