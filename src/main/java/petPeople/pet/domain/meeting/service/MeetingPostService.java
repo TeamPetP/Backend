@@ -11,6 +11,9 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingPostWriteRespDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.notification.entity.Notification;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
+import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
@@ -28,6 +31,7 @@ public class MeetingPostService {
     private final MeetingPostImageRepository meetingPostImageRepository;
     private final MeetingRepository meetingRepository;
     private final MeetingPostLikeRepository meetingPostLikeRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public MeetingPostWriteRespDto write(Member member, MeetingPostWriteReqDto meetingPostWriteReqDto, Long meetingId) {
@@ -122,6 +126,7 @@ public class MeetingPostService {
             deleteMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);
         } else {
             saveMeetingPostLike(createMeetingPostLike(member, findMeetingPost));
+            saveNotification(member, findMeetingPost);
         }
 
         return countMeetingPostLikeByMeetingPostsId(meetingPostId);
@@ -138,6 +143,34 @@ public class MeetingPostService {
         deleteMeetingPostLikeByMeetingPostId(meetingPostId);
         deleteMeetingPostImageByMeetingPostId(meetingPostId);
         deleteMeetingPostByMeetingPostId(meetingPostId);
+    }
+
+    private void saveNotification(Member member, MeetingPost findMeetingPost) {
+        if (isNotSameMember(member, findMeetingPost.getMember())) {
+            if (!isExistMemberLikePostNotification(findMeetingPost.getId(), member)) {
+                saveNotification(createNotification(member, findMeetingPost));
+            }
+        }
+    }
+
+    private Notification createNotification(Member member, MeetingPost findMeetingPost) {
+        return Notification.builder()
+                .meetingPost(findMeetingPost)
+                .ownerMember(findMeetingPost.getMember())
+                .member(member)
+                .build();
+    }
+
+    private boolean isNotSameMember(Member member, Member meetingPostMember) {
+        return member != meetingPostMember;
+    }
+
+    private boolean isExistMemberLikePostNotification(Long postId, Member member) {
+        return notificationRepository.findByMemberIdAndPostId(member.getId(), postId).isPresent();
+    }
+
+    private void saveNotification(Notification notification) {
+        notificationRepository.save(notification);
     }
 
     private Slice<MeetingPost> findMeetingPostSliceByMemberId(Member member, Pageable pageable) {

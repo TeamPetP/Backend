@@ -45,6 +45,7 @@ public class PostRetrieveRespDto {
     @ApiModelProperty(required = true, value = "좋아요 여부", example = "true/false")
     private Boolean isLiked;
 
+<<<<<<< HEAD
     @ApiModelProperty(required = true, value = "회원 이름", example = "김상운")
     private String nickname;
 
@@ -53,6 +54,9 @@ public class PostRetrieveRespDto {
 
     @ApiModelProperty(required = true, value = "댓글 개수", example = "1")
     private Long commentCnt;
+=======
+
+>>>>>>> a7b5f39a0657635f20a8d0e7e0b330f12da8811d
 
     public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked) {
         this.postId = post.getId();

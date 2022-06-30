@@ -6,7 +6,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import petPeople.pet.controller.member.dto.resp.MemberNotificationResponseDto;
+import petPeople.pet.controller.member.dto.resp.notificationResp.MemberNotificationResponseDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.notification.service.NotificationService;
 
