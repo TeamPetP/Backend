@@ -16,6 +16,7 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
@@ -142,12 +143,12 @@ public class MeetingService {
         }
     }
 
-    public Slice<MeetingRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalHeader) {
+    public Slice<MeetingRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalHeader, MeetingParameter meetingParameter) {
 
         if (isLogined(optionalHeader)) {
             Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
 
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
             List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
             return meetingSliceMapToRetrieveRespDto(
                     member,
@@ -156,7 +157,7 @@ public class MeetingService {
                     findMeetingMemberByMeetingIds(meetingIds)
             );
         } else {
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
             List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
             return meetingSliceMapToRetrieveNoLoginRespDto(
                     meetingSlice,
@@ -166,13 +167,13 @@ public class MeetingService {
         }
     }
 
-    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalHeader) {
+    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalHeader, MeetingParameter meetingParameter) {
 
         if (isLogined(optionalHeader)) {
             FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
             Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
 
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
             List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
             return meetingSliceMapToRetrieveRespDto(
                     member,
@@ -181,7 +182,7 @@ public class MeetingService {
                     findMeetingMemberByMeetingIds(meetingIds)
             );
         } else {
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable);
+            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
             List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
             return meetingSliceMapToRetrieveNoLoginRespDto(
                     meetingSlice,
@@ -435,8 +436,8 @@ public class MeetingService {
         return meetingImageRepository.findByMeetingIds(meetingIds);
     }
 
-    private Slice<Meeting> findAllMeetingSlicingWithFetchJoinMember(Pageable pageable) {
-        return meetingRepository.findAllSlicingWithFetchJoinMember(pageable);
+    private Slice<Meeting> findAllMeetingSlicingWithFetchJoinMember(Pageable pageable, MeetingParameter meetingParameter) {
+        return meetingRepository.findAllSlicingWithFetchJoinMember(pageable, meetingParameter);
     }
 
     private List<Long> getMeetingId(List<Meeting> content) {
