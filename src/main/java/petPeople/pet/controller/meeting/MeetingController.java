@@ -16,6 +16,7 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.MeetingImage;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.member.entity.Member;
@@ -62,17 +63,17 @@ public class MeetingController {
 
     @GetMapping("")
     @ApiOperation(value = "모임 전체 조회 API", notes = "모임을 전체 조회합니다.(헤더에 토큰이 있을 경우 가입 여부를 알립니다.)")
-    public ResponseEntity<Slice<MeetingRetrieveRespDto>> retrieveAllMeeting(Pageable pageable, HttpServletRequest request) {
+    public ResponseEntity<Slice<MeetingRetrieveRespDto>> retrieveAllMeeting(@ModelAttribute MeetingParameter meetingParameter,
+                                                                            Pageable pageable, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
-
         if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(meetingService.localRetrieveAll(pageable, Optional.ofNullable(header)));
+                    .body(meetingService.localRetrieveAll(pageable, Optional.ofNullable(header), meetingParameter));
         } else {
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(meetingService.retrieveAll(pageable, Optional.ofNullable(header)));
+                    .body(meetingService.retrieveAll(pageable, Optional.ofNullable(header), meetingParameter));
         }
     }
 
@@ -96,7 +97,7 @@ public class MeetingController {
     }
 
     @DeleteMapping("/{meetingId}")
-    @ApiOperation(value = "모임 탈 API", notes = "모임을 탈퇴를 위해 meetingId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    @ApiOperation(value = "모임 탈퇴 API", notes = "모임을 탈퇴를 위해 meetingId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
     public ResponseEntity resignMeeting(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
                                         Authentication authentication) {
         Member member = getMember(authentication);
