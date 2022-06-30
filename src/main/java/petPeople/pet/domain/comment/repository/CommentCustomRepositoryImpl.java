@@ -39,4 +39,21 @@ public class CommentCustomRepositoryImpl implements CommentCustomRepository{
         }
         return new SliceImpl(commentList, pageable, hasNext);
     }
+
+    @Override
+    public List<Comment> findByPostIds(List<Long> ids) {
+        return queryFactory
+                .selectFrom(comment)
+                .where(comment.post.id.in(ids))
+                .fetch();
+    }
+
+    @Override
+    public Long countByPostId(Long postId) {
+        return queryFactory
+                .select(comment.count())
+                .from(comment)
+                .where(comment.post.id.eq(postId))
+                .fetchOne();
+    }
 }

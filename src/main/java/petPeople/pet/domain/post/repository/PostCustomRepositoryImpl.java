@@ -20,13 +20,13 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
 
     @Override
     public Optional<Post> findByIdWithFetchJoinMember(Long postId) {
-        Post post = queryFactory
-                .selectFrom(QPost.post)
-                .join(QPost.post.member, member)
-                .where(QPost.post.id.eq(postId))
+        Post content = queryFactory
+                .selectFrom(post)
+                .join(post.member, member)
+                .where(post.id.eq(postId))
                 .fetchOne();
 
-        return Optional.ofNullable(post);
+        return Optional.ofNullable(content);
     }
 
     @Override
@@ -34,6 +34,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
 
         List<Post> content = queryFactory
                 .selectFrom(post)
+                .join(post.member, member).fetchJoin()
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize() + 1)
                 .orderBy(post.createdDate.desc())
@@ -54,6 +55,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
                 .select(post)
                 .from(tag1)
                 .join(tag1.post, post)
+                .join(post.member, member).fetchJoin()
                 .where(tag1.tag.eq(tag))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize() + 1)

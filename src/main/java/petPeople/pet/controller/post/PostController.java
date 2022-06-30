@@ -62,7 +62,7 @@ public class PostController {
     @ApiOperation(value = "게시글 전체 조회 API", notes = "게시글 전체 조회(헤더에 토큰이 있을 경우 좋아요 여부를 알려줍니다.)")
     @GetMapping("")
     public ResponseEntity<Slice<PostRetrieveRespDto>> retrieveAllPost(Pageable pageable,
-                                                                      @ApiParam(value = "태그로 검색할 경우 태그 입력", required = true) @RequestParam(required = false) String tag, HttpServletRequest request) {
+                                                                      @ApiParam(value = "태그로 검색할 경우 태그 입력", required = false) @RequestParam(required = false) String tag, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
         if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
             return ResponseEntity.ok().body(postService.localRetrieveAll(pageable, Optional.ofNullable(tag), Optional.ofNullable(header)));
