@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.config.auth.AuthFilterContainer;
-import petPeople.pet.controller.member.dto.resp.MemberPostBookMarkRespDto;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
@@ -198,10 +197,34 @@ public class PostService {
         }
     }
 
-    public Slice<MemberPostBookMarkRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
+    public Slice<PostRetrieveRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
 
-        return findPostBookmarkByMemberId(member, pageable)
-                .map(postBookmark -> new MemberPostBookMarkRespDto(postBookmark.getId(), postBookmark.getPost().getId(), postBookmark.getPost().getContent()));
+        Slice<PostLike> postLikesSlice = findPostLikeByMemberId(member, pageable);
+
+        List<Long> ids = getPostIdByPostLikeId(postLikesSlice.getContent());
+
+        PostChildList postChildList =
+                createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
+
+        return postLikesSlice.map(postLike -> {
+            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), postLike.getPost());
+            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), postLike.getPost());
+            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), postLike.getPost());
+            List<Comment> commentList = getCommentListByPost(postChildList.getCommentList(), postLike.getPost());
+
+            return new PostRetrieveRespDto(postLike.getPost(), tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()));
+        });
+    }
+
+    private Slice<PostRetrieveRespDto> test(Slice<Post> postPage, PostChildList postChildList, Member member) {
+        return postPage.map(post -> {
+            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
+            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
+            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
+            List<Comment> commentList = getCommentListByPost(postChildList.getCommentList(), post);
+
+            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()));
+        });
     }
 
     public long countMemberPost(Member member) {
@@ -234,6 +257,10 @@ public class PostService {
 
     private Slice<PostBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
         return postBookmarkRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
+    }
+
+    private Slice<PostLike> findPostLikeByMemberId(Member member, Pageable pageable) {
+        return postLikeRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
     }
 
     public Slice<PostRetrieveRespDto> retrieveMemberPost(Member member, Pageable pageable, String header) {
@@ -472,6 +499,14 @@ public class PostService {
         List<Long> ids = new ArrayList<>();
         for (Post post : content) {
             ids.add(post.getId());
+        }
+        return ids;
+    }
+
+    private List<Long> getPostIdByPostLikeId(List<PostLike> content) {
+        List<Long> ids = new ArrayList<>();
+        for (PostLike postLike : content) {
+            ids.add(postLike.getPost().getId());
         }
         return ids;
     }
