@@ -11,7 +11,7 @@ import lombok.Setter;
 public class MemberCountDto {
 
     private Long postCnt;
-    private Long meetingCnt;
+    private Long meetingBookCnt;
     private Long notificationCnt;
 
 }

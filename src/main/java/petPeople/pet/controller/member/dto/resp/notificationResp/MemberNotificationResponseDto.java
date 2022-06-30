@@ -1,4 +1,4 @@
-package petPeople.pet.controller.member.dto.resp;
+package petPeople.pet.controller.member.dto.resp.notificationResp;
 
 import lombok.*;
 import petPeople.pet.domain.notification.entity.Notification;

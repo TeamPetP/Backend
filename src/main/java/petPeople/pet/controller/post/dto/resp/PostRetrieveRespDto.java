@@ -45,6 +45,19 @@ public class PostRetrieveRespDto {
     @ApiModelProperty(required = true, value = "좋아요 여부", example = "true/false")
     private Boolean isLiked;
 
+<<<<<<< HEAD
+    @ApiModelProperty(required = true, value = "회원 이름", example = "김상운")
+    private String nickname;
+
+    @ApiModelProperty(required = true, value = "회원 이미지 url", example = "www.img.url")
+    private String imgUrl;
+
+    @ApiModelProperty(required = true, value = "댓글 개수", example = "1")
+    private Long commentCnt;
+=======
+
+>>>>>>> a7b5f39a0657635f20a8d0e7e0b330f12da8811d
+
     public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked) {
         this.postId = post.getId();
         this.memberId = post.getMember().getId();
@@ -62,5 +75,28 @@ public class PostRetrieveRespDto {
         this.lastModifiedDate = post.getLastModifiedDate();
         this.likeCnt = likeCnt;
         this.isLiked = isLiked;
+    }
+
+    public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked, Long commentCnt) {
+        this.postId = post.getId();
+        this.memberId = post.getMember().getId();
+        this.content = post.getContent();
+
+        for (Tag tag : tags) {
+            this.tagList.add(tag.getTag());
+        }
+
+        for (PostImage imgUrl : imgUrls) {
+            this.imgUrlList.add(imgUrl.getImgUrl());
+        }
+
+        this.createdDate = post.getCreatedDate();
+        this.lastModifiedDate = post.getLastModifiedDate();
+        this.likeCnt = likeCnt;
+        this.isLiked = isLiked;
+
+        this.nickname = post.getMember().getNickname();
+        this.imgUrl = post.getMember().getImgUrl();
+        this.commentCnt = commentCnt;
     }
 }
