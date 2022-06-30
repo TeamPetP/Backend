@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.config.auth.AuthFilterContainer;
+import petPeople.pet.controller.member.dto.resp.MemberPostBookMarkRespDto;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
@@ -180,6 +181,25 @@ public class PostService {
         }
     }
 
+    @Transactional
+    public void deleteBookmark(Member member, Long postId) {
+        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
+            postBookmarkRepository.deleteByMemberIdAndPostId(member.getId(), postId);
+        } else {
+            throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
+        }
+    }
+
+    public Slice<MemberPostBookMarkRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
+
+        return findPostBookmarkByMemberId(member, pageable)
+                .map(postBookmark -> new MemberPostBookMarkRespDto(postBookmark.getId(), postBookmark.getPost().getId(), postBookmark.getPost().getContent()));
+    }
+
+    public long countMemberPost(Member member) {
+        return postRepository.countByMemberId(member.getId());
+    }
+
     private void saveNotification(Long postId, Member member, Post findPost) {
         if (isNotSameMember(member, findPost.getMember())) {
             if (!isExistMemberLikePostNotification(findPost.getId(), member)) {
@@ -204,13 +224,8 @@ public class PostService {
         notificationRepository.save(notification);
     }
 
-    @Transactional
-    public void deleteBookmark(Member member, Long postId) {
-        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
-            postBookmarkRepository.deleteByMemberIdAndPostId(member.getId(), postId);
-        } else {
-            throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
-        }
+    private Slice<PostBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
+        return postBookmarkRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
     }
 
     public Slice<PostRetrieveRespDto> retrieveMemberPost(Member member, Pageable pageable, String header) {
@@ -236,6 +251,7 @@ public class PostService {
 
     public FirebaseToken decodeToken(String header) {
         try {
+            header = "Bearer " + header;
             String token = RequestUtil.getAuthorizationToken(header);
             return firebaseAuth.verifyIdToken(token);
         } catch (IllegalArgumentException | FirebaseAuthException e) {

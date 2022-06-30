@@ -36,4 +36,24 @@ public class MeetingPostCustomRepositoryImpl implements MeetingPostCustomReposit
 
         return new SliceImpl<>(content, pageable, hasNext);
     }
+
+    @Override
+    public Slice<MeetingPost> findAllSliceByMemberId(Pageable pageable, Long memberId) {
+        List<MeetingPost> content = queryFactory
+                .select(meetingPost)
+                .from(meetingPost)
+                .where(meetingPost.member.id.eq(memberId))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1)
+                .orderBy(meetingPost.createdDate.desc())
+                .fetch();
+
+        boolean hasNext = false;
+        if (content.size() > pageable.getPageSize()) {
+            content.remove(pageable.getPageSize());
+            hasNext = true;
+        }
+
+        return new SliceImpl<>(content, pageable, hasNext);
+    }
 }

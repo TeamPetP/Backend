@@ -13,4 +13,5 @@ public interface PostCustomRepository {
     Optional<Post> findByIdWithFetchJoinMember(Long postId);
     Slice<Post> findPostSlicingByTag(Pageable pageable, String tag);
     Slice<Post> findAllByMemberIdSlicing(Long memberId, Pageable pageable);
+    Long countByMemberId(Long memberId);
 }

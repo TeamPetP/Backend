@@ -11,6 +11,9 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingPostWriteRespDto;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.notification.entity.Notification;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
+import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
@@ -28,6 +31,7 @@ public class MeetingPostService {
     private final MeetingPostImageRepository meetingPostImageRepository;
     private final MeetingRepository meetingRepository;
     private final MeetingPostLikeRepository meetingPostLikeRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public MeetingPostWriteRespDto write(Member member, MeetingPostWriteReqDto meetingPostWriteReqDto, Long meetingId) {
@@ -77,20 +81,22 @@ public class MeetingPostService {
         });
     }
 
-    private boolean isMemberLikedMeetingPost(Member member, List<MeetingPostLike> meetingPostLikesByMeetingPost) {
-        boolean isLiked = false;
+    public Slice<MeetingPostRetrieveRespDto> retrieveMemberMeetingPost(Member member, Pageable pageable) {
+        Slice<MeetingPost> meetingPostSlice = findMeetingPostSliceByMemberId(member, pageable);
 
-        for (MeetingPostLike meetingPostLike : meetingPostLikesByMeetingPost) {
-            if (meetingPostLike.getMember() == member) {
-                isLiked = true;
-                break;
-            }
-        }
-        return isLiked;
-    }
+        List<Long> meetingPostIds = getMeetingPostId(meetingPostSlice.getContent());
 
-    private List<MeetingPostLike> finAllMeetingPostLikeByMeetingPostIds(List<Long> meetingPostIds) {
-        return meetingPostLikeRepository.findByMeetingPostIds(meetingPostIds);
+        List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostIds(meetingPostIds);
+        List<MeetingPostLike> findMeetingPostLikeList = finAllMeetingPostLikeByMeetingPostIds(meetingPostIds);
+
+        return meetingPostSlice.map(meetingPost -> {
+            List<MeetingPostImage> meetingPostImageList = getMeetingPostImagesByMeetingPost(findMeetingPostImageList, meetingPost);
+            List<MeetingPostLike> meetingPostLikesByMeetingPost = getMeetingPostLikesByMeetingPost(findMeetingPostLikeList, meetingPost);
+
+            boolean isLiked = isMemberLikedMeetingPost(member, meetingPostLikesByMeetingPost);
+
+            return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked);
+        });
     }
 
     @Transactional
@@ -120,6 +126,7 @@ public class MeetingPostService {
             deleteMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);
         } else {
             saveMeetingPostLike(createMeetingPostLike(member, findMeetingPost));
+            saveNotification(member, findMeetingPost);
         }
 
         return countMeetingPostLikeByMeetingPostsId(meetingPostId);
@@ -138,8 +145,56 @@ public class MeetingPostService {
         deleteMeetingPostByMeetingPostId(meetingPostId);
     }
 
+    private void saveNotification(Member member, MeetingPost findMeetingPost) {
+        if (isNotSameMember(member, findMeetingPost.getMember())) {
+            if (!isExistMemberLikePostNotification(findMeetingPost.getId(), member)) {
+                saveNotification(createNotification(member, findMeetingPost));
+            }
+        }
+    }
+
+    private Notification createNotification(Member member, MeetingPost findMeetingPost) {
+        return Notification.builder()
+                .meetingPost(findMeetingPost)
+                .ownerMember(findMeetingPost.getMember())
+                .member(member)
+                .build();
+    }
+
+    private boolean isNotSameMember(Member member, Member meetingPostMember) {
+        return member != meetingPostMember;
+    }
+
+    private boolean isExistMemberLikePostNotification(Long postId, Member member) {
+        return notificationRepository.findByMemberIdAndPostId(member.getId(), postId).isPresent();
+    }
+
+    private void saveNotification(Notification notification) {
+        notificationRepository.save(notification);
+    }
+
+    private Slice<MeetingPost> findMeetingPostSliceByMemberId(Member member, Pageable pageable) {
+        return meetingPostRepository.findAllSliceByMemberId(pageable, member.getId());
+    }
+
     private void deleteMeetingPostByMeetingPostId(Long meetingPostId) {
         meetingPostRepository.deleteById(meetingPostId);
+    }
+
+    private boolean isMemberLikedMeetingPost(Member member, List<MeetingPostLike> meetingPostLikesByMeetingPost) {
+        boolean isLiked = false;
+
+        for (MeetingPostLike meetingPostLike : meetingPostLikesByMeetingPost) {
+            if (meetingPostLike.getMember() == member) {
+                isLiked = true;
+                break;
+            }
+        }
+        return isLiked;
+    }
+
+    private List<MeetingPostLike> finAllMeetingPostLikeByMeetingPostIds(List<Long> meetingPostIds) {
+        return meetingPostLikeRepository.findByMeetingPostIds(meetingPostIds);
     }
 
     private void deleteMeetingPostLikeByMeetingPostId(Long meetingPostId) {

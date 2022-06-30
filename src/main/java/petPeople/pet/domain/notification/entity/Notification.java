@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.comment.entity.Comment;
+import petPeople.pet.domain.meeting.entity.Meeting;
 import petPeople.pet.domain.meeting.entity.MeetingComment;
 import petPeople.pet.domain.meeting.entity.MeetingPost;
 import petPeople.pet.domain.member.entity.Member;
@@ -44,6 +45,10 @@ public class Notification extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id2")
     private Comment writeComment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "meeting_id")
+    private Meeting meeting;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_post_id")

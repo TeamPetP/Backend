@@ -1,4 +1,4 @@
-package petPeople.pet.controller.member.dto.resp;
+package petPeople.pet.controller.member.dto.resp.notificationResp;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

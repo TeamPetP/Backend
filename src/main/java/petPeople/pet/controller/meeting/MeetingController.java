@@ -1,5 +1,7 @@
 package petPeople.pet.controller.meeting;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -33,14 +35,18 @@ public class MeetingController {
     private final AuthFilterContainer authFilterContainer;
 
     @PostMapping("")
-    public ResponseEntity<MeetingCreateRespDto> createMeeting(Authentication authentication, @RequestBody MeetingCreateReqDto meetingCreateReqDto) {
+    @ApiOperation(value = "모임 생성 API", notes = "모임 생성을 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity<MeetingCreateRespDto> createMeeting(Authentication authentication,
+                                                              @ApiParam(value = "모임 개설 DTO", required = true) @RequestBody MeetingCreateReqDto meetingCreateReqDto) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(meetingService.create(getMember(authentication), meetingCreateReqDto));
     }
 
     @GetMapping("/{meetingId}")
-    public ResponseEntity<MeetingRetrieveRespDto> retrieveMeeting(@PathVariable Long meetingId, HttpServletRequest request) {
+    @ApiOperation(value = "모임 단건 조회 API", notes = "단건 조회할 모임 ID를 경로 변수에 넣어주세요(헤더에 토큰이 있을 경우 가입 여부를 알립니다.)")
+    public ResponseEntity<MeetingRetrieveRespDto> retrieveMeeting(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                                                  HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
 
         if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
@@ -55,6 +61,7 @@ public class MeetingController {
     }
 
     @GetMapping("")
+    @ApiOperation(value = "모임 전체 조회 API", notes = "모임을 전체 조회합니다.(헤더에 토큰이 있을 경우 가입 여부를 알립니다.)")
     public ResponseEntity<Slice<MeetingRetrieveRespDto>> retrieveAllMeeting(Pageable pageable, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
 
@@ -70,38 +77,52 @@ public class MeetingController {
     }
 
     @PutMapping("/{meetingId}")
-    public ResponseEntity<MeetingEditRespDto> editMeeting(Authentication authentication, @PathVariable Long meetingId, @RequestBody MeetingEditReqDto meetingEditReqDto) {
+    @ApiOperation(value = "모임 수정 API", notes = "모임을 수정을 위해 meetingId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    public ResponseEntity<MeetingEditRespDto> editMeeting(Authentication authentication,
+                                                          @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                                          @ApiParam(value = "모임 수정 DTO", required = true) @RequestBody MeetingEditReqDto meetingEditReqDto) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(meetingService.edit(getMember(authentication), meetingId, meetingEditReqDto));
     }
 
     @PostMapping("/{meetingId}")
-    public ResponseEntity joinMeeting(Authentication authentication, @PathVariable Long meetingId) {
+    @ApiOperation(value = "모임 가입 요청 API", notes = "모임을 가입 요청을 위해 meetingId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    public ResponseEntity joinMeeting(Authentication authentication,
+                                      @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId) {
         meetingService.joinRequest(getMember(authentication), meetingId);
 
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{meetingId}")
-    public ResponseEntity resignMeeting(@PathVariable Long meetingId, Authentication authentication) {
+    @ApiOperation(value = "모임 탈 API", notes = "모임을 탈퇴를 위해 meetingId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    public ResponseEntity resignMeeting(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                        Authentication authentication) {
         Member member = getMember(authentication);
         meetingService.resign(meetingId, member);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{meetingId}/members/{memberId}/approve")
-    public ResponseEntity approveJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
+    @ApiOperation(value = "모임 가입 요청 승인 API", notes = "모임을 가입 요청 위해 meetingId 와 memberId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    public ResponseEntity approveJoin(Authentication authentication,
+                                      @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                      @ApiParam(value = "회원 ID", required = true) @PathVariable Long memberId) {
         meetingService.approve(getMember(authentication), meetingId, memberId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{meetingId}/members/{memberId}/decline")
-    public ResponseEntity declineJoin(Authentication authentication, @PathVariable Long meetingId, @PathVariable Long memberId) {
+    @ApiOperation(value = "모임 가입 요청 거절 API", notes = "모임을 가입 요청 거부를 위해 meetingId 와 memberId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    public ResponseEntity declineJoin(Authentication authentication,
+                                      @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                      @ApiParam(value = "회원 ID", required = true) @PathVariable Long memberId) {
         meetingService.decline(getMember(authentication), meetingId, memberId);
         return ResponseEntity.noContent().build();
     }
 
+    // TODO: 2022-06-28 모임 이미지가 아닌 모임 게시글에 있는 모든 사진
     @GetMapping("/{meetingId}/images")
     public ResponseEntity<List<MeetingImageRetrieveRespDto>> retrieveAllMeetingImage(@PathVariable Long meetingId) {
 

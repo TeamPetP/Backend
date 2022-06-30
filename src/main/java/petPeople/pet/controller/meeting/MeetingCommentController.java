@@ -1,5 +1,6 @@
 package petPeople.pet.controller.meeting;
 
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -21,6 +22,7 @@ public class MeetingCommentController {
     private final MeetingCommentService meetingCommentService;
 
     @PostMapping("/{meetingId}/meetingPosts/{meetingPostId}/meetingComments")
+    @ApiOperation(value = "모임 게시글 댓글 작성 API", notes = "모임 게시글 댓글 작성과 권한 검사를 위해 header 에 토큰을 입력해주세요")
     public ResponseEntity<MeetingCommentWriteRespDto> writeMeetingComment(@PathVariable Long meetingId, @PathVariable Long meetingPostId,
                                                                           @RequestBody MeetingCommentWriteReqDto meetingCommentWriteReqDto,
                                                                           Authentication authentication) {
@@ -31,6 +33,7 @@ public class MeetingCommentController {
     }
 
     @GetMapping("/{meetingId}/meetingPosts/{meetingPostId}/meetingComments")
+    @ApiOperation(value = "모임 게시글 댓글 조회 API", notes = "모임 게시글 댓글 조회와 권한 검사를 위해 header 에 토큰을 입력해주세요")
     public ResponseEntity<Slice<MeetingCommentRetrieveRespDto>> retrieveComments(@PathVariable Long meetingId, @PathVariable Long meetingPostId,
                                                                                  Authentication authentication, Pageable pageable) {
 
@@ -41,6 +44,7 @@ public class MeetingCommentController {
     }
 
     @PatchMapping("/{meetingId}/meetingPosts/{meetingPostId}/meetingComments/{meetingCommentId}")
+    @ApiOperation(value = "모임 게시글 댓글 좋아요 API", notes = "모임 게시글 댓글 좋아요와 권한 검사를 위해 header 에 토큰을 입력해주세요(한번 더 누를 시 취소)")
     public ResponseEntity likeComment(@PathVariable Long meetingId, @PathVariable Long meetingPostId, @PathVariable Long meetingCommentId,
                                       Authentication authentication) {
         Member member = getMember(authentication);

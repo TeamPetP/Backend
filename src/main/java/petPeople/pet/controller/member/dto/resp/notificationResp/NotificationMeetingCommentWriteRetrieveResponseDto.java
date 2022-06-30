@@ -1,12 +1,12 @@
-package petPeople.pet.controller.member.dto.resp;
+package petPeople.pet.controller.member.dto.resp.notificationResp;
 
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import petPeople.pet.domain.meeting.entity.MeetingPostImage;
 import petPeople.pet.domain.notification.entity.Notification;
-import petPeople.pet.domain.post.entity.PostImage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +27,14 @@ public class NotificationMeetingCommentWriteRetrieveResponseDto extends MemberNo
 
     private List<String> postImgUrlList = new ArrayList<>();
 
-    public NotificationMeetingCommentWriteRetrieveResponseDto(Notification notification) {
-        super(notification, "MeetingCommentWrite");
-        this.meetingCommentId = notification.getMeetingComment().getId();
-        this.content = notification.getWriteComment().getContent();
+    public NotificationMeetingCommentWriteRetrieveResponseDto(Notification notification, List<MeetingPostImage> meetingPostImages) {
+        super(notification, "meetingCommentWrite");
+        this.meetingCommentId = notification.getWriteMeetingComment().getId();
+        this.content = notification.getWriteMeetingComment().getContent();
         this.meetingPostId = notification.getMeetingPost().getId();
+
+        for (MeetingPostImage meetingPostImage : meetingPostImages) {
+            this.postImgUrlList.add(meetingPostImage.getImgUrl());
+        }
     }
 }

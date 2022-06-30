@@ -5,19 +5,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import petPeople.pet.controller.member.dto.resp.*;
-import petPeople.pet.domain.comment.repository.CommentRepository;
+import petPeople.pet.controller.member.dto.resp.notificationResp.*;
+import petPeople.pet.domain.meeting.entity.MeetingPostImage;
+import petPeople.pet.domain.meeting.repository.MeetingPostImageRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
-import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostImage;
 import petPeople.pet.domain.post.repository.PostImageRepository;
-import petPeople.pet.domain.post.repository.PostRepository;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,24 +25,34 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final PostImageRepository postImageRepository;
+    private final MeetingPostImageRepository meetingPostImageRepository;
 
     public Slice<MemberNotificationResponseDto> retrieveNotifications(Long memberId, Pageable pageable) {
         return notificationRepository.findByOwnerMemberId(pageable, memberId)
                 .map(notification -> {
-                    List<PostImage> postImageList = null;
-                    if (notification.getComment() != null)
-                        return new NotificationCommentRetrieveResponseDto(notification, postImageList);
-                    else if (notification.getPost() != null)
-                        return new NotificationPostRetrieveResponseDto(notification, postImageList);
-                    else if (notification.getWriteComment() != null) {
-                        return new NotificationMeetingCommentWriteRetrieveResponseDto(notification);
+                    List<MeetingPostImage> meetingPostImages = null;
+                    List<PostImage> postImages = null;
+                    if (notification.getPost() != null) {
+                        postImages = postImageRepository.findByPostId(notification.getPost().getId());
                     } else {
+                        meetingPostImages = meetingPostImageRepository.findAllMeetingPostImageByMeetingPostId(notification.getMeetingPost().getId());
                     }
-                        return new NotificationCommentWriteRetrieveResponseDto(notification, postImageList);
+
+                    if (notification.getComment() != null)
+                        return new NotificationCommentRetrieveResponseDto(notification, postImages);
+                    else if (notification.getPost() != null)
+                        return new NotificationPostRetrieveResponseDto(notification, postImages);
+                    else if (notification.getWriteComment() != null) {
+                        return new NotificationMeetingCommentRetrieveResponseDto(notification, meetingPostImages);
+                    } else if (notification.getMeetingPost() != null) {
+                        return new NotificationMeetingPostRetrieveResponseDto(notification, meetingPostImages);
+                    } else if (notification.getWriteMeetingComment() != null) {
+                        return new NotificationMeetingCommentWriteRetrieveResponseDto(notification, meetingPostImages);
+                    } else {
+                        return new NotificationCommentWriteRetrieveResponseDto(notification, postImages);
+                    }
                 });
     }
-
-
 
     @Transactional
     public void updateNotifications(Long memberId) {

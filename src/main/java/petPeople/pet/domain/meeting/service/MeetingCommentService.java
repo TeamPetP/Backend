@@ -81,9 +81,7 @@ public class MeetingCommentService {
 
     @Transactional
     public Long likeComment(Long meetingId, Long meetingPostId, Long meetingCommentId, Member member) {
-        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
-
-        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
         MeetingComment meetingComment = validateOptionalMeetingComment(findMeetingCommentByMeetingCommentId(meetingCommentId));
 
@@ -93,11 +91,33 @@ public class MeetingCommentService {
             deleteMeetingCommentLikeByMeetingCommentIdAndMemberId(meetingCommentId, member.getId());
         } else {
             saveMeetingCommentLike(createMeetingCommentLike(member, meetingComment));
+            saveNotification(member, meetingCommentId, meetingComment, meeting);
         }
 
         return countMeetingCommentLikeByMeetingCommentId(meetingCommentId);
 
     }
+
+    private void saveNotification(Member member, Long commentId, MeetingComment meetingComment, Meeting meeting) {
+        if (isNotSameMember(member, meetingComment.getMember())) {
+            Optional<Notification> optionalNotification = notificationRepository.findByMemberIdAndCommentId(member.getId(), commentId);
+            createLikeMeetingCommentNotification(member, meetingComment, optionalNotification, meeting);
+        }
+    }
+
+    private void createLikeMeetingCommentNotification(Member member, MeetingComment findMeetingComment, Optional<Notification> optionalNotification, Meeting meeting) {
+        if (!optionalNotification.isPresent()) {
+            Notification notification = Notification.builder()
+                    .meeting(meeting)
+                    .member(member)
+                    .meetingComment(findMeetingComment)
+                    .ownerMember(findMeetingComment.getMember())
+                    .build();
+
+            notificationRepository.save(notification);
+        }
+    }
+
 
     private boolean isMemberLikedMeetingComment(Member member, List<MeetingCommentLike> meetingCommentLikes) {
         boolean isLiked = false;

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.domain.meeting.entity.Meeting;
+import petPeople.pet.domain.meeting.entity.QMeetingMember;
 import petPeople.pet.domain.meeting.repository.MeetingCustomRepository;
 
 import java.util.List;
@@ -60,4 +61,12 @@ public class MeetingCustomRepositoryImpl implements MeetingCustomRepository {
         return new SliceImpl<>(content, pageable, hasNext);
     }
 
+    @Override
+    public Long countByMemberId(Long memberId) {
+        return queryFactory
+                .select(meeting.count())
+                .from(meetingMember)
+                .where(meetingMember.member.id.eq(memberId))
+                .fetchOne();
+    }
 }
