@@ -15,6 +15,7 @@ import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
@@ -204,12 +205,12 @@ class MeetingServiceTest {
         meetingMemberList.addAll(meetingMemberList2);
         meetingMemberList.addAll(meetingMemberList3);
 
-        when(meetingRepository.findAllSlicingWithFetchJoinMember(any())).thenReturn(meetingSlice);
+        when(meetingRepository.findAllSlicingWithFetchJoinMember(any(), meetingParameter)).thenReturn(meetingSlice);
         when(meetingImageRepository.findByMeetingIds(any())).thenReturn(meetingImageList);
         when(meetingMemberRepository.findByMeetingIds(any())).thenReturn(meetingMemberList);
 
         //when
-        Slice<MeetingRetrieveRespDto> respDtoSlice = meetingService.localRetrieveAll(pageRequest, Optional.empty());
+        Slice<MeetingRetrieveRespDto> respDtoSlice = meetingService.localRetrieveAll(pageRequest, Optional.empty(), new MeetingParameter());
 
         //then
         assertThat(respDtoSlice).isEqualTo(result);

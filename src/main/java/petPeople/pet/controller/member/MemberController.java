@@ -155,7 +155,7 @@ public class MemberController {
                 .body(meetingPostService.retrieveMemberMeetingPost(getMember(authentication), pageable));
     }
 
-    @ApiOperation(value = "회원의 북마크 조회 API", notes = "회원이 북마크 조회")
+    @ApiOperation(value = "회원의 게시글 좋아요 조회 API", notes = "회원의 좋아요 한 게시글 조회")
     @GetMapping("/me/likes")
     public ResponseEntity<Slice<PostRetrieveRespDto>> retrieveMemberLikePost(Authentication authentication, Pageable pageable) {
         return ResponseEntity
