@@ -7,12 +7,15 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import petPeople.pet.domain.meeting.entity.JoinRequestStatus;
 import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
+import petPeople.pet.domain.meeting.entity.QMeetingWaitingMember;
 import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberCustomRepository;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 
 import static petPeople.pet.domain.meeting.entity.QMeeting.*;
+import static petPeople.pet.domain.meeting.entity.QMeetingWaitingMember.*;
 import static petPeople.pet.domain.meeting.entity.QMeetingWaitingMember.meetingWaitingMember;
 import static petPeople.pet.domain.member.entity.QMember.*;
 
@@ -20,7 +23,7 @@ import static petPeople.pet.domain.member.entity.QMember.*;
 public class MeetingWaitingMemberCustomRepositoryImpl implements MeetingWaitingMemberCustomRepository {
 
     private final JPAQueryFactory queryFactory;
-
+    private final EntityManager em;
     @Override
     public List<MeetingWaitingMember> findAllByMeetingIdFetchJoinMember(Long meetingId) {
         return queryFactory
@@ -28,6 +31,17 @@ public class MeetingWaitingMemberCustomRepositoryImpl implements MeetingWaitingM
                 .join(meetingWaitingMember.member, member).fetchJoin()
                 .where(meetingWaitingMember.meeting.id.eq(meetingId), meetingWaitingMember.joinRequestStatus.eq(JoinRequestStatus.WAITING))
                 .fetch();
+    }
+
+    @Override
+    public Optional<MeetingWaitingMember> findAllByMeetingIdAndMemberId(Long meetingId, Long memberId) {
+        MeetingWaitingMember content = queryFactory
+                .selectFrom(meetingWaitingMember)
+                .where(meetingWaitingMember.meeting.id.eq(meetingId),
+                        meetingWaitingMember.member.id.eq(memberId),
+                        meetingWaitingMember.joinRequestStatus.eq(JoinRequestStatus.WAITING))
+                .fetchOne();
+        return Optional.ofNullable(content);
     }
 
     @Override
@@ -60,5 +74,15 @@ public class MeetingWaitingMemberCustomRepositoryImpl implements MeetingWaitingM
         }
 
         return new SliceImpl<>(content, pageable, hasNext);
+    }
+
+    @Override
+    public void deleteByMeetingIdAndMemberId(Long meetingId, Long memberId) {
+        queryFactory
+                .delete(meetingWaitingMember)
+                .where(QMeetingWaitingMember.meetingWaitingMember.meeting.id.eq(meetingId), QMeetingWaitingMember.meetingWaitingMember.member.id.eq(memberId))
+                .execute();
+        em.flush();
+        em.clear();
     }
 }

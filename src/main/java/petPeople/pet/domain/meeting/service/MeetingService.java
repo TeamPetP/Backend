@@ -234,10 +234,6 @@ public class MeetingService {
         deleteMeetingMemberByMeetingIdAndMemberId(meetingId, findMember);
     }
 
-    private Optional<Member> findMemberByMemberId(Long memberId) {
-        return memberRepository.findById(memberId);
-    }
-
     @Transactional
     public void decline(Member member, Long meetingId, Long memberId) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
@@ -248,6 +244,17 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
     }
 
+    @Transactional
+    public void cancelJoinRequest(Long meetingId, Long memberId, Member member) {
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(meetingWaitingMemberRepository.findAllByMeetingIdAndMemberId(meetingId, memberId));
+        validateMemberAuthorization(meetingWaitingMember.getMember(), member);
+
+        meetingWaitingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, memberId);
+    }
+
+    private Optional<Member> findMemberByMemberId(Long memberId) {
+        return memberRepository.findById(memberId);
+    }
 
     public List<MeetingImageRetrieveRespDto> retrieveAllImage(Long meetingId) {
         return findMeetingImageListByMeetingId(meetingId).stream()
@@ -260,10 +267,10 @@ public class MeetingService {
     public Long countMemberMeeting(Member member) {
         return meetingRepository.countByMemberId(member.getId());
     }
-
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
     }
+
     private Member validateOptionalMember(Optional<Member> optionalMember) {
         return optionalMember
                 .orElseThrow(() ->
