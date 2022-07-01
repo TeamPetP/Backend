@@ -132,6 +132,17 @@ public class MeetingController {
                 .body(meetingService.retrieveAllImage(meetingId));
     }
 
+    @ApiOperation(value = "모임 회원 추방 API", notes = "모임에 가입한 회원의 추방을 위해 meetingId 와 memberId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    @DeleteMapping("/{meetingId}/members/{memberId}")
+    public ResponseEntity expelMeetingMember(@PathVariable Long meetingId, @PathVariable Long memberId, Authentication authentication) {
+        meetingService.expelMeetingMember(meetingId, memberId, getMember(authentication));
+
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();
     }

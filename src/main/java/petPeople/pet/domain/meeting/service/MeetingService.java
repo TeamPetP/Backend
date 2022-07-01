@@ -88,7 +88,7 @@ public class MeetingService {
         validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검즘
         validateDuplicatedJoinRequest(member, meetingId);//중복 가입 요청 회원 검즘
         validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검즘
-        validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검즘
+        validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검증
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
 
@@ -215,10 +215,27 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
 
         saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
+    }
 
-        if (isOccupiedMeeting(findMeeting.getMaxPeople(), joinMemberCount)) {
-            findMeeting.setIsOpened(false);
-        }
+    @Transactional
+    public void expelMeetingMember(Long meetingId, Long memberId, Member member) {
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Member findMember = validateOptionalMember(findMemberByMemberId(memberId));
+
+        validateJoinedMember(isJoined(findMember, findMeetingMemberListByMeetingId(meetingId)));
+
+        validateOwnMeetingResign(findMember, member);
+
+        //회원이 개셜한 모임인지 확인하는 로직
+        validateMemberAuthorization(findMeeting.getMember(), member);
+
+
+        //meetingMember 삭제
+        deleteMeetingMemberByMeetingIdAndMemberId(meetingId, findMember);
+    }
+
+    private Optional<Member> findMemberByMemberId(Long memberId) {
+        return memberRepository.findById(memberId);
     }
 
     @Transactional
@@ -247,12 +264,12 @@ public class MeetingService {
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
     }
-
     private Member validateOptionalMember(Optional<Member> optionalMember) {
         return optionalMember
                 .orElseThrow(() ->
                         new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
     }
+
     private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
     if (member == targetMember) {
         throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
