@@ -50,9 +50,6 @@ public class MeetingCreateRespDto {
     @ApiModelProperty(required = true, value = "1회성일 경우 작성 x/주기 적인 만남일 경우만 작성", example = "주 2회")
     private String period;
 
-    // TODO: 2022-06-28 이거 수정 
-    private LocalDateTime meetingDate;
-
     @ApiModelProperty(required = true, value = "모임 최대 인원", example = "3")
     private Integer maxPeople;
 
@@ -77,7 +74,6 @@ public class MeetingCreateRespDto {
         this.category = meeting.getCategory().getDetail();
         this.meetingType = meeting.getMeetingType().getDetail();
         this.period = meeting.getPeriod();
-        this.meetingDate = meeting.getMeetingDate();
         this.maxPeople = meeting.getMaxPeople();
         for (MeetingImage meetingImage : meetingImageList) {
             imgUrlList.add(meetingImage.getImgUrl());

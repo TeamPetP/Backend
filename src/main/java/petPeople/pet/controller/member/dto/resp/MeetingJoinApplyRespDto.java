@@ -25,8 +25,6 @@ public class MeetingJoinApplyRespDto {
 
     private String location;
 
-    private LocalDateTime meetingDate;
-
     private String conditions;
 
     private Integer maxPeople;
