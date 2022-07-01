@@ -16,11 +16,9 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.controller.member.dto.resp.notificationResp.MemberMeetingBookMarkRespDto;
 import petPeople.pet.domain.meeting.entity.*;
-import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
-import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
-import petPeople.pet.domain.meeting.repository.MeetingRepository;
-import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberRepository;
+import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.exception.CustomException;
@@ -36,11 +34,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MeetingService {
-
     private final MeetingRepository meetingRepository;
+
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
     private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
+    private final MeetingBookmarkRepository meetingBookmarkRepository;
     private final MemberRepository memberRepository;
     private final FirebaseAuth firebaseAuth;
 
@@ -230,6 +229,56 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
     }
 
+    @Transactional
+    public void bookmark(Member member, Long meetingId) {
+        if (isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId))) {
+            throwException(ErrorCode.BOOKMARKED_POST, "이미 북마크를 눌렀습니다.");
+        } else {
+            savePostBookmark(createPostBookmark(member, validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId))));
+        }
+    }
+
+    private void savePostBookmark(MeetingBookmark postBookmark) {
+        meetingBookmarkRepository.save(postBookmark);
+    }
+
+    private MeetingBookmark createPostBookmark(Member member, Meeting meeting) {
+        return MeetingBookmark.builder()
+                .member(member)
+                .meeting(meeting)
+                .build();
+    }
+
+    private boolean isOptionalPostBookmarkPresent(Optional<MeetingBookmark> optionalMeetingBookmark) {
+        return optionalMeetingBookmark.isPresent();
+    }
+
+    private Optional<MeetingBookmark> findMeetingBookmarkByMemberIdAndPostId(Long memberId, Long meetingId) {
+        return meetingBookmarkRepository.findByMemberIdAndMeetingId(memberId, meetingId);
+    }
+
+    @Transactional
+    public void deleteBookmark(Member member, Long meetingId) {
+        if (isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId))) {
+            meetingBookmarkRepository.deleteByMemberIdAndMeetingId(member.getId(), meetingId);
+        } else {
+            throwException(ErrorCode.NEVER_BOOKMARKED_MEETING, "북마크 하지 않은 모임입니다.");
+        }
+    }
+
+    public Slice<MemberMeetingBookMarkRespDto> retrieveMemberBookMarkMeeting(Member member, Pageable pageable) {
+
+        return findPostBookmarkByMemberId(member, pageable)
+                .map(meetingBookmark -> new MemberMeetingBookMarkRespDto(
+                        meetingBookmark.getId(),
+                        meetingBookmark.getMeeting().getId(),
+                        meetingBookmark.getMeeting().getTitle()
+                ));
+    }
+
+    private Slice<MeetingBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
+        return meetingBookmarkRepository.findByMemberIdWithFetchJoinMeeting(member.getId(), pageable);
+    }
 
     public List<MeetingImageRetrieveRespDto> retrieveAllImage(Long meetingId) {
         return findMeetingImageListByMeetingId(meetingId).stream()
@@ -243,15 +292,19 @@ public class MeetingService {
         return meetingRepository.countByMemberId(member.getId());
     }
 
+    public Long countMemberMeetingBookmark(Member member) {
+        return meetingBookmarkRepository.countByMemberId(member.getId());
+    }
+
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
     }
-
     private Member validateOptionalMember(Optional<Member> optionalMember) {
         return optionalMember
                 .orElseThrow(() ->
                         new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
     }
+
     private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
     if (member == targetMember) {
         throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
@@ -515,7 +568,6 @@ public class MeetingService {
                 .doName(meetingCreateReqDto.getDoName())
                 .sigungu(meetingCreateReqDto.getSigungu())
                 .location(meetingCreateReqDto.getLocation())
-                .meetingDate(meetingCreateReqDto.getMeetingDate())
                 .conditions(meetingCreateReqDto.getConditions())
                 .maxPeople(meetingCreateReqDto.getMaxPeople())
                 .sex(meetingCreateReqDto.getSex())

@@ -51,9 +51,6 @@ public class MeetingCreateReqDto {
     @ApiModelProperty(required = true, value = "1회성일 경우 작성 x/주기 적인 만남일 경우만 작성", example = "주 2회")
     private String period;
 
-    // TODO: 2022-06-28 이걸 수정 
-    private LocalDateTime meetingDate;
-
     @ApiModelProperty(required = true, value = "촤대 몇명", example = "3")
     private Integer maxPeople;
 

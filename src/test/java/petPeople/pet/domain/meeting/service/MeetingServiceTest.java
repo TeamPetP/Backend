@@ -50,7 +50,6 @@ class MeetingServiceTest {
     final Sex sex = Sex.MALE;
     final Category category = Category.WALK;
     final String conditions = "탈모아닌사람만";
-    final LocalDateTime meetingDate = LocalDateTime.of(2022, 05, 15, 5, 15);
     final Integer maxPeople = 5;
     final List<String> imgUrlList = Arrays.asList("www.abc.com", "www.abc.com", "www.abc.com", "www.abc.com");
     final String period = "주 2회";
@@ -341,7 +340,6 @@ class MeetingServiceTest {
                 .sex(sex)
                 .category(category)
                 .conditions(conditions)
-                .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .imgUrlList(imgUrlList)
                 .build();
@@ -356,7 +354,6 @@ class MeetingServiceTest {
                 .sex(sex)
                 .category(category)
                 .conditions(conditions)
-                .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .imgUrlList(imgUrlList)
                 .build();
@@ -388,7 +385,6 @@ class MeetingServiceTest {
                 .meetingType(meetingType)
                 .period(period)
                 .conditions(conditions)
-                .meetingDate(meetingDate)
                 .maxPeople(maxPeople)
                 .isOpened(true)
                 .build();

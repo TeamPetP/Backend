@@ -21,12 +21,14 @@ import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
 import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
 import petPeople.pet.controller.member.dto.resp.*;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
+import petPeople.pet.domain.meeting.repository.MeetingBookmarkRepository;
 import petPeople.pet.domain.meeting.service.MeetingPostService;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.meeting.service.MeetingWaitingMemberService;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.service.MemberRegisterDto;
 import petPeople.pet.domain.member.service.MemberService;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
 import petPeople.pet.domain.post.service.PostService;
 import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
@@ -45,6 +47,8 @@ public class MemberController {
     private final MeetingPostService meetingPostService;
     private final FirebaseAuth firebaseAuth;
     private final MeetingWaitingMemberService meetingWaitingMemberService;
+    private final MeetingBookmarkRepository meetingBookmarkRepository;
+    private final NotificationRepository notificationRepository;
     private final AuthFilterContainer authFilterContainer;
 
     //로컬 회원 가입
@@ -138,11 +142,17 @@ public class MemberController {
 
         Member member = getMember(authentication);
         long countMemberPost = postService.countMemberPost(member);
-        Long countMemberMeeting = meetingService.countMemberMeeting(member);
+        Long countMeetingBookmark = meetingBookmarkRepository.countByMemberId(getMemberId(member));
+        long countUnReadMemberNotifications = notificationRepository.countUnReadMemberNotifications(getMemberId(member));
+
         // TODO: 2022-06-29 알림 개수
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(new MemberCountDto(countMemberPost, countMemberMeeting, 0L));
+                .body(new MemberCountDto(countMemberPost, countMeetingBookmark, countUnReadMemberNotifications));
+    }
+
+    private Long getMemberId(Member member) {
+        return member.getId();
     }
 
     @ApiOperation(value = "회원이 작성한 모임 게시글 조회 API", notes = "회원이 작성한 모임 게시글 조회")
@@ -154,13 +164,23 @@ public class MemberController {
                 .body(meetingPostService.retrieveMemberMeetingPost(getMember(authentication), pageable));
     }
 
-    @ApiOperation(value = "회원의 북마크 조회 API", notes = "회원이 북마크 조회")
+    @ApiOperation(value = "회원의 게시글 북마크 조회 API", notes = "회원이 게시글 북마크 조회")
     @GetMapping("/me/bookmark")
     public ResponseEntity retrieveMemberBookMarkPost(Authentication authentication, Pageable pageable) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(postService.retrieveMemberBookMarkPost(getMember(authentication), pageable));
     }
+
+    @ApiOperation(value = "회원의 모임 북마크 조회 API", notes = "회원의 모임 북마크 조회")
+    @GetMapping("/me/meetingBookmark")
+    public ResponseEntity retrieveMemberBookMarkMeeting(Authentication authentication, Pageable pageable) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(meetingService.retrieveMemberBookMarkMeeting(getMember(authentication), pageable));
+    }
+
+
 
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();

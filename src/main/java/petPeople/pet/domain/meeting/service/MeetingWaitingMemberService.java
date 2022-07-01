@@ -52,7 +52,6 @@ public class MeetingWaitingMemberService {
                 .doName(mwm.getMeeting().getDoName())
                 .sigungu(mwm.getMeeting().getSigungu())
                 .location(mwm.getMeeting().getLocation())
-                .meetingDate(mwm.getMeeting().getMeetingDate())
                 .conditions(mwm.getMeeting().getConditions())
                 .maxPeople(mwm.getMeeting().getMaxPeople())
                 .sex(mwm.getMeeting().getSex().getDetail())
