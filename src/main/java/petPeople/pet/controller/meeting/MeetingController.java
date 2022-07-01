@@ -105,6 +105,25 @@ public class MeetingController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{meetingId}/meetingBookmarks")
+    @ApiOperation(value = "관심 모임 북마크 등록 API", notes = "북마크 등록를 위해 meetingId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
+    public ResponseEntity bookMeeting(Authentication authentication,
+                                      @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId) {
+        getMember(authentication);
+        meetingService.bookmark(getMember(authentication), meetingId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @ApiOperation(value = "관심 모임 북마크 취소 API", notes = "header 에 토큰을 입력해주세요, 북마크 취소할 meetingId 를 경로변수에 넣어주세요")
+    @DeleteMapping("/{meetingId}/meetingBookmarks")
+    public ResponseEntity deleteBookmarkMeeting(Authentication authentication,
+                                             @ApiParam(value = "게시글 ID", required = true) @PathVariable Long meetingId) {
+        meetingService.deleteBookmark(getMember(authentication), meetingId);
+
+        return ResponseEntity.noContent().build();
+    }
+
     // TODO: 2022-06-28 모임 이미지가 아닌 모임 게시글에 있는 모든 사진
 
     @GetMapping("/{meetingId}/images")
@@ -114,6 +133,7 @@ public class MeetingController {
                 .status(HttpStatus.OK)
                 .body(meetingService.retrieveAllImage(meetingId));
     }
+
     @PatchMapping("/{meetingId}/members/{memberId}/approve")
     @ApiOperation(value = "모임 가입 요청 승인 API", notes = "모임을 가입 요청 위해 meetingId 와 memberId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
     public ResponseEntity approveJoin(Authentication authentication,
@@ -144,7 +164,6 @@ public class MeetingController {
     @PatchMapping("/{meetingId}/members/{memberId}/expel")
     public ResponseEntity expelMeetingMember(@PathVariable Long meetingId, @PathVariable Long memberId, Authentication authentication) {
         meetingService.expelMeetingMember(meetingId, memberId, getMember(authentication));
-
         return ResponseEntity
                 .noContent()
                 .build();

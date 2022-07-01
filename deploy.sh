@@ -19,9 +19,4 @@ else
 fi
 
 echo "> $JAR_PATH 배포"
-<<<<<<< HEAD
-=======
-
->>>>>>> f83d9e59910ba846926581e6025c1c92f095960f
-#23412
 nohup java -jar $JAR_PATH --spring.profiles.active=prod > $REPOSITORY/nohup.out 2>&1 &

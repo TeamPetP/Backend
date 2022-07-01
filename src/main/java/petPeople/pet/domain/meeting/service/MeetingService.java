@@ -16,12 +16,10 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
+import petPeople.pet.controller.member.dto.resp.notificationResp.MemberMeetingBookMarkRespDto;
 import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.*;
-import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
-import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
-import petPeople.pet.domain.meeting.repository.MeetingRepository;
-import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberRepository;
+import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.exception.CustomException;
@@ -37,11 +35,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MeetingService {
-
     private final MeetingRepository meetingRepository;
+
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
     private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
+    private final MeetingBookmarkRepository meetingBookmarkRepository;
     private final MemberRepository memberRepository;
     private final FirebaseAuth firebaseAuth;
 
@@ -91,7 +90,6 @@ public class MeetingService {
         validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검증
 
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
-
     }
 
     @Transactional
@@ -245,19 +243,61 @@ public class MeetingService {
     }
 
     @Transactional
+    public void bookmark(Member member, Long meetingId) {
+        if (isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId))) {
+            throwException(ErrorCode.BOOKMARKED_POST, "이미 북마크를 눌렀습니다.");
+        } else {
+            savePostBookmark(createPostBookmark(member, validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId))));
+        }
+    }
+
+    private void savePostBookmark(MeetingBookmark postBookmark) {
+        meetingBookmarkRepository.save(postBookmark);
+    }
+
+    private MeetingBookmark createPostBookmark(Member member, Meeting meeting) {
+        return MeetingBookmark.builder()
+                .member(member)
+                .meeting(meeting)
+                .build();
+    }
+
+    private boolean isOptionalPostBookmarkPresent(Optional<MeetingBookmark> optionalMeetingBookmark) {
+        return optionalMeetingBookmark.isPresent();
+    }
+
+    private Optional<MeetingBookmark> findMeetingBookmarkByMemberIdAndPostId(Long memberId, Long meetingId) {
+        return meetingBookmarkRepository.findByMemberIdAndMeetingId(memberId, meetingId);
+    }
+
+    @Transactional
+    public void deleteBookmark(Member member, Long meetingId) {
+        if (isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId))) {
+            meetingBookmarkRepository.deleteByMemberIdAndMeetingId(member.getId(), meetingId);
+        } else {
+            throwException(ErrorCode.NEVER_BOOKMARKED_MEETING, "북마크 하지 않은 모임입니다.");
+        }
+    }
+
+    public Slice<MemberMeetingBookMarkRespDto> retrieveMemberBookMarkMeeting(Member member, Pageable pageable) {
+
+        return findPostBookmarkByMemberId(member, pageable)
+                .map(meetingBookmark -> new MemberMeetingBookMarkRespDto(
+                        meetingBookmark.getId(),
+                        meetingBookmark.getMeeting().getId(),
+                        meetingBookmark.getMeeting().getTitle()
+                ));
+    }
+
+    private Slice<MeetingBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
+        return meetingBookmarkRepository.findByMemberIdWithFetchJoinMeeting(member.getId(), pageable);
+    }
+
     public void cancelJoinRequest(Long meetingId, Long memberId, Member member) {
-        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(meetingWaitingMemberRepository.findAllByMeetingIdAndMemberId(meetingId, memberId));
         validateMemberAuthorization(meetingWaitingMember.getMember(), member);
 
-        deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId);
-    }
-
-    private void deleteMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
         meetingWaitingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, memberId);
-    }
-
-    private Optional<MeetingWaitingMember> findMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
-        return meetingWaitingMemberRepository.findAllByMeetingIdAndMemberId(meetingId, memberId);
     }
 
     private Optional<Member> findMemberByMemberId(Long memberId) {
@@ -275,6 +315,11 @@ public class MeetingService {
     public Long countMemberMeeting(Member member) {
         return meetingRepository.countByMemberId(member.getId());
     }
+
+    public Long countMemberMeetingBookmark(Member member) {
+        return meetingBookmarkRepository.countByMemberId(member.getId());
+    }
+
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
     }
@@ -548,7 +593,6 @@ public class MeetingService {
                 .doName(meetingCreateReqDto.getDoName())
                 .sigungu(meetingCreateReqDto.getSigungu())
                 .location(meetingCreateReqDto.getLocation())
-                .meetingDate(meetingCreateReqDto.getMeetingDate())
                 .conditions(meetingCreateReqDto.getConditions())
                 .maxPeople(meetingCreateReqDto.getMaxPeople())
                 .sex(meetingCreateReqDto.getSex())

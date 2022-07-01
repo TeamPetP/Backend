@@ -25,7 +25,9 @@ public enum ErrorCode {
 
     //북마크 예외
     BOOKMARKED_POST(HttpStatus.BAD_REQUEST, "이미 북마크한 피드입니다."),
+    BOOKMARKED_MEETING(HttpStatus.BAD_REQUEST, "이미 북마크한 모임입니다."),
     NEVER_BOOKMARKED_POST(HttpStatus.BAD_REQUEST, "북마크하지 않은 피드입니다."),
+    NEVER_BOOKMARKED_MEETING(HttpStatus.BAD_REQUEST, "북마크하지 않은 모임입니다."),
 
     //리뷰 예외
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, "해당 리뷰를 찾을 수 없습니다."),
