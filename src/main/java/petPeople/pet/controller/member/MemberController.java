@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.config.auth.AuthFilterContainer;
+import petPeople.pet.controller.meeting.dto.resp.MeetingPostRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.req.MemberEditReqDto;
 import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
@@ -138,7 +139,7 @@ public class MemberController {
 
     @ApiOperation(value = "회원의 한줄 소개 조회 API", notes = "회원의 한줄 소개 조회")
     @GetMapping("/me/info")
-    public ResponseEntity info(Authentication authentication) {
+    public ResponseEntity<MemberCountDto> info(Authentication authentication) {
 
         Member member = getMember(authentication);
         long countMemberPost = postService.countMemberPost(member);
@@ -157,16 +158,16 @@ public class MemberController {
 
     @ApiOperation(value = "회원이 작성한 모임 게시글 조회 API", notes = "회원이 작성한 모임 게시글 조회")
     @GetMapping("/me/meetings/meetingPosts")
-    public ResponseEntity retrieveMemberMeetingPost(Authentication authentication, Pageable pageable) {
+    public ResponseEntity<Slice<MeetingPostRetrieveRespDto>> retrieveMemberMeetingPost(Authentication authentication, Pageable pageable) {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(meetingPostService.retrieveMemberMeetingPost(getMember(authentication), pageable));
     }
 
-    @ApiOperation(value = "회원의 게시글 북마크 조회 API", notes = "회원이 게시글 북마크 조회")
-    @GetMapping("/me/bookmark")
-    public ResponseEntity retrieveMemberBookMarkPost(Authentication authentication, Pageable pageable) {
+    @ApiOperation(value = "회원의 게시글 좋아요 조회 API", notes = "회원의 좋아요 한 게시글 조회")
+    @GetMapping("/me/likes")
+    public ResponseEntity<Slice<PostRetrieveRespDto>> retrieveMemberLikePost(Authentication authentication, Pageable pageable) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(postService.retrieveMemberBookMarkPost(getMember(authentication), pageable));

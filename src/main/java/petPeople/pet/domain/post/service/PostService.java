@@ -13,17 +13,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.config.auth.AuthFilterContainer;
-import petPeople.pet.controller.member.dto.resp.MemberPostBookMarkRespDto;
 import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.datastructure.PostChildList;
+import petPeople.pet.domain.comment.entity.Comment;
+import petPeople.pet.domain.comment.repository.CommentRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
-import petPeople.pet.domain.notification.service.NotificationService;
 import petPeople.pet.domain.post.entity.*;
 import petPeople.pet.domain.post.repository.*;
 import petPeople.pet.exception.CustomException;
@@ -51,6 +51,7 @@ public class PostService {
     private final MemberRepository memberRepository;
     private final AuthFilterContainer authFilterContainer;
     private final NotificationRepository notificationRepository;
+    private final CommentRepository commentRepository;
 
     //의도와 구현을 분리
     @Transactional
@@ -69,18 +70,23 @@ public class PostService {
         List<Tag> tagList = findTagList(postId);
         List<PostImage> postImageList = findPostImageList(postId);
         Long likeCnt = countPostLikeByPostId(postId);
+        Long commentCnt = countCommentByPostId(postId);
 
         PostRetrieveRespDto respDto;
 
         if (isLogined(optionalHeader)) {
             Long memberId = getLocalMemberByHeader(optionalHeader.get()).getId();
             boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(memberId, postId));
-            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent);
+            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt);
         } else {
-            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt);
+            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
         }
 
         return respDto;
+    }
+
+    private Long countCommentByPostId(Long postId) {
+        return commentRepository.countByPostId(postId);
     }
 
     public PostRetrieveRespDto retrieveOne(Long postId, Optional<String> optionalHeader) {
@@ -89,6 +95,7 @@ public class PostService {
         List<Tag> tagList = findTagList(postId);
         List<PostImage> postImageList = findPostImageList(postId);
         Long likeCnt = countPostLikeByPostId(postId);
+        Long commentCnt = countCommentByPostId(postId);
 
         PostRetrieveRespDto respDto;
 
@@ -97,9 +104,9 @@ public class PostService {
             Member member = validateOptionalMember(findOptionalMemberByUid(uid));
 
             boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId));
-            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent);
+            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt);
         } else {
-            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt);
+            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
         }
 
         return respDto;
@@ -190,10 +197,34 @@ public class PostService {
         }
     }
 
-    public Slice<MemberPostBookMarkRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
+    public Slice<PostRetrieveRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
 
-        return findPostBookmarkByMemberId(member, pageable)
-                .map(postBookmark -> new MemberPostBookMarkRespDto(postBookmark.getId(), postBookmark.getPost().getId(), postBookmark.getPost().getContent()));
+        Slice<PostLike> postLikesSlice = findPostLikeByMemberId(member, pageable);
+
+        List<Long> ids = getPostIdByPostLikeId(postLikesSlice.getContent());
+
+        PostChildList postChildList =
+                createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
+
+        return postLikesSlice.map(postLike -> {
+            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), postLike.getPost());
+            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), postLike.getPost());
+            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), postLike.getPost());
+            List<Comment> commentList = getCommentListByPost(postChildList.getCommentList(), postLike.getPost());
+
+            return new PostRetrieveRespDto(postLike.getPost(), tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()));
+        });
+    }
+
+    private Slice<PostRetrieveRespDto> test(Slice<Post> postPage, PostChildList postChildList, Member member) {
+        return postPage.map(post -> {
+            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
+            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
+            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
+            List<Comment> commentList = getCommentListByPost(postChildList.getCommentList(), post);
+
+            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()));
+        });
     }
 
     public long countMemberPost(Member member) {
@@ -228,10 +259,14 @@ public class PostService {
         return postBookmarkRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
     }
 
+    private Slice<PostLike> findPostLikeByMemberId(Member member, Pageable pageable) {
+        return postLikeRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
+    }
+
     public Slice<PostRetrieveRespDto> retrieveMemberPost(Member member, Pageable pageable, String header) {
         Slice<Post> postSlice = findAllPostByMemberIdSlicing(member, pageable);
         List<Long> ids = getPostId(postSlice.getContent());
-        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
+        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
         return postSliceMapToRespDtoWithLogin(header, postSlice, postChildList);
     }
 
@@ -283,11 +318,12 @@ public class PostService {
                 .build();
     }
 
-    private PostChildList createPostChildList(List<Tag> findTagList, List<PostImage> findPostImageList, List<PostLike> findPostLikeList) {
+    private PostChildList createPostChildList(List<Tag> findTagList, List<PostImage> findPostImageList, List<PostLike> findPostLikeList, List<Comment> findCommentList) {
         return PostChildList.builder()
                 .tagList(findTagList)
                 .postImageList(findPostImageList)
                 .postLikeList(findPostLikeList)
+                .commentList(findCommentList)
                 .build();
     }
 
@@ -302,13 +338,18 @@ public class PostService {
     private Slice<PostRetrieveRespDto> postSliceMapToRespDtoSlice(Optional<String> optionalHeader, Slice<Post> postSlice) {
         List<Long> ids = getPostId(postSlice.getContent());
 
-        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids));
+        PostChildList postChildList =
+                createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
 
         if (isLogined(optionalHeader)) {
             return postSliceMapToRespDtoWithLogin(optionalHeader.get(), postSlice, postChildList);
         } else {
             return postSliceMapToRespDtoWithNoLogin(postSlice, postChildList);
         }
+    }
+
+    private List<Comment> findCommentsByPostIds(List<Long> ids) {
+        return commentRepository.findByPostIds(ids);
     }
 
     private boolean isLogined(Optional<String> optionalHeader) {
@@ -336,8 +377,9 @@ public class PostService {
             List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
             List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
             List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
+            List<Comment> commentList = getCommentListByPost(postChildList.getCommentList(), post);
 
-            return createLoginPostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList));
+            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()));
         });
     }
 
@@ -358,17 +400,16 @@ public class PostService {
             List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
             List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
             List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
-
-            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()));
+            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), null, Long.valueOf(getCommentListByPost(postChildList.getCommentList(), post).size()));
         });
     }
 
-    private PostRetrieveRespDto createLoginPostRetrieveRespDto(Post post, List<Tag> tagList, List<PostImage> postImageList, Long likeCnt, boolean flag) {
-        return new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, flag);
+    private PostRetrieveRespDto createLoginPostRetrieveRespDto(Post post, List<Tag> tagList, List<PostImage> postImageList, Long likeCnt, boolean flag, Long commentCnt) {
+        return new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, flag, commentCnt);
     }
 
-    private PostRetrieveRespDto createNoLoginPostRetrieveRespDto(Post post, List<Tag> tagList, List<PostImage> postImageList, Long likeCnt) {
-        return new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, null);
+    private PostRetrieveRespDto createNoLoginPostRetrieveRespDto(Post post, List<Tag> tagList, List<PostImage> postImageList, Long likeCnt, Long commentCnt) {
+        return new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, null, commentCnt);
     }
 
     private void deletePostByPostId(Long postId) {
@@ -412,6 +453,16 @@ public class PostService {
         return postLikeList;
     }
 
+    private List<Comment> getCommentListByPost(List<Comment> findComment, Post post) {
+        List<Comment> commentList = new ArrayList<>();
+        for (Comment comment : findComment) {
+            if (comment.getPost() == post) {
+                commentList.add(comment);
+            }
+        }
+        return commentList;
+    }
+
     private List<PostImage> getPostImageListByPost(List<PostImage> findPostImageList, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
         for (PostImage postImage : findPostImageList) {
@@ -448,6 +499,14 @@ public class PostService {
         List<Long> ids = new ArrayList<>();
         for (Post post : content) {
             ids.add(post.getId());
+        }
+        return ids;
+    }
+
+    private List<Long> getPostIdByPostLikeId(List<PostLike> content) {
+        List<Long> ids = new ArrayList<>();
+        for (PostLike postLike : content) {
+            ids.add(postLike.getPost().getId());
         }
         return ids;
     }
