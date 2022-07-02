@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter @Setter
 @ApiModel(description = "회원의 댓글 좋아요 알림 응답 DTO")
-public class NotificationCommentRetrieveResponseDto extends MemberNotificationResponseDto {
+public class NotificationCommentLikeRetrieveResponseDto extends MemberNotificationResponseDto {
 
     @ApiModelProperty(required = true, value = "댓글 ID", example = "1")
     private Long commentId;
@@ -30,7 +30,7 @@ public class NotificationCommentRetrieveResponseDto extends MemberNotificationRe
     @ApiModelProperty(required = true, value = "게시글 이미지", example = "www.img.com")
     private List<String> postImgUrlList = new ArrayList<>();
 
-    public NotificationCommentRetrieveResponseDto(Notification notification, List<PostImage> postImageList) {
+    public NotificationCommentLikeRetrieveResponseDto(Notification notification, List<PostImage> postImageList) {
         super(notification, "commentLike");
         this.commentId = notification.getComment().getId();
         this.postId = notification.getComment().getPost().getId();

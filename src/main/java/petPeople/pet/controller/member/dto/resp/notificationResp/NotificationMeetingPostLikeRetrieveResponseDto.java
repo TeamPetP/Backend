@@ -18,7 +18,7 @@ import java.util.List;
 @Getter
 @Setter
 @ApiModel(description = "회원의 모임 게시글 좋아요 알림 응답 DTO")
-public class NotificationMeetingPostRetrieveResponseDto extends MemberNotificationResponseDto {
+public class NotificationMeetingPostLikeRetrieveResponseDto extends MemberNotificationResponseDto {
 
     @ApiModelProperty(required = true, value = "모임 댓글 ID", example = "1")
     private Long meetingCommentId;
@@ -35,7 +35,7 @@ public class NotificationMeetingPostRetrieveResponseDto extends MemberNotificati
     @ApiModelProperty(required = true, value = "게시글 이미지", example = "www.img.com")
     private List<String> postImgUrlList = new ArrayList<>();
 
-    public NotificationMeetingPostRetrieveResponseDto(Notification notification, List<MeetingPostImage> meetingPostImages) {
+    public NotificationMeetingPostLikeRetrieveResponseDto(Notification notification, List<MeetingPostImage> meetingPostImages) {
         super(notification, "meetingPostLike");
         this.meetingPostId = notification.getMeetingPost().getId();
         this.content = notification.getMeetingPost().getContent();
