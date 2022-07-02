@@ -45,7 +45,7 @@ public class MemberNotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @ApiOperation(value = "회원 알림 삭제 API", notes = "알림 삭제를 위해 header에 토큰을 입력해주세요")
+    @ApiOperation(value = "회원 알림 전체 삭제 API", notes = "알림 삭제를 위해 header에 토큰을 입력해주세요")
     @DeleteMapping("/notifications")
     public ResponseEntity deleteAllNotification(Authentication authentication) {
         Long memberId = (getMember(authentication)).getId();
