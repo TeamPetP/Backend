@@ -16,12 +16,16 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
-import petPeople.pet.controller.member.dto.resp.notificationResp.MemberMeetingBookMarkRespDto;
+import petPeople.pet.controller.member.dto.resp.MemberMeetingBookMarkRespDto;
 import petPeople.pet.controller.post.model.MeetingParameter;
+import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
+import petPeople.pet.domain.notification.entity.Notification;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
+import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 import petPeople.pet.util.RequestUtil;
@@ -43,6 +47,7 @@ public class MeetingService {
     private final MeetingBookmarkRepository meetingBookmarkRepository;
     private final MemberRepository memberRepository;
     private final FirebaseAuth firebaseAuth;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
@@ -89,7 +94,32 @@ public class MeetingService {
         validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검즘
         validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검증
 
+        // TODO: 2022-07-06 회원이 미팅에 참여했을 때 알람 구현
+        saveNotification(meeting, member);
+
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
+    }
+
+    private void saveNotification(Meeting meeting, Member member) {
+        if (isNotSameMember(member, meeting.getMember())) {
+            if (!isExistMemberLikePostNotification(meeting.getMember().getId(), member)) {
+                saveNotification(createNotification(member, meeting));
+            }
+        }
+    }
+
+    // TODO: 2022-07-06 회원이 미팅에 참여했을 때 알람 구현
+    private void saveNotification(Notification notification) {
+    }
+
+    private Notification createNotification(Member member, Meeting meeting) {
+        return Notification.builder()
+                .member(member)
+                .build();
+    }
+
+    private boolean isExistMemberLikePostNotification(Long postId, Member member) {
+        return notificationRepository.findByMemberIdAndPostId(member.getId(), postId).isPresent();
     }
 
     @Transactional
@@ -111,13 +141,13 @@ public class MeetingService {
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList));
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId));
         } else {
             Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null);
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
         }
     }
 
@@ -131,13 +161,13 @@ public class MeetingService {
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList));
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId));
         } else {
             Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null);
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
         }
     }
 
@@ -244,10 +274,20 @@ public class MeetingService {
 
     @Transactional
     public void bookmark(Member member, Long meetingId) {
-        if (isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId))) {
+        if (isBookmarked(member, meetingId)) {
             throwException(ErrorCode.BOOKMARKED_POST, "이미 북마크를 눌렀습니다.");
         } else {
             savePostBookmark(createPostBookmark(member, validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId))));
+        }
+    }
+
+
+    @Transactional
+    public void deleteBookmark(Member member, Long meetingId) {
+        if (isBookmarked(member, meetingId)) {
+            meetingBookmarkRepository.deleteByMemberIdAndMeetingId(member.getId(), meetingId);
+        } else {
+            throwException(ErrorCode.NEVER_BOOKMARKED_MEETING, "북마크 하지 않은 모임입니다.");
         }
     }
 
@@ -268,15 +308,6 @@ public class MeetingService {
 
     private Optional<MeetingBookmark> findMeetingBookmarkByMemberIdAndPostId(Long memberId, Long meetingId) {
         return meetingBookmarkRepository.findByMemberIdAndMeetingId(memberId, meetingId);
-    }
-
-    @Transactional
-    public void deleteBookmark(Member member, Long meetingId) {
-        if (isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId))) {
-            meetingBookmarkRepository.deleteByMemberIdAndMeetingId(member.getId(), meetingId);
-        } else {
-            throwException(ErrorCode.NEVER_BOOKMARKED_MEETING, "북마크 하지 않은 모임입니다.");
-        }
     }
 
     public Slice<MemberMeetingBookMarkRespDto> retrieveMemberBookMarkMeeting(Member member, Pageable pageable) {
@@ -470,8 +501,13 @@ public class MeetingService {
                     meeting,
                     getMeetingImagesByMeeting(meetingImageList, meeting),
                     getMeetingMembersByMeeting(meetingMemberList, meeting),
-                    isJoined(member, getMeetingMembersByMeeting(meetingMemberList, meeting)))
+                    isJoined(member, getMeetingMembersByMeeting(meetingMemberList, meeting)),
+                    isBookmarked(member, meeting.getId()))
         );
+    }
+
+    private boolean isBookmarked(Member member, Long meetingId) {
+        return isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId));
     }
 
     private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveNoLoginRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
@@ -480,6 +516,7 @@ public class MeetingService {
                         meeting,
                         getMeetingImagesByMeeting(meetingImageList, meeting),
                         getMeetingMembersByMeeting(meetingMemberList, meeting),
+                        null,
                         null)
         );
     }

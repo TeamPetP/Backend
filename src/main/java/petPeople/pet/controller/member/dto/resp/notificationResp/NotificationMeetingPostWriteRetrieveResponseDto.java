@@ -17,10 +17,10 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-@ApiModel(description = "회원의 모임 게시글 좋아요 알림 응답 DTO")
-public class NotificationMeetingPostLikeRetrieveResponseDto extends MemberNotificationResponseDto {
+@ApiModel(description = "회원의 모임 게시글 작성 알림 응답 DTO")
+public class NotificationMeetingPostWriteRetrieveResponseDto extends MemberNotificationResponseDto {
 
-    @ApiModelProperty(required = true, value = "모임 게시글 ID", example = "1")
+    @ApiModelProperty(required = true, value = "모임 게시글 ID", example = "2")
     private Long meetingPostId;
 
     @ApiModelProperty(required = true, value = "게시글 제목", example = "토르 러브 엔 썬더 보고싶당 여긴 제목")
@@ -32,8 +32,8 @@ public class NotificationMeetingPostLikeRetrieveResponseDto extends MemberNotifi
     @ApiModelProperty(required = true, value = "게시글 이미지", example = "www.img.com")
     private List<String> postImgUrlList = new ArrayList<>();
 
-    public NotificationMeetingPostLikeRetrieveResponseDto(Notification notification, List<MeetingPostImage> meetingPostImages) {
-        super(notification, "meetingPostLike");
+    public NotificationMeetingPostWriteRetrieveResponseDto(Notification notification, List<MeetingPostImage> meetingPostImages) {
+        super(notification, "meetingPostWrite");
         this.meetingPostId = notification.getMeetingPost().getId();
         this.content = notification.getMeetingPost().getContent();
         this.postTitle = notification.getMeetingPost().getTitle();

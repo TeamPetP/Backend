@@ -7,9 +7,9 @@ import lombok.Getter;
 @Getter
 public enum Sex {
 
-    ALL("성별 구분 X"),
-    FEMALE("여성"),
-    MALE("남성");
+    ALL("ALL"),
+    FEMALE("FEMALE"),
+    MALE("MALE");
     
     private String detail;
 

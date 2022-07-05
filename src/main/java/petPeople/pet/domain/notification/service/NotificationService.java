@@ -42,10 +42,12 @@ public class NotificationService {
                         return new NotificationCommentLikeRetrieveResponseDto(notification, postImages);
                     else if (notification.getWriteComment() != null) {
                         return new NotificationCommentWriteRetrieveResponseDto(notification, postImages);
-                    } else if (notification.getPost() != null)
+                    } else if (notification.getPost() != null) {
                         return new NotificationPostRetrieveResponseDto(notification, postImages);
-                     else if (notification.getMeetingPost() != null) {
+                    } else if (notification.getMeetingPost() != null) {
                         return new NotificationMeetingPostLikeRetrieveResponseDto(notification, meetingPostImages);
+                    } else if (notification.getMeetingWritePost() != null){
+                        return new NotificationMeetingPostWriteRetrieveResponseDto(notification, meetingPostImages);
                     } else if (notification.getWriteMeetingComment() != null) {
                         return new NotificationMeetingCommentWriteRetrieveResponseDto(notification, meetingPostImages);
                     } else {
