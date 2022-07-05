@@ -338,6 +338,7 @@ public class MeetingService {
 
     public FirebaseToken decodeToken(String header) {
         try {
+            header = "Bearer " + header;
             String token = RequestUtil.getAuthorizationToken(header);
             return firebaseAuth.verifyIdToken(token);
         } catch (IllegalArgumentException | FirebaseAuthException e) {
