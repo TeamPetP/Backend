@@ -55,6 +55,10 @@ public class Notification extends BaseTimeEntity {
     private MeetingPost meetingPost;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "meeting_post_id2")
+    private MeetingPost meetingWritePost;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_comment_id")
     private MeetingComment meetingComment;
 

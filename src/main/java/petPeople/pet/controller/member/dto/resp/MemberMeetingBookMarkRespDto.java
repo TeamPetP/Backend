@@ -1,4 +1,4 @@
-package petPeople.pet.controller.member.dto.resp.notificationResp;
+package petPeople.pet.controller.member.dto.resp;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

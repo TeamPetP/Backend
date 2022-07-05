@@ -39,17 +39,19 @@ public class NotificationService {
                     }
 
                     if (notification.getComment() != null)
-                        return new NotificationCommentRetrieveResponseDto(notification, postImages);
-                    else if (notification.getPost() != null)
-                        return new NotificationPostRetrieveResponseDto(notification, postImages);
+                        return new NotificationCommentLikeRetrieveResponseDto(notification, postImages);
                     else if (notification.getWriteComment() != null) {
-                        return new NotificationMeetingCommentRetrieveResponseDto(notification, meetingPostImages);
+                        return new NotificationCommentWriteRetrieveResponseDto(notification, postImages);
+                    } else if (notification.getPost() != null) {
+                        return new NotificationPostRetrieveResponseDto(notification, postImages);
                     } else if (notification.getMeetingPost() != null) {
-                        return new NotificationMeetingPostRetrieveResponseDto(notification, meetingPostImages);
+                        return new NotificationMeetingPostLikeRetrieveResponseDto(notification, meetingPostImages);
+                    } else if (notification.getMeetingWritePost() != null){
+                        return new NotificationMeetingPostWriteRetrieveResponseDto(notification, meetingPostImages);
                     } else if (notification.getWriteMeetingComment() != null) {
                         return new NotificationMeetingCommentWriteRetrieveResponseDto(notification, meetingPostImages);
                     } else {
-                        return new NotificationCommentWriteRetrieveResponseDto(notification, postImages);
+                        return new NotificationMeetingCommentRetrieveResponseDto(notification, meetingPostImages);
                     }
                 });
     }
