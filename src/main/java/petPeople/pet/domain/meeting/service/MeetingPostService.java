@@ -41,6 +41,9 @@ public class MeetingPostService {
         MeetingPost saveMeetingPost = saveMeetingPost(createMeetingPost(member, meetingPostWriteReqDto, findMeeting));
         List<MeetingPostImage> saveMeetingPostImageList = saveMeetingPostImageList(member, saveMeetingPost, meetingPostWriteReqDto.getImgUrlList());
 
+        Notification findMeetingWritePost = createWritePostNotification(member, findMeeting, saveMeetingPost);
+        saveNotification(member, saveMeetingPost, findMeetingWritePost);
+
         return new MeetingPostWriteRespDto(saveMeetingPost, saveMeetingPostImageList);
     }
 
@@ -118,7 +121,7 @@ public class MeetingPostService {
 
     @Transactional
     public long like(Long meetingId, Long meetingPostId, Member member) {
-        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         MeetingPost findMeetingPost = validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
         Optional<MeetingPostLike> optionalMeetingPostLike = findOptionalMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);
 
@@ -126,7 +129,9 @@ public class MeetingPostService {
             deleteMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);
         } else {
             saveMeetingPostLike(createMeetingPostLike(member, findMeetingPost));
-            saveNotification(member, findMeetingPost);
+
+            Notification meetingLikePostNotification = createLikePostNotification(member, findMeeting, findMeetingPost);
+            saveNotification(member, findMeetingPost, meetingLikePostNotification);
         }
 
         return countMeetingPostLikeByMeetingPostsId(meetingPostId);
@@ -145,18 +150,28 @@ public class MeetingPostService {
         deleteMeetingPostByMeetingPostId(meetingPostId);
     }
 
-    private void saveNotification(Member member, MeetingPost findMeetingPost) {
+    private void saveNotification(Member member, MeetingPost findMeetingPost, Notification notification) {
         if (isNotSameMember(member, findMeetingPost.getMember())) {
             if (!isExistMemberLikePostNotification(findMeetingPost.getId(), member)) {
-                saveNotification(createNotification(member, findMeetingPost));
+                saveNotification(notification);
             }
         }
     }
 
-    private Notification createNotification(Member member, MeetingPost findMeetingPost) {
+    private Notification createWritePostNotification(Member member, Meeting findMeeting, MeetingPost findMeetingPost) {
+        return Notification.builder()
+                .meetingWritePost(findMeetingPost)
+                .ownerMember(findMeetingPost.getMember())
+                .meeting(findMeeting)
+                .member(member)
+                .build();
+    }
+
+    private Notification createLikePostNotification(Member member, Meeting findMeeting, MeetingPost findMeetingPost) {
         return Notification.builder()
                 .meetingPost(findMeetingPost)
                 .ownerMember(findMeetingPost.getMember())
+                .meeting(findMeeting)
                 .member(member)
                 .build();
     }

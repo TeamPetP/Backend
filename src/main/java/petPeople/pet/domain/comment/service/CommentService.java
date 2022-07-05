@@ -105,27 +105,31 @@ public class CommentService {
     @Transactional
     public Long likeComment(Member member, Long commentId) {
         Comment findComment = validateOptionalComment(findOptionalComment(commentId));
+        Long postId = findComment.getPost().getId();
+        Post findPost = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "해당하는 게시글이 존재하지 않습니다."));
 
         if(isOptionalCommentLikePresent(member, commentId)){
             deleteCommentLikeByCommentIdAndMemberId(member, commentId);
         } else {
             savePostLike(member, commentId);
-            saveNotification(member, commentId, findComment);
+            saveNotification(member, commentId, findComment, findPost);
         }
         return commentLikeRepository.countByCommentId(commentId);
     }
 
-    private void saveNotification(Member member, Long commentId, Comment findComment) {
+    private void saveNotification(Member member, Long commentId, Comment findComment, Post findPost) {
         if (isNotSameMember(member, findComment.getMember())) {
             Optional<Notification> optionalNotification = notificationRepository.findByMemberIdAndCommentId(member.getId(), commentId);
-            createLikeCommentNotification(member, findComment, optionalNotification);
+            createLikeCommentNotification(member, findComment, optionalNotification, findPost);
         }
     }
 
-    private void createLikeCommentNotification(Member member, Comment findComment, Optional<Notification> optionalNotification) {
+    private void createLikeCommentNotification(Member member, Comment findComment, Optional<Notification> optionalNotification, Post findPost) {
         if (!optionalNotification.isPresent()) {
             Notification notification = Notification.builder()
                     .comment(findComment)//댓글 엔티티
+                    .post(findPost)
                     .member(member)//좋아요를 누른 회원 엔티티
                     .ownerMember(findComment.getMember())//게시글의 회원
                     .build();
@@ -140,9 +144,9 @@ public class CommentService {
         }
     }
 
-    private Notification createNotification(Member member, Post post, Comment comment) {
+    private Notification createNotification(Member member, Post post, Comment writeComment) {
         return Notification.builder()
-                .comment(comment)
+                .writeComment(writeComment)
                 .post(post)
                 .ownerMember(post.getMember()) //게시글 작성자
                 .member(member) //게시글에 댓글을 단 사용자

@@ -44,7 +44,10 @@ public class NotificationCustomRepositoryImpl implements NotificationCustomRepos
     public Optional<Notification> findByMemberIdAndPostId(Long memberId, Long postId) {
         Notification content = queryFactory
                 .selectFrom(notification)
-                .where(notification.member.id.eq(memberId), notification.post.id.eq(postId))
+                .where(notification.member.id.eq(memberId),
+                        notification.post.id.eq(postId),
+                        notification.writeComment.id.isNull(),
+                        notification.comment.isNull())
                 .fetchOne();
 
         return Optional.ofNullable(content);

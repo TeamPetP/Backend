@@ -20,6 +20,12 @@ import java.util.List;
 @ApiModel(description = "게시글 작성 응답 DTO")
 public class PostWriteRespDto {
 
+    @ApiModelProperty(required = true, value = "회원 ID", example = "1")
+    private Long memberId;
+
+    @ApiModelProperty(required = true, value = "회원 닉네임", example = "1")
+    private String nickname;
+
     @ApiModelProperty(required = true, value = "게시글 ID", example = "1")
     private Long postId;
 
@@ -39,6 +45,8 @@ public class PostWriteRespDto {
     private LocalDateTime lastModifiedDate;
 
     public PostWriteRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls) {
+        this.memberId = post.getMember().getId();
+        this.nickname = post.getMember().getNickname();
         this.postId = post.getId();
         this.content = post.getContent();
 

@@ -77,7 +77,10 @@ public class MeetingRetrieveRespDto {
     @ApiModelProperty(required = true, value = "모집 여부", example = "true/false")
     private Boolean isJoined;
 
-    public MeetingRetrieveRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList, Boolean isJoined) {
+    @ApiModelProperty(required = true, value = "북마크 여부", example = "true/false")
+    private Boolean isBookmarked;
+
+    public MeetingRetrieveRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList, Boolean isJoined, Boolean isBookmarked) {
         this.meetingId = meeting.getId();
         this.memberId = meeting.getMember().getId();
         this.nickname = meeting.getMember().getNickname();
@@ -103,5 +106,6 @@ public class MeetingRetrieveRespDto {
             imgUrlList.add(meetingImage.getImgUrl());
         }
         this.isJoined = isJoined;
+        this.isBookmarked = isBookmarked;
     }
 }
