@@ -88,10 +88,10 @@ public class MeetingService {
     public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
-        validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검즘
-        validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검즘
-        validateDuplicatedJoinRequest(member, meetingId);//중복 가입 요청 회원 검즘
-        validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검즘
+        validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검증
+        validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검증
+        validateDuplicatedJoinRequest(member, meetingId);//중복 가입 요청 회원 검증
+        validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검증
         validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검증
 
         // TODO: 2022-07-06 회원이 미팅에 참여했을 때 알람 구현
@@ -256,7 +256,6 @@ public class MeetingService {
 
         //회원이 개셜한 모임인지 확인하는 로직
         validateMemberAuthorization(findMeeting.getMember(), member);
-
 
         //meetingMember 삭제
         deleteMeetingMemberByMeetingIdAndMemberId(meetingId, findMember);

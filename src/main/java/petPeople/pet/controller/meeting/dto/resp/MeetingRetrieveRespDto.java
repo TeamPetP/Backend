@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import petPeople.pet.domain.meeting.entity.*;
+import petPeople.pet.domain.meeting.service.MeetingRetrieveOneMemberDto;
+import petPeople.pet.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -72,7 +74,7 @@ public class MeetingRetrieveRespDto {
     private List<String> imgUrlList = new ArrayList<>();
 
     @ApiModelProperty(required = true, value = "가입 회원 리스트", example = "aaaa, bbbb, cccc")
-    private List<String> joinMembers = new ArrayList<>();
+    private List<MeetingRetrieveOneMemberDto> joinMembers = new ArrayList<>();
 
     @ApiModelProperty(required = true, value = "모집 여부", example = "true/false")
     private Boolean isJoined;
@@ -99,7 +101,8 @@ public class MeetingRetrieveRespDto {
         this.joinPeople = meetingMemberList.size();
         this.createDate = meeting.getCreatedDate();
         for (MeetingMember meetingMember : meetingMemberList) {
-            joinMembers.add(meetingMember.getMember().getNickname());
+            MeetingRetrieveOneMemberDto meetingRetrieveOneMemberDto = new MeetingRetrieveOneMemberDto(meetingMember);
+            joinMembers.add(meetingRetrieveOneMemberDto);
         }
 
         for (MeetingImage meetingImage : meetingImageList) {
