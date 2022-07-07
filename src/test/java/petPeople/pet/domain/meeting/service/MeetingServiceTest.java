@@ -128,7 +128,7 @@ class MeetingServiceTest {
         when(meetingImageRepository.findByMeetingId(any())).thenReturn(meetingImageList);
         when(meetingMemberRepository.findByMeetingId(any())).thenReturn(meetingMemberList);
 
-        MeetingRetrieveRespDto result = new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null);
+        MeetingRetrieveRespDto result = new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
 
         //when
         MeetingRetrieveRespDto respDto = meetingService.localRetrieveOne(meeting.getId(), Optional.empty());
@@ -184,9 +184,9 @@ class MeetingServiceTest {
         List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
 
-        MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1, null);
-        MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2, null);
-        MeetingRetrieveRespDto result3 = new MeetingRetrieveRespDto(meeting3, meetingImageList3, meetingMemberList3, null);
+        MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1, null, null);
+        MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2, null, null);
+        MeetingRetrieveRespDto result3 = new MeetingRetrieveRespDto(meeting3, meetingImageList3, meetingMemberList3, null, null);
 
         List<Meeting> meetingList = Arrays.asList(meeting1, meeting2, meeting3);
         List<MeetingRetrieveRespDto> content = Arrays.asList(result1, result2, result3);
@@ -204,7 +204,7 @@ class MeetingServiceTest {
         meetingMemberList.addAll(meetingMemberList2);
         meetingMemberList.addAll(meetingMemberList3);
 
-        when(meetingRepository.findAllSlicingWithFetchJoinMember(any(), meetingParameter)).thenReturn(meetingSlice);
+        when(meetingRepository.findAllSlicingWithFetchJoinMember(any(), any())).thenReturn(meetingSlice);
         when(meetingImageRepository.findByMeetingIds(any())).thenReturn(meetingImageList);
         when(meetingMemberRepository.findByMeetingIds(any())).thenReturn(meetingMemberList);
 
@@ -293,9 +293,9 @@ class MeetingServiceTest {
         List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
         List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
 
-        MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1, true);
-        MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2, true);
-        MeetingRetrieveRespDto result3 = new MeetingRetrieveRespDto(meeting3, meetingImageList3, meetingMemberList3, true);
+        MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1, true, true);
+        MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2, true, true);
+        MeetingRetrieveRespDto result3 = new MeetingRetrieveRespDto(meeting3, meetingImageList3, meetingMemberList3, true, true);
 
         List<Meeting> meetingList = Arrays.asList(meeting1, meeting2, meeting3);
         List<MeetingRetrieveRespDto> content = Arrays.asList(result1, result2, result3);
