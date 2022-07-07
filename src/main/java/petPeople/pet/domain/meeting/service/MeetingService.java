@@ -356,6 +356,7 @@ public class MeetingService {
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
     }
+
     private Member validateOptionalMember(Optional<Member> optionalMember) {
         return optionalMember
                 .orElseThrow(() ->
@@ -370,6 +371,7 @@ public class MeetingService {
 
     public FirebaseToken decodeToken(String header) {
         try {
+            header = "Bearer " + header;
             String token = RequestUtil.getAuthorizationToken(header);
             return firebaseAuth.verifyIdToken(token);
         } catch (IllegalArgumentException | FirebaseAuthException e) {
