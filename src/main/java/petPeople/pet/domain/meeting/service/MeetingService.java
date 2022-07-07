@@ -85,8 +85,11 @@ public class MeetingService {
     }
 
     @Transactional
-    public void joinRequest(Member member, Long meetingId) {
+    public void joinRequest(Optional<String> optionalHeader, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
+        Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
 
         validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검증
         validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검증
