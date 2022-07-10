@@ -54,6 +54,18 @@ public class NotificationCustomRepositoryImpl implements NotificationCustomRepos
     }
 
     @Override
+    public void deleteNotificationByMemberIdAndPostId(Long memberId, Long postId) {
+        queryFactory
+                .delete(notification)
+                .where(notification.ownerMember.id.eq(memberId),
+                        notification.post.id.eq(postId))
+                .execute();
+        em.flush();
+        em.clear();
+    }
+
+
+    @Override
     public Optional<Notification> findByMemberIdAndCommentId(Long memberId, Long commentId) {
         Notification content = queryFactory
                 .selectFrom(notification)

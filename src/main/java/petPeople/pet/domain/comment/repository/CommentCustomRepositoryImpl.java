@@ -11,6 +11,7 @@ import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.comment.entity.QComment;
 import petPeople.pet.domain.member.entity.QMember;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 
 import static petPeople.pet.domain.comment.entity.QComment.*;
@@ -20,6 +21,7 @@ import static petPeople.pet.domain.member.entity.QMember.*;
 public class CommentCustomRepositoryImpl implements CommentCustomRepository{
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager em;
 
     @Override
     public Slice<Comment> findAllByIdWithFetchJoinMemberPaging(Long postId, Pageable pageable) {
@@ -55,5 +57,16 @@ public class CommentCustomRepositoryImpl implements CommentCustomRepository{
                 .from(comment)
                 .where(comment.post.id.eq(postId))
                 .fetchOne();
+    }
+
+    @Override
+    public void deleteCommentByPostId(Long postId) {
+        queryFactory
+                .delete(comment)
+                .where(comment.post.id.eq(postId))
+                .execute();
+
+        em.flush();
+        em.clear();
     }
 }

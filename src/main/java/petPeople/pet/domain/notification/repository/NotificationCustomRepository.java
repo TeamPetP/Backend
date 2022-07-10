@@ -15,6 +15,8 @@ public interface NotificationCustomRepository {
 
     Optional<Notification> findByMemberIdAndPostId(Long id, Long postId);
 
+    void deleteNotificationByMemberIdAndPostId(Long memberId, Long postId);
+
     Optional<Notification> findByMemberIdAndCommentId(Long id, Long postId);
 
     Slice<Notification> findByOwnerMemberId(Pageable pageable, Long memberId);

@@ -113,7 +113,7 @@ public class CommentService {
             deleteCommentLikeByCommentIdAndMemberId(member, commentId);
         } else {
             savePostLike(member, commentId);
-            saveNotification(member, commentId, findComment, findPost);
+//            saveNotification(member, commentId, findComment, findPost);
         }
         return commentLikeRepository.countByCommentId(commentId);
     }

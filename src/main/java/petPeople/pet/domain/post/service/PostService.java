@@ -176,6 +176,8 @@ public class PostService {
         deleteTagByPostId(postId);
         deletePostImageByPostId(postId);
         deletePostLikeByPostId(postId);
+        notificationRepository.deleteNotificationByMemberIdAndPostId(member.getId(), postId);
+        commentRepository.deleteCommentByPostId(postId);
         deletePostByPostId(postId);
     }
 
