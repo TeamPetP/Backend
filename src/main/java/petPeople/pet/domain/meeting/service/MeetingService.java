@@ -18,14 +18,12 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.resp.MemberMeetingBookMarkRespDto;
 import petPeople.pet.controller.post.model.MeetingParameter;
-import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
-import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 import petPeople.pet.util.RequestUtil;
@@ -85,11 +83,8 @@ public class MeetingService {
     }
 
     @Transactional
-    public void joinRequest(Optional<String> optionalHeader, Long meetingId) {
+    public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-
-        FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
-        Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
 
         validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검증
         validateOwnMeetingJoinRequest(member, meeting.getMember());//자신의 모임 가입 검증
