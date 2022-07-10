@@ -51,6 +51,14 @@ public class CommentCustomRepositoryImpl implements CommentCustomRepository{
     }
 
     @Override
+    public List<Comment> findByPostId(Long postId) {
+        return queryFactory
+                .selectFrom(comment)
+                .where(comment.post.id.eq(postId))
+                .fetch();
+    }
+
+    @Override
     public Long countByPostId(Long postId) {
         return queryFactory
                 .select(comment.count())

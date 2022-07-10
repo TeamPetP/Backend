@@ -12,6 +12,8 @@ public interface CommentCustomRepository {
 
     Slice<Comment> findAllByIdWithFetchJoinMemberPaging(Long postId, Pageable pageable);
     List<Comment> findByPostIds(List<Long> ids);
+
+    List<Comment> findByPostId(Long postId);
     Long countByPostId(Long postId);
 
     void deleteCommentByPostId(Long postId);

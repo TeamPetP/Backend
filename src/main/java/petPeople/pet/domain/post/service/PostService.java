@@ -19,6 +19,7 @@ import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.datastructure.PostChildList;
 import petPeople.pet.domain.comment.entity.Comment;
+import petPeople.pet.domain.comment.repository.CommentLikeRepository;
 import petPeople.pet.domain.comment.repository.CommentRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
@@ -52,6 +53,7 @@ public class PostService {
     private final AuthFilterContainer authFilterContainer;
     private final NotificationRepository notificationRepository;
     private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     //의도와 구현을 분리
     @Transactional
@@ -171,14 +173,36 @@ public class PostService {
     @Transactional
     public void delete(Member member, Long postId) {
         Post post = validateOptionalPost(findOptionalPost(postId));
+        List<Comment> findCommentList = getFindCommentList(postId);
         validateMemberAuthorization(member, post.getMember());
 
         deleteTagByPostId(postId);
         deletePostImageByPostId(postId);
         deletePostLikeByPostId(postId);
-        notificationRepository.deleteNotificationByMemberIdAndPostId(member.getId(), postId);
-        commentRepository.deleteCommentByPostId(postId);
+        deleteNotificationByMemberIdAndPostId(member, postId);
+        for (Comment comment : findCommentList) {
+            deleteCommentLikeByCommentId(comment);
+            deleteNotificationByMemberIdAndCommentId(member, comment);
+            deleteNotification(member, comment);
+            commentRepository.deleteById(comment.getId());
+        }
         deletePostByPostId(postId);
+    }
+
+    private void deleteNotification(Member member, Comment comment) {
+        notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), comment.getId());
+    }
+
+    private void deleteNotificationByMemberIdAndCommentId(Member member, Comment comment) {
+        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), comment.getId());
+    }
+
+    private void deleteCommentLikeByCommentId(Comment comment) {
+        commentLikeRepository.deleteByCommentId(comment.getId());
+    }
+
+    private List<Comment> getFindCommentList(Long postId) {
+        return commentRepository.findByPostId(postId);
     }
 
     @Transactional
@@ -247,6 +271,15 @@ public class PostService {
                 .ownerMember(post.getMember()) //게시글 작성자
                 .member(member) //게시글에 좋아요한 사용자
                 .build();
+    }
+
+
+    private void deleteNotificationByMemberIdAndPostId(Member member, Long postId) {
+        notificationRepository.deleteNotificationByMemberIdAndPostId(member.getId(), postId);
+    }
+
+    private void deleteCommentByPostId(Long postId) {
+        commentRepository.deleteCommentByPostId(postId);
     }
 
     private boolean isExistMemberLikePostNotification(Long postId, Member member) {

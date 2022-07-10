@@ -99,6 +99,8 @@ public class CommentService {
         validateAuthorization(member, comment);
 
         deleteCommentLikeByCommentId(commentId);
+        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), commentId);
+        notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), commentId);
         deleteCommentByCommentId(commentId);
     }
 
@@ -113,7 +115,7 @@ public class CommentService {
             deleteCommentLikeByCommentIdAndMemberId(member, commentId);
         } else {
             savePostLike(member, commentId);
-//            saveNotification(member, commentId, findComment, findPost);
+            saveNotification(member, commentId, findComment, findPost);
         }
         return commentLikeRepository.countByCommentId(commentId);
     }
