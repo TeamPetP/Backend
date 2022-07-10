@@ -82,7 +82,7 @@ public class PostController {
                 .body(respDto);
     }
 
-    @ApiOperation(value = "게시글 좋아요 조회 API", notes = "header 에 토큰을 입력해주세요, 게시글 좋아요 할 postId 를 경로변수에 넣어주세요")
+    @ApiOperation(value = "게시글 좋아요 API", notes = "header 에 토큰을 입력해주세요, 게시글 좋아요 할 postId 를 경로변수에 넣어주세요")
     @PatchMapping("/{postId}")
     public ResponseEntity<Long> likePost(Authentication authentication,
                                          @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId) {
