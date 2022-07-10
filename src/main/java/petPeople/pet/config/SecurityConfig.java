@@ -40,6 +40,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST ,"/members/local")//로컬용 회원가입
                 .antMatchers(HttpMethod.POST, "/members")//배포용 회원가입
                 .antMatchers(HttpMethod.GET, "/meetings")
+                .antMatchers(HttpMethod.GET, "/meetings/*")
                 .antMatchers(HttpMethod.GET, "/posts/**")
                 .antMatchers("/css/**")
                 .antMatchers("/static/**")
