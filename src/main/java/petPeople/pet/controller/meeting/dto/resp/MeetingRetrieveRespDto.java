@@ -28,6 +28,9 @@ public class MeetingRetrieveRespDto {
     @ApiModelProperty(required = true, value = "회원 닉네임", example = "abcd")
     private String nickname;
 
+    @ApiModelProperty(required = true, value = "회원 사진", example = "www.img.com")
+    private String memberImgUrl;
+
     @ApiModelProperty(required = true, value = "모임 모집 여부", example = "true/false")
     private Boolean isOpened;
 
@@ -86,6 +89,7 @@ public class MeetingRetrieveRespDto {
         this.meetingId = meeting.getId();
         this.memberId = meeting.getMember().getId();
         this.nickname = meeting.getMember().getNickname();
+        this.memberImgUrl = meeting.getMember().getImgUrl();
         this.isOpened = meeting.getIsOpened();
         this.doName = meeting.getDoName();
         this.sigungu = meeting.getSigungu();
