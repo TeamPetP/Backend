@@ -3,6 +3,7 @@ package petPeople.pet.controller.post.dto.resp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
+import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostImage;
 import petPeople.pet.domain.post.entity.Tag;
@@ -54,6 +55,9 @@ public class PostRetrieveRespDto {
     @ApiModelProperty(required = true, value = "댓글 개수", example = "1")
     private Long commentCnt;
 
+    @ApiModelProperty(required = true, value = "자신의 게시글인지", example = "true/false")
+    private Boolean owner;
+
     public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked) {
         this.postId = post.getId();
         this.memberId = post.getMember().getId();
@@ -73,7 +77,7 @@ public class PostRetrieveRespDto {
         this.isLiked = isLiked;
     }
 
-    public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked, Long commentCnt) {
+    public PostRetrieveRespDto(Post post, List<Tag> tags, List<PostImage> imgUrls, Long likeCnt, Boolean isLiked, Long commentCnt, Member member) {
         this.postId = post.getId();
         this.memberId = post.getMember().getId();
         this.content = post.getContent();
@@ -94,5 +98,13 @@ public class PostRetrieveRespDto {
         this.nickname = post.getMember().getNickname();
         this.imgUrl = post.getMember().getImgUrl();
         this.commentCnt = commentCnt;
+
+        if (member == null) {
+            this.owner = null;
+        } else {
+            if (post.getMember() == member) this.owner = true;
+            else this.owner = false;
+        }
+
     }
 }
