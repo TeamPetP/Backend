@@ -42,6 +42,8 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public final petPeople.pet.domain.meeting.entity.QMeetingPost meetingPost;
 
+    public final petPeople.pet.domain.meeting.entity.QMeetingPost meetingWritePost;
+
     public final petPeople.pet.domain.member.entity.QMember member;
 
     public final petPeople.pet.domain.member.entity.QMember ownerMember;
@@ -74,6 +76,7 @@ public class QNotification extends EntityPathBase<Notification> {
         this.meeting = inits.isInitialized("meeting") ? new petPeople.pet.domain.meeting.entity.QMeeting(forProperty("meeting"), inits.get("meeting")) : null;
         this.meetingComment = inits.isInitialized("meetingComment") ? new petPeople.pet.domain.meeting.entity.QMeetingComment(forProperty("meetingComment"), inits.get("meetingComment")) : null;
         this.meetingPost = inits.isInitialized("meetingPost") ? new petPeople.pet.domain.meeting.entity.QMeetingPost(forProperty("meetingPost"), inits.get("meetingPost")) : null;
+        this.meetingWritePost = inits.isInitialized("meetingWritePost") ? new petPeople.pet.domain.meeting.entity.QMeetingPost(forProperty("meetingWritePost"), inits.get("meetingWritePost")) : null;
         this.member = inits.isInitialized("member") ? new petPeople.pet.domain.member.entity.QMember(forProperty("member")) : null;
         this.ownerMember = inits.isInitialized("ownerMember") ? new petPeople.pet.domain.member.entity.QMember(forProperty("ownerMember")) : null;
         this.post = inits.isInitialized("post") ? new petPeople.pet.domain.post.entity.QPost(forProperty("post"), inits.get("post")) : null;

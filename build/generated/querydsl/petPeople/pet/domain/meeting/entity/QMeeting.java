@@ -46,8 +46,6 @@ public class QMeeting extends EntityPathBase<Meeting> {
 
     public final NumberPath<Integer> maxPeople = createNumber("maxPeople", Integer.class);
 
-    public final DateTimePath<java.time.LocalDateTime> meetingDate = createDateTime("meetingDate", java.time.LocalDateTime.class);
-
     public final EnumPath<MeetingType> meetingType = createEnum("meetingType", MeetingType.class);
 
     public final petPeople.pet.domain.member.entity.QMember member;
