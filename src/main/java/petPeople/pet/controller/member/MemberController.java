@@ -23,6 +23,8 @@ import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
 import petPeople.pet.controller.member.dto.resp.*;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.domain.meeting.repository.MeetingBookmarkRepository;
+import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
+import petPeople.pet.domain.meeting.repository.MeetingRepository;
 import petPeople.pet.domain.meeting.service.MeetingPostService;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.meeting.service.MeetingWaitingMemberService;
@@ -50,6 +52,7 @@ public class MemberController {
     private final MeetingWaitingMemberService meetingWaitingMemberService;
     private final MeetingBookmarkRepository meetingBookmarkRepository;
     private final NotificationRepository notificationRepository;
+    private final MeetingMemberRepository meetingMemberRepository;
     private final AuthFilterContainer authFilterContainer;
 
     //로컬 회원 가입
@@ -142,14 +145,14 @@ public class MemberController {
     public ResponseEntity<MemberCountDto> info(Authentication authentication) {
 
         Member member = getMember(authentication);
-        long countMemberPost = postService.countMemberPost(member);
+        Long countJoinedMemberInMeeting = meetingMemberRepository.countByMemberId(member.getId());
         Long countMeetingBookmark = meetingBookmarkRepository.countByMemberId(getMemberId(member));
         long countUnReadMemberNotifications = notificationRepository.countUnReadMemberNotifications(getMemberId(member));
 
         // TODO: 2022-06-29 알림 개수
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(new MemberCountDto(countMemberPost, countMeetingBookmark, countUnReadMemberNotifications));
+                .body(new MemberCountDto(countJoinedMemberInMeeting, countMeetingBookmark, countUnReadMemberNotifications));
     }
 
     private Long getMemberId(Member member) {
