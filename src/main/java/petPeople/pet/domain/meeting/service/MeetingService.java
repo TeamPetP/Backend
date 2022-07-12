@@ -139,7 +139,9 @@ public class MeetingService {
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId));
+            Optional<MeetingWaitingMember> waitingMemberOptional = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), waitingMemberOptional);
         } else {
             Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
@@ -147,6 +149,10 @@ public class MeetingService {
 
             return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
         }
+    }
+
+    private Optional<MeetingWaitingMember> findMeetingWaitingMemberByMemberIdAndMeetingId(Long meetingId, Member member) {
+        return meetingWaitingMemberRepository.findByMemberIdAndMeetingId(member.getId(), meetingId);
     }
 
     public MeetingRetrieveRespDto retrieveOne(Long meetingId, Optional<String> optionalHeader) {
@@ -159,7 +165,9 @@ public class MeetingService {
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId));
+            Optional<MeetingWaitingMember> waitingMemberOptional = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), waitingMemberOptional);
         } else {
             Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);

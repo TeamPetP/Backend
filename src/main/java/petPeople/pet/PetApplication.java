@@ -8,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
+import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableJpaAuditing
@@ -18,6 +20,11 @@ public class PetApplication {
 		SpringApplication.run(PetApplication.class, args);
 	}
 
+	@PostConstruct
+	public void started() {
+		// timezone UTC 셋팅
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+	}
 
 	@Bean
 	public ModelMapper modelMapper() {
