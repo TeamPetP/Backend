@@ -83,7 +83,9 @@ public class MeetingService {
     }
 
     @Transactional
-    public void joinRequest(Member member, Long meetingId) {
+    public void joinRequest(Optional<String> optionalHeader, Long meetingId) {
+        Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
+
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
         validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검증

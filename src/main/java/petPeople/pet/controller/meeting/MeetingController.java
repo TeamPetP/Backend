@@ -89,9 +89,11 @@ public class MeetingController {
 
     @PostMapping("/{meetingId}")
     @ApiOperation(value = "모임 가입 요청 API", notes = "모임을 가입 요청을 위해 meetingId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
-    public ResponseEntity joinMeeting(Authentication authentication,
-                                      @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId) {
-        meetingService.joinRequest(getMember(authentication), meetingId);
+    public ResponseEntity joinMeeting(@ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
+                                      HttpServletRequest request) {
+        String header = RequestUtil.getAuthorizationToken(request);
+
+        meetingService.joinRequest(Optional.ofNullable(header), meetingId);
 
         return ResponseEntity.noContent().build();
     }
