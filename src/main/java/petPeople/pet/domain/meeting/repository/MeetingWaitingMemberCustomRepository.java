@@ -13,4 +13,5 @@ public interface MeetingWaitingMemberCustomRepository {
     Optional<MeetingWaitingMember> findByMeetingIdAndMemberIdFetchJoinMember(Long meetingId, Long memberId);
     Slice<MeetingWaitingMember> findAllByMemberIdFetchJoinMemberAndMeeting(Pageable pageable, Long memberId);
     void deleteByMeetingIdAndMemberId(Long meetingId, Long memberId);
+    Optional<MeetingWaitingMember> findByMemberIdAndMeetingId(Long memberId, Long meetingId);
 }

@@ -12,6 +12,7 @@ import petPeople.pet.domain.member.entity.Member;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
@@ -85,6 +86,59 @@ public class MeetingRetrieveRespDto {
     @ApiModelProperty(required = true, value = "북마크 여부", example = "true/false")
     private Boolean isBookmarked;
 
+    @ApiModelProperty(required = true, value = "가입 상태 여부", example = "승인됨/거절됨/대기중")
+    private String joinStatus;
+
+    public MeetingRetrieveRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList, Boolean isJoined, Boolean isBookmarked, Optional<MeetingWaitingMember> optionalMeetingWaitingMember) {
+        this.meetingId = meeting.getId();
+        this.memberId = meeting.getMember().getId();
+        this.nickname = meeting.getMember().getNickname();
+        this.memberImgUrl = meeting.getMember().getImgUrl();
+        this.isOpened = meeting.getIsOpened();
+        this.doName = meeting.getDoName();
+        this.sigungu = meeting.getSigungu();
+        this.location = meeting.getLocation();
+        this.category = meeting.getCategory().getDetail();
+        this.meetingType = meeting.getMeetingType().getDetail();
+        this.period = meeting.getPeriod();
+        this.title = meeting.getTitle();
+        this.content = meeting.getContent();
+        this.conditions = meeting.getConditions();
+        this.sex = meeting.getSex().getDetail();
+        this.maxPeople = meeting.getMaxPeople();
+        this.joinPeople = meetingMemberList.size();
+        this.createDate = meeting.getCreatedDate();
+        for (MeetingMember meetingMember : meetingMemberList) {
+            MeetingRetrieveOneMemberDto meetingRetrieveOneMemberDto = new MeetingRetrieveOneMemberDto(meetingMember);
+            joinMembers.add(meetingRetrieveOneMemberDto);
+        }
+
+        for (MeetingImage meetingImage : meetingImageList) {
+            imgUrlList.add(meetingImage.getImgUrl());
+        }
+        this.isJoined = isJoined;
+        this.isBookmarked = isBookmarked;
+
+        if (isJoined) {
+            this.joinStatus = "승인됨";
+        } else {
+            if (optionalMeetingWaitingMember.isPresent()) {
+                MeetingWaitingMember meetingWaitingMember = optionalMeetingWaitingMember.get();
+                if (meetingWaitingMember.getJoinRequestStatus() == JoinRequestStatus.APPROVED) {
+                    this.joinStatus = JoinRequestStatus.APPROVED.getDetail();
+                } else if (meetingWaitingMember.getJoinRequestStatus() == JoinRequestStatus.WAITING) {
+                    this.joinStatus = JoinRequestStatus.WAITING.getDetail();
+                } else {
+                    this.joinStatus = JoinRequestStatus.DECLINED.getDetail();
+                }
+            } else {
+                this.joinStatus = null;
+            }
+        }
+
+
+    }
+
     public MeetingRetrieveRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList, Boolean isJoined, Boolean isBookmarked) {
         this.meetingId = meeting.getId();
         this.memberId = meeting.getMember().getId();
@@ -114,5 +168,6 @@ public class MeetingRetrieveRespDto {
         }
         this.isJoined = isJoined;
         this.isBookmarked = isBookmarked;
+
     }
 }
