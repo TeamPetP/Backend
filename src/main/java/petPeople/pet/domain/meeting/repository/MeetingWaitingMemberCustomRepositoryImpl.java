@@ -80,9 +80,21 @@ public class MeetingWaitingMemberCustomRepositoryImpl implements MeetingWaitingM
     public void deleteByMeetingIdAndMemberId(Long meetingId, Long memberId) {
         queryFactory
                 .delete(meetingWaitingMember)
-                .where(QMeetingWaitingMember.meetingWaitingMember.meeting.id.eq(meetingId), QMeetingWaitingMember.meetingWaitingMember.member.id.eq(memberId))
+                .where(meetingWaitingMember.meeting.id.eq(meetingId), meetingWaitingMember.member.id.eq(memberId))
                 .execute();
         em.flush();
         em.clear();
+    }
+
+    @Override
+    public Optional<MeetingWaitingMember> findByMemberIdAndMeetingId(Long memberId, Long meetingId) {
+
+        MeetingWaitingMember content = queryFactory
+                .select(meetingWaitingMember)
+                .from(meetingWaitingMember)
+                .where(meetingWaitingMember.member.id.eq(memberId), meetingWaitingMember.meeting.id.eq(meetingId))
+                .fetchOne();
+
+        return Optional.ofNullable(content);
     }
 }
