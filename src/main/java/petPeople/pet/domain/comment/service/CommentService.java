@@ -99,6 +99,8 @@ public class CommentService {
         validateAuthorization(member, comment);
 
         deleteCommentLikeByCommentId(commentId);
+        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), commentId);
+        notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), commentId);
         deleteCommentByCommentId(commentId);
     }
 

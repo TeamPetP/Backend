@@ -13,8 +13,8 @@ import lombok.Setter;
 @ApiModel(description = "회원 게시글, 알림, 모임 북마크 개수 응답 DTO")
 public class MemberCountDto {
 
-    @ApiModelProperty(required = true, value = "회원이 작성한 게시글 개수", example = "1")
-    private Long postCnt;
+    @ApiModelProperty(required = true, value = "회원이 가입한 미팅 개수", example = "1")
+    private Long joinedMeetingCnt;
 
     @ApiModelProperty(required = true, value = "회원이 등록한 모임 북마크 개수", example = "1")
     private Long meetingBookCnt;

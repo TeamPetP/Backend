@@ -42,7 +42,7 @@ public class MeetingPostService {
         List<MeetingPostImage> saveMeetingPostImageList = saveMeetingPostImageList(member, saveMeetingPost, meetingPostWriteReqDto.getImgUrlList());
 
         Notification findMeetingWritePost = createWritePostNotification(member, findMeeting, saveMeetingPost);
-        saveNotification(member, saveMeetingPost, findMeetingWritePost);
+        saveMeetingPostNotification(member, saveMeetingPost, findMeetingWritePost);
 
         return new MeetingPostWriteRespDto(saveMeetingPost, saveMeetingPostImageList);
     }
@@ -131,7 +131,7 @@ public class MeetingPostService {
             saveMeetingPostLike(createMeetingPostLike(member, findMeetingPost));
 
             Notification meetingLikePostNotification = createLikePostNotification(member, findMeeting, findMeetingPost);
-            saveNotification(member, findMeetingPost, meetingLikePostNotification);
+            saveMeetingPostLikeNotification(member, findMeetingPost, meetingLikePostNotification);
         }
 
         return countMeetingPostLikeByMeetingPostsId(meetingPostId);
@@ -150,7 +150,13 @@ public class MeetingPostService {
         deleteMeetingPostByMeetingPostId(meetingPostId);
     }
 
-    private void saveNotification(Member member, MeetingPost findMeetingPost, Notification notification) {
+    private void saveMeetingPostNotification(Member member, MeetingPost findMeetingPost, Notification notification) {
+        if (!isExistMemberLikePostNotification(findMeetingPost.getId(), member)) {
+            saveNotification(notification);
+        }
+    }
+
+    private void saveMeetingPostLikeNotification(Member member, MeetingPost findMeetingPost, Notification notification) {
         if (isNotSameMember(member, findMeetingPost.getMember())) {
             if (!isExistMemberLikePostNotification(findMeetingPost.getId(), member)) {
                 saveNotification(notification);
