@@ -60,6 +60,8 @@ public class Meeting extends BaseTimeEntity {
         this.title = meetingEditReqDto.getTitle();
         this.content = meetingEditReqDto.getContent();
         this.isOpened = meetingEditReqDto.getIsOpened();
+        this.period = meetingEditReqDto.getPeriod();
+        this.meetingType = meetingEditReqDto.getMeetingType();
     }
 
 }
