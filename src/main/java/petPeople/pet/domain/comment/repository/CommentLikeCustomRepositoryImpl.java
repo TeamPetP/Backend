@@ -9,7 +9,6 @@ import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 
-import static petPeople.pet.domain.comment.entity.QCommentLike.*;
 import static petPeople.pet.domain.comment.entity.QCommentLike.commentLike;
 
 @RequiredArgsConstructor
@@ -24,6 +23,14 @@ public class CommentLikeCustomRepositoryImpl implements CommentLikeCustomReposit
         return queryFactory
                 .selectFrom(commentLike)
                 .where(commentLike.comment.id.in(ids))
+                .fetch();
+    }
+
+    @Override
+    public List<CommentLike> findCommentLikesByPostId(Long postId) {
+        return queryFactory
+                .selectFrom(commentLike)
+                .where(commentLike.post.id.eq(postId))
                 .fetch();
     }
 

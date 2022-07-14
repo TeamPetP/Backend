@@ -10,12 +10,15 @@ import petPeople.pet.controller.post.dto.resp.CommentRetrieveRespDto;
 import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.comment.entity.QComment;
 import petPeople.pet.domain.member.entity.QMember;
+import petPeople.pet.domain.post.entity.QPost;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static petPeople.pet.domain.comment.entity.QComment.*;
 import static petPeople.pet.domain.member.entity.QMember.*;
+import static petPeople.pet.domain.post.entity.QPost.post;
 
 @RequiredArgsConstructor
 public class CommentCustomRepositoryImpl implements CommentCustomRepository{
@@ -25,21 +28,40 @@ public class CommentCustomRepositoryImpl implements CommentCustomRepository{
 
     @Override
     public Slice<Comment> findAllByIdWithFetchJoinMemberPaging(Long postId, Pageable pageable) {
-        List<Comment> commentList = queryFactory
+        List<Comment> commentParentList = queryFactory
                 .selectFrom(comment)
+                .join(comment.post, post).fetchJoin()
                 .join(comment.member, member).fetchJoin()
-                .where(comment.post.id.eq(postId))
+                .where(comment.post.id.eq(postId), comment.parent.isNull())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize() + 1)
                 .orderBy(comment.createdDate.asc())
                 .fetch();
 
+        List<Comment> commentChildrenList = queryFactory
+                .selectFrom(comment)
+                .join(comment.member, member).fetchJoin()
+                .join(comment.post, post).fetchJoin()
+                .where(comment.post.id.eq(postId), comment.parent.isNotNull())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1)
+                .orderBy(comment.createdDate.asc())
+                .fetch();
+
+        commentParentList
+                .forEach(parent -> {
+                    parent.setChild(commentChildrenList.stream()
+                            .filter(child -> child.getParent().getId().equals(parent.getId()))
+                            .collect(Collectors.toList()));
+                });
+
+
         boolean hasNext = false;
-        if (commentList.size() > pageable.getPageSize()) {
-            commentList.remove(pageable.getPageSize());
+        if (commentParentList.size() > pageable.getPageSize()) {
+            commentParentList.remove(pageable.getPageSize());
             hasNext = true;
         }
-        return new SliceImpl(commentList, pageable, hasNext);
+        return new SliceImpl(commentParentList, pageable, hasNext);
     }
 
     @Override

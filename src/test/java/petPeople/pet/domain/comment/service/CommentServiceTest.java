@@ -1,7 +1,5 @@
 package petPeople.pet.domain.comment.service;
 
-import com.google.api.gax.rpc.NotFoundException;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,16 +29,13 @@ import petPeople.pet.domain.post.entity.Tag;
 import petPeople.pet.domain.post.repository.PostImageRepository;
 import petPeople.pet.domain.post.repository.PostRepository;
 import petPeople.pet.domain.post.repository.TagRepository;
-import petPeople.pet.domain.post.service.PostService;
 import petPeople.pet.exception.CustomException;
-import petPeople.pet.exception.ErrorCode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -126,7 +121,7 @@ class CommentServiceTest {
 
         //when
         //@EqualsAndHashCode 필요
-        CommentWriteRespDto result = commentService.write(member, commentWriteReqDto, post.getId());
+        CommentWriteRespDto result = commentService.writeComment(member, commentWriteReqDto, post.getId());
 
         //then
         assertThat(result).isEqualTo(respDto);
@@ -171,6 +166,9 @@ class CommentServiceTest {
         Long likeCnt = 11L;
         PageRequest pageRequest = PageRequest.of(0, 10);
 
+        Member commentMember = createMember(uid, email, name, nickname, imgUrl, introduce);
+
+
         CommentWriteReqDto writeReqDto1 = createCommentWriteReqDto("댓글1");
         CommentWriteReqDto writeReqDto2 = createCommentWriteReqDto("댓글2");
         CommentWriteReqDto writeReqDto3 = createCommentWriteReqDto("댓글3");
@@ -181,9 +179,9 @@ class CommentServiceTest {
 
         List<Comment> commentList = Arrays.asList(comment1, comment2, comment3);
 
-        CommentLike commentLike1 = new CommentLike(id++, comment1, createMember(uid, email, name, nickname, imgUrl, introduce));
-        CommentLike commentLike2 = new CommentLike(id++, comment2, createMember(uid, email, name, nickname, imgUrl, introduce));
-        CommentLike commentLike3 = new CommentLike(id++, comment3, createMember(uid, email, name, nickname, imgUrl, introduce));
+        CommentLike commentLike1 = new CommentLike(id++, comment1, createMember(uid, email, name, nickname, imgUrl, introduce), post);
+        CommentLike commentLike2 = new CommentLike(id++, comment2, createMember(uid, email, name, nickname, imgUrl, introduce), post);
+        CommentLike commentLike3 = new CommentLike(id++, comment3, createMember(uid, email, name, nickname, imgUrl, introduce), post);
 
         List<CommentLike> commentLikeList = Arrays.asList(commentLike1, commentLike2, commentLike3);
 
@@ -194,7 +192,7 @@ class CommentServiceTest {
         when(commentRepository.findAllByIdWithFetchJoinMemberPaging(any(), any())).thenReturn(commentSlice);
         when(commentLikeRepository.findCommentLikesByCommentIds(any())).thenReturn(commentLikeList);
 
-        Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false));
+        Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false, commentLikeList, commentMember.getId()));
 
         //when
         Slice<CommentRetrieveRespDto> reqsDto = commentService.retrieveAll(post.getId(), null, pageRequest);
@@ -210,6 +208,8 @@ class CommentServiceTest {
         Long likeCnt = 12L;
         PageRequest pageRequest = PageRequest.of(0, 10);
 
+        Member commentMember = createMember(uid, email, name, nickname, imgUrl, introduce);
+
         CommentWriteReqDto writeReqDto1 = createCommentWriteReqDto("댓글1");
         CommentWriteReqDto writeReqDto2 = createCommentWriteReqDto("댓글2");
         CommentWriteReqDto writeReqDto3 = createCommentWriteReqDto("댓글3");
@@ -220,9 +220,9 @@ class CommentServiceTest {
 
         List<Comment> commentList = Arrays.asList(comment1, comment2, comment3);
 
-        CommentLike commentLike1 = new CommentLike(id++, comment1, createMember(uid, email, name, nickname, imgUrl, introduce));
-        CommentLike commentLike2 = new CommentLike(id++, comment2, createMember(uid, email, name, nickname, imgUrl, introduce));
-        CommentLike commentLike3 = new CommentLike(id++, comment3, createMember(uid, email, name, nickname, imgUrl, introduce));
+        CommentLike commentLike1 = new CommentLike(id++, comment1, createMember(uid, email, name, nickname, imgUrl, introduce), post);
+        CommentLike commentLike2 = new CommentLike(id++, comment2, createMember(uid, email, name, nickname, imgUrl, introduce), post);
+        CommentLike commentLike3 = new CommentLike(id++, comment3, createMember(uid, email, name, nickname, imgUrl, introduce), post);
 
         List<CommentLike> commentLikeList = Arrays.asList(commentLike1, commentLike2, commentLike3);
 
@@ -236,7 +236,7 @@ class CommentServiceTest {
         when(commentLikeRepository.findCommentLikesByCommentIds(commentIdList)).thenReturn(commentLikeList);
         when(userDetailsService.loadUserByUsername(any()));
 
-        Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false));
+        Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false, commentLikeList, commentMember.getId()));
 
         //when
         Slice<CommentRetrieveRespDto> reqsDto = commentService.retrieveAll(post.getId(), member.getUid(), pageRequest);
@@ -304,7 +304,7 @@ class CommentServiceTest {
     }
 
     private CommentWriteReqDto createCommentWriteReqDto(String content) {
-        return new CommentWriteReqDto(content);
+        return new CommentWriteReqDto(content, comment.getParent().getId());
     }
 
     private Post createPost(Member member, String content) {
@@ -341,9 +341,9 @@ class CommentServiceTest {
 
     private List<CommentLike> createCommentLikeList() {
         return Arrays.asList(
-                new CommentLike(id++, comment, member),
-                new CommentLike(id++, comment, member),
-                new CommentLike(id++, comment, member));
+                new CommentLike(id++, comment, member, post),
+                new CommentLike(id++, comment, member, post),
+                new CommentLike(id++, comment, member, post));
     }
 
     private PostWriteReqDto createPostWriteReqDto(String postContent, List<String> postTags, List<String> postImgUrls) {
