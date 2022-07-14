@@ -83,9 +83,7 @@ public class MeetingService {
     }
 
     @Transactional
-    public void joinRequest(Optional<String> optionalHeader, Long meetingId) {
-        Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
-
+    public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
         validateOpenedMeeting(meeting.getIsOpened());//모집 상태 검증
@@ -141,9 +139,15 @@ public class MeetingService {
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            Optional<MeetingWaitingMember> waitingMemberOptional = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+            List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+            Optional<MeetingWaitingMember> meetingWaitingMember = null;
+            if (meetingWaitingMembers.isEmpty()) {
+                meetingWaitingMember = Optional.empty();
+            } else {
+                meetingWaitingMember = Optional.ofNullable(meetingWaitingMembers.get(meetingWaitingMembers.size()-1));
+            }
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), waitingMemberOptional);
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), meetingWaitingMember);
         } else {
             Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
@@ -153,7 +157,7 @@ public class MeetingService {
         }
     }
 
-    private Optional<MeetingWaitingMember> findMeetingWaitingMemberByMemberIdAndMeetingId(Long meetingId, Member member) {
+    private List<MeetingWaitingMember> findMeetingWaitingMemberByMemberIdAndMeetingId(Long meetingId, Member member) {
         return meetingWaitingMemberRepository.findByMemberIdAndMeetingId(member.getId(), meetingId);
     }
 
@@ -167,9 +171,15 @@ public class MeetingService {
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
             List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
 
-            Optional<MeetingWaitingMember> waitingMemberOptional = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+            List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+            Optional<MeetingWaitingMember> meetingWaitingMember = null;
+            if (meetingWaitingMembers.isEmpty()) {
+                meetingWaitingMember = Optional.empty();
+            } else {
+                meetingWaitingMember = Optional.ofNullable(meetingWaitingMembers.get(0));
+            }
 
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), waitingMemberOptional);
+            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), meetingWaitingMember);
         } else {
             Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
             List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
