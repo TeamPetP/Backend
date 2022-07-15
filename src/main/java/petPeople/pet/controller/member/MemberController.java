@@ -140,7 +140,7 @@ public class MemberController {
                 .body(meetingWaitingMemberService.retrieveMeetingWaitingMemberApply(pageable, getMember(authentication)));
     }
 
-    @ApiOperation(value = "회원의 한줄 소개 조회 API", notes = "회원의 한줄 소개 조회")
+    @ApiOperation(value = "회원의 게시글, 알림, 북마크 수 조회 API", notes = "회원의 게시글, 알림, 북마크 수 조회 API")
     @GetMapping("/me/info")
     public ResponseEntity<MemberCountDto> info(Authentication authentication) {
 
@@ -149,7 +149,6 @@ public class MemberController {
         Long countMeetingBookmark = meetingBookmarkRepository.countByMemberId(getMemberId(member));
         long countUnReadMemberNotifications = notificationRepository.countUnReadMemberNotifications(getMemberId(member));
 
-        // TODO: 2022-06-29 알림 개수
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(new MemberCountDto(countJoinedMemberInMeeting, countMeetingBookmark, countUnReadMemberNotifications));
