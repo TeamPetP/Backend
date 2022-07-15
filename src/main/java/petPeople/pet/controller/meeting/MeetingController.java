@@ -153,11 +153,11 @@ public class MeetingController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{meetingId}/members/{memberId}/cancel")
+    @DeleteMapping("/{meetingId}/cancel")
     @ApiOperation(value = "모임 가입 신청 중 취소 API", notes = "모임을 가입 신청 취소를 위해 meetingId 와 memberId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
-    public ResponseEntity cancelJoinRequest(@PathVariable Long meetingId, @PathVariable Long memberId, Authentication authentication) {
+    public ResponseEntity cancelJoinRequest(@PathVariable Long meetingId, Authentication authentication) {
 
-        meetingService.cancelJoinRequest(meetingId, memberId, getMember(authentication));
+        meetingService.cancelJoinRequest(meetingId, getMember(authentication));
         return ResponseEntity.noContent().build();
     }
 
