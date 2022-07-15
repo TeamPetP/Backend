@@ -16,6 +16,9 @@ public class MeetingWaitingMemberRespDto {
     @ApiModelProperty(required = true, value = "회원 ID", example = "1")
     private Long memberId;
 
+    @ApiModelProperty(required = true, value = "회원 img url", example = "www.img.com")
+    private String memberImgUrl;
+
     @ApiModelProperty(required = true, value = "모임 ID", example = "2")
     private Long meetingId;
 
