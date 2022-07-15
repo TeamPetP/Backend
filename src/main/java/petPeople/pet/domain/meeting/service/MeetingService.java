@@ -41,6 +41,7 @@ public class MeetingService {
 
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
+    private final MeetingImageFileRepository meetingImageFileRepository;
     private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
     private final MeetingBookmarkRepository meetingBookmarkRepository;
     private final MemberRepository memberRepository;
@@ -54,11 +55,14 @@ public class MeetingService {
         saveMeetingMember(createMeetingMember(member, saveMeeting));
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
-        for (String url : meetingCreateReqDto.getImgUrlList()) {
+        List<MeetingImageFile> meetingImageFileList = new ArrayList<>();
+        for (String url : meetingCreateReqDto.getImage()) {
             meetingImageList.add(saveMeetingImage(createMeetingImage(saveMeeting, url)));
         }
-
-        return new MeetingCreateRespDto(saveMeeting, meetingImageList);
+        for (String imgFileUrl : meetingCreateReqDto.getImageFile()) {
+            meetingImageFileList.add(saveMeetingImageFile(createMeetingImageFile(saveMeeting, imgFileUrl)));
+        }
+        return new MeetingCreateRespDto(saveMeeting, meetingImageList, meetingImageFileList);
     }
 
     @Transactional
@@ -608,10 +612,21 @@ public class MeetingService {
         return meetingImageRepository.save(meetingImage);
     }
 
+    private MeetingImageFile saveMeetingImageFile(MeetingImageFile meetingImageFile) {
+        return meetingImageFileRepository.save(meetingImageFile);
+    }
+
     private MeetingImage createMeetingImage(Meeting meeting, String url) {
         return MeetingImage.builder()
                 .meeting(meeting)
                 .imgUrl(url)
+                .build();
+    }
+
+    private MeetingImageFile createMeetingImageFile(Meeting meeting, String url) {
+        return MeetingImageFile.builder()
+                .meeting(meeting)
+                .imgFileUrl(url)
                 .build();
     }
 

@@ -34,11 +34,18 @@ public class PostCommentController {
                 status(HttpStatus.CREATED)
                 .body(respDto);
     }
-//
-//    @PostMapping("/posts/{postId}/comments/{commentsId}")
-//    @ApiOperation(value = "대댓글 작성 API", notes = "대댓글 작성을 위해 header 에 토큰을 입력해주세요")
-//    public ResponseEntity<CommentWriteRespDto> writeChildComment(@PathVariable String postId,
-//                                                                 @PathVariable String commentsId,)
+
+    @PostMapping("/posts/{postId}/comments/{commentId}")
+    @ApiOperation(value = "대댓글 작성 API", notes = "대댓글 작성을 위해 header 에 토큰을 입력해주세요")
+    public ResponseEntity<CommentWriteRespDto> writeChildComment(@ApiParam(value = "댓글 작성 DTO", required = true) @RequestBody CommentWriteReqDto commentWriteRequestDto,
+                                                                 @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
+                                                                 @ApiParam(value = "댓글 ID", required = true) @PathVariable String commentId,
+                                                                 Authentication authentication) {
+        CommentWriteRespDto respDto = commentService.writeComment(getMember(authentication), commentWriteRequestDto, postId);
+        return ResponseEntity.
+                status(HttpStatus.CREATED)
+                .body(respDto);
+    }
 
 
     @GetMapping("/posts/{postId}/comments")
