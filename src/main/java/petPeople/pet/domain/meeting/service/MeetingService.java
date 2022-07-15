@@ -349,11 +349,11 @@ public class MeetingService {
         return meetingBookmarkRepository.findByMemberIdWithFetchJoinMeeting(member.getId(), pageable);
     }
 
-    public void cancelJoinRequest(Long meetingId, Long memberId, Member member) {
-        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(meetingWaitingMemberRepository.findAllByMeetingIdAndMemberId(meetingId, memberId));
-        validateMemberAuthorization(meetingWaitingMember.getMember(), member);
+    @Transactional
+    public void cancelJoinRequest(Long meetingId, Member member) {
+        validateOptionalMeetingWaitingMember(meetingWaitingMemberRepository.findAllByMeetingIdAndMemberId(meetingId, member.getId()));
 
-        meetingWaitingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, memberId);
+        meetingWaitingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, member.getId());
     }
 
     private Optional<Member> findMemberByMemberId(Long memberId) {
