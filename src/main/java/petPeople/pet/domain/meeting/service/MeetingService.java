@@ -14,7 +14,7 @@ import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
-import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingPostImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.resp.MemberMeetingBookMarkRespDto;
 import petPeople.pet.controller.post.model.MeetingParameter;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class MeetingService {
     private final MeetingRepository meetingRepository;
-
+    private final MeetingPostImageRepository meetingPostImageRepository;
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
     private final MeetingImageFileRepository meetingImageFileRepository;
@@ -360,11 +360,11 @@ public class MeetingService {
         return memberRepository.findById(memberId);
     }
 
-    public List<MeetingImageRetrieveRespDto> retrieveAllImage(Long meetingId) {
-        return findMeetingImageListByMeetingId(meetingId).stream()
-                .map(meetingImage ->
-                        new MeetingImageRetrieveRespDto(
-                                meetingImage.getId(), meetingImage.getMeeting().getId(), meetingImage.getImgUrl())
+    public List<MeetingPostImageRetrieveRespDto> retrieveAllImage(Long meetingId) {
+        return meetingPostImageRepository.findAllByMeetingId(meetingId).stream()
+                .map(meetingPostImage ->
+                        new MeetingPostImageRetrieveRespDto(
+                                meetingPostImage.getId(), meetingPostImage.getMeetingPost().getMeeting().getId(), meetingPostImage.getImgUrl())
                 ).collect(Collectors.toList());
     }
 
