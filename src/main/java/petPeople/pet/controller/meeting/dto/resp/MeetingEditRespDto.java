@@ -56,6 +56,9 @@ public class MeetingEditRespDto {
     @ApiModelProperty(required = true, value = "모임 이미지", example = "www.img.com")
     private List<String> imgUrlList = new ArrayList<>();
 
+    @ApiModelProperty(required = true, value = "모임 이미지 파일", example = "www.img.com")
+    private List<String> imgUrlFileList = new ArrayList<>();
+
     @ApiModelProperty(required = true, value = "작성 시간", example = "2022-06-28T07:38:14.152321")
     private LocalDateTime createdDate;
 
@@ -65,7 +68,7 @@ public class MeetingEditRespDto {
     @ApiModelProperty(required = true, value = "모임 모집 여부", example = "true/false")
     private Boolean status;
 
-    public MeetingEditRespDto(Meeting meeting, List<MeetingImage> meetingImageList) {
+    public MeetingEditRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingImageFile> meetingImageFileList) {
         this.meetingId = meeting.getId();
         this.title = meeting.getTitle();
         this.content = meeting.getContent();
@@ -81,6 +84,10 @@ public class MeetingEditRespDto {
 
         for (MeetingImage meetingImage : meetingImageList) {
             imgUrlList.add(meetingImage.getImgUrl());
+        }
+
+        for (MeetingImageFile meetingImageFile : meetingImageFileList) {
+            imgUrlFileList.add(meetingImageFile.getImgFileUrl());
         }
 
         this.createdDate = meeting.getCreatedDate();

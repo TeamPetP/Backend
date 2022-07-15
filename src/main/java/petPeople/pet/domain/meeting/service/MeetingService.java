@@ -55,10 +55,10 @@ public class MeetingService {
         saveMeetingMember(createMeetingMember(member, saveMeeting));
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
-        List<MeetingImageFile> meetingImageFileList = new ArrayList<>();
         for (String url : meetingCreateReqDto.getImage()) {
             meetingImageList.add(saveMeetingImage(createMeetingImage(saveMeeting, url)));
         }
+        List<MeetingImageFile> meetingImageFileList = new ArrayList<>();
         for (String imgFileUrl : meetingCreateReqDto.getImageFile()) {
             meetingImageFileList.add(saveMeetingImageFile(createMeetingImageFile(saveMeeting, imgFileUrl)));
         }
@@ -82,8 +82,12 @@ public class MeetingService {
         for (String url : meetingEditReqDto.getImgUrlList()) {
             meetingImageList.add(saveMeetingImage(createMeetingImage(findMeeting, url)));
         }
+        List<MeetingImageFile> meetingImageFileList = new ArrayList<>();
+        for (String imgFileUrl : meetingEditReqDto.getImgFileUrlList()) {
+            meetingImageFileList.add(saveMeetingImageFile(createMeetingImageFile(findMeeting, imgFileUrl)));
+        }
 
-        return new MeetingEditRespDto(findMeeting, meetingImageList);
+        return new MeetingEditRespDto(findMeeting, meetingImageList, meetingImageFileList);
     }
 
     @Transactional
