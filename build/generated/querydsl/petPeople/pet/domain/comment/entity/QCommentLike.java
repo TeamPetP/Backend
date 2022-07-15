@@ -36,6 +36,8 @@ public class QCommentLike extends EntityPathBase<CommentLike> {
 
     public final petPeople.pet.domain.member.entity.QMember member;
 
+    public final petPeople.pet.domain.post.entity.QPost post;
+
     public QCommentLike(String variable) {
         this(CommentLike.class, forVariable(variable), INITS);
     }
@@ -56,6 +58,7 @@ public class QCommentLike extends EntityPathBase<CommentLike> {
         super(type, metadata, inits);
         this.comment = inits.isInitialized("comment") ? new QComment(forProperty("comment"), inits.get("comment")) : null;
         this.member = inits.isInitialized("member") ? new petPeople.pet.domain.member.entity.QMember(forProperty("member")) : null;
+        this.post = inits.isInitialized("post") ? new petPeople.pet.domain.post.entity.QPost(forProperty("post"), inits.get("post")) : null;
     }
 
 }

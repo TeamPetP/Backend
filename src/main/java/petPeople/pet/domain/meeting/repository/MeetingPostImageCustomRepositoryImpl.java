@@ -37,4 +37,12 @@ public class MeetingPostImageCustomRepositoryImpl implements MeetingPostImageCus
                 .where(meetingPostImage.meetingPost.id.eq(meetingPostId))
                 .execute();
     }
+
+    @Override
+    public List<MeetingPostImage> findAllByMeetingId(Long meetingId) {
+        return queryFactory
+                .selectFrom(meetingPostImage)
+                .where(meetingPostImage.meetingPost.meeting.id.eq(meetingId))
+                .fetch();
+    }
 }

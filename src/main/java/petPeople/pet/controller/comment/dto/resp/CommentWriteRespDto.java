@@ -31,11 +31,21 @@ public class CommentWriteRespDto {
     @ApiModelProperty(required = true, value = "작성 시간", example = "2022-06-28T07:38:14.152321")
     private LocalDateTime createDate;
 
+    @ApiModelProperty(required = false, value = "부모 댓글 존재 여부", example = "true")
+    private boolean hasParent;
+
+    @ApiModelProperty(required = false, value = "부모 댓글Id", example = "1")
+    private Long parentId;
+
     public CommentWriteRespDto(Comment comment) {
         this.commentId = comment.getId();
         this.memberId = comment.getMember().getId();
         this.postId = comment.getPost().getId();
         this.content = comment.getContent();
         this.createDate = comment.getCreatedDate();
+        if (comment.getParent() != null) {
+            this.hasParent = true;
+            this.parentId = comment.getParent().getId();
+        }
     }
 }

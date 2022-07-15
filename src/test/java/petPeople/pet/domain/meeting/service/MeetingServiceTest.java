@@ -23,7 +23,6 @@ import petPeople.pet.domain.meeting.repository.MeetingRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -342,7 +341,7 @@ class MeetingServiceTest {
                 .category(category)
                 .conditions(conditions)
                 .maxPeople(maxPeople)
-                .imgUrlList(imgUrlList)
+                .image(imgUrlList)
                 .build();
     }
 
