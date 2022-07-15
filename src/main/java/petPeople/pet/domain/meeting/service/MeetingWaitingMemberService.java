@@ -69,6 +69,7 @@ public class MeetingWaitingMemberService {
     private MeetingWaitingMemberRespDto createMeetingWaitingMemberRespDto(MeetingWaitingMember meetingWaitingMember) {
         return MeetingWaitingMemberRespDto.builder()
                 .memberId(meetingWaitingMember.getMember().getId())
+                .memberImgUrl(meetingWaitingMember.getMember().getImgUrl())
                 .meetingId(meetingWaitingMember.getMeeting().getId())
                 .nickname(meetingWaitingMember.getMember().getNickname())
                 .introduce(meetingWaitingMember.getMember().getIntroduce())

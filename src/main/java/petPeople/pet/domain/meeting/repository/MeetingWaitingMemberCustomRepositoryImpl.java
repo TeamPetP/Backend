@@ -87,14 +87,14 @@ public class MeetingWaitingMemberCustomRepositoryImpl implements MeetingWaitingM
     }
 
     @Override
-    public Optional<MeetingWaitingMember> findByMemberIdAndMeetingId(Long memberId, Long meetingId) {
+    public List<MeetingWaitingMember> findByMemberIdAndMeetingId(Long memberId, Long meetingId) {
 
-        MeetingWaitingMember content = queryFactory
+        List<MeetingWaitingMember> content = queryFactory
                 .select(meetingWaitingMember)
                 .from(meetingWaitingMember)
                 .where(meetingWaitingMember.member.id.eq(memberId), meetingWaitingMember.meeting.id.eq(meetingId))
-                .fetchOne();
+                .fetch();
 
-        return Optional.ofNullable(content);
+        return content;
     }
 }
