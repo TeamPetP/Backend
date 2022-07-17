@@ -4,8 +4,11 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 import petPeople.pet.domain.comment.entity.Comment;
+import petPeople.pet.domain.comment.entity.CommentLike;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @EqualsAndHashCode
 @Getter
@@ -41,7 +44,23 @@ public class CommentRetrieveRespDto {
     @ApiModelProperty(required = true, value = "좋아요 여부", example = "true/false")
     private Boolean isLiked;
 
-    public CommentRetrieveRespDto(Comment comment, Long likeCnt, Boolean isLiked) {
+    @ApiModelProperty(required = false, value = "대댓글 조회", example = "[\n" +
+            "                {\n" +
+            "                    \"commentId\": 11,\n" +
+            "                    \"memberId\": 3,\n" +
+            "                    \"postId\": 4,\n" +
+            "                    \"content\": \"사랑으로 키울게\",\n" +
+            "                    \"likeCnt\": 2,\n" +
+            "                    \"createdDate\": \"2022-07-13T08:30:54.86814\",\n" +
+            "                    \"nickName\": \"방울이엄마\",\n" +
+            "                    \"memberImageUrl\": \"htttestp:www.balladang.com\",\n" +
+            "                    \"isLiked\": false,\n" +
+            "                    \"childComment\": []\n" +
+            "                }\n" +
+            "            ]")
+    private List<CommentRetrieveRespDto> childComment = new ArrayList<>();
+
+    public CommentRetrieveRespDto(Comment comment, Long likeCnt, Boolean isLiked, List<CommentLike> findCommentLikeList, Long memberId) {
         this.content = comment.getContent();
         this.commentId = comment.getId();
         this.postId = comment.getPost().getId();
@@ -51,5 +70,30 @@ public class CommentRetrieveRespDto {
         this.memberImageUrl = comment.getMember().getImgUrl();
         this.likeCnt = likeCnt;
         this.isLiked = isLiked;
+        if (comment.getChild() != null) {
+            for (Comment c : comment.getChild()) {
+                Long likeCount = 0L;
+                boolean flag = false;
+                for (CommentLike commentLike : findCommentLikeList) {
+                    likeCount = countCommentLike(c, likeCount, commentLike);
+                    flag = checkLike(memberId, flag, commentLike);
+                }
+                this.childComment.add(new CommentRetrieveRespDto(c, likeCount, flag, findCommentLikeList, memberId));
+            }
+        }
+    }
+
+    private Long countCommentLike(Comment c, Long likeCount, CommentLike commentLike) {
+        if (c.getId().equals(commentLike.getComment().getId())) {
+            likeCount++;
+        }
+        return likeCount;
+    }
+
+    private boolean checkLike(Long memberId, boolean flag, CommentLike commentLike) {
+        if (commentLike.getMember().getId().equals(memberId)) {
+            flag = true;
+        }
+        return flag;
     }
 }

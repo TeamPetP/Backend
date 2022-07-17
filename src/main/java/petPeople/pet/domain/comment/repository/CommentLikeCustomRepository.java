@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface CommentLikeCustomRepository {
 
     List<CommentLike> findCommentLikesByCommentIds(List<Long> ids);
+    List<CommentLike> findCommentLikesByPostId(Long postId);
     Long countByCommentId(Long commentId);
     void deleteByCommentId(Long commentId);
     Optional<CommentLike> findCommentLikeByCommentIdAndMemberId(Long id, Long commentId);

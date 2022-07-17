@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ApiModel(description = "모임 이미지 조회 응답 DTO")
-public class MeetingImageRetrieveRespDto {
+@ApiModel(description = "모임의 게시글 이미지 조회 응답 DTO")
+public class MeetingPostImageRetrieveRespDto {
 
     @ApiModelProperty(required = true, value = "모임 이미지 ID", example = "12")
     private Long meetingImageId;

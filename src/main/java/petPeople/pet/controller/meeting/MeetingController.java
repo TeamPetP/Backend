@@ -14,10 +14,9 @@ import petPeople.pet.controller.meeting.dto.req.MeetingCreateReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCreateRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
-import petPeople.pet.controller.meeting.dto.resp.MeetingImageRetrieveRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingPostImageRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.post.model.MeetingParameter;
-import petPeople.pet.domain.meeting.entity.MeetingImage;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.filter.MockJwtFilter;
@@ -128,7 +127,7 @@ public class MeetingController {
     // TODO: 2022-06-28 모임 이미지가 아닌 모임 게시글에 있는 모든 사진
 
     @GetMapping("/{meetingId}/images")
-    public ResponseEntity<List<MeetingImageRetrieveRespDto>> retrieveAllMeetingImage(@PathVariable Long meetingId) {
+    public ResponseEntity<List<MeetingPostImageRetrieveRespDto>> retrieveAllMeetingImage(@PathVariable Long meetingId) {
 
         return ResponseEntity
                 .status(HttpStatus.OK)

@@ -42,29 +42,43 @@ public class CommentService {
     private final NotificationRepository notificationRepository;
 
     @Transactional
-    public CommentWriteRespDto write(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId) {
+    public CommentWriteRespDto writeComment(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId) {
 
         Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
-        Comment saveComment = saveComment(createComment(member, findPost, commentWriteRequestDto));
 
+        if (commentWriteRequestDto.getParentId() == null) {
+            Comment saveComment = saveComment(createParentComment(member, findPost, commentWriteRequestDto));
+            saveNotification(saveComment, member, findPost);
+            return new CommentWriteRespDto(saveComment);
+        }
+        Comment parent = commentRepository.findById(commentWriteRequestDto.getParentId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
+        Comment child = createChildComment(member, findPost, commentWriteRequestDto, parent);
+        Comment saveComment = saveComment(child);
         saveNotification(saveComment, member, findPost);
-
         return new CommentWriteRespDto(saveComment);
     }
 
+
     public Slice<CommentRetrieveRespDto> retrieveAll(Long postId, String header, Pageable pageable) {
-        Slice<Comment> commentSlice = findAllCommentByIdWithFetchJoinMember(postId, pageable);
+        Slice<Comment> commentSlice = findAllCommentByPostIdWithFetchJoinMember(postId, pageable);
+        List<CommentLike> findCommentLikeList = getCommentLikesByPostId(postId);
+        /**
+         * 모든 CommentLike는 현재 post엔티티가 없음. 그러므로 commentLike엔티티에 postId를 식별할 수 있는 엔티티를 추가하여
+         * 모든 commentLike를 가져오는 게 아니라 해당 post에 맞는 commentLike만 가져오도록 변경 ㅇㄸ
+         * 그러면 그걸 dto에 넘겨줘서 거기에 맞게 로직 설정
+         *
+         * 그리고 PostCommentController에서 댓글 작성 API는 dto로 parentCommentId를 받는 게 낫지 않을까?
+         * 그러면 댓글작성 api + 대댓글 작성 api도 하나 더 만들어야 할텐데
+         */
 
-        List<Long> ids = getCommentId(commentSlice.getContent());
-
-        List<CommentLike> findCommentLikeList = findCommentLikesByCommentIds(ids);
 
         //@OneToMany를 쓰지 않기 위해 이런 방법으로?
         if (header == null) {
             return commentSlice.map(comment -> {
                 ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
 
-                return createNoLoginCommentRetrieveRespDto(comment, commentLikeList);
+                return createNoLoginCommentRetrieveRespDto(comment, commentLikeList, findCommentLikeList);
             });
         } else{
             Member member = getLocalMemberByHeader(header);
@@ -72,9 +86,13 @@ public class CommentService {
                 ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
 
                 boolean flag = commentLikeFlag(member, commentLikeList);
-                return new CommentRetrieveRespDto(comment, Long.valueOf(commentLikeList.size()), flag);
+                return new CommentRetrieveRespDto(comment, (long) commentLikeList.size(), flag, findCommentLikeList, member.getId());
             });
         }
+    }
+
+    private List<CommentLike> getCommentLikesByPostId(Long postId) {
+        return commentLikeRepository.findCommentLikesByPostId(postId);
     }
 
     @Transactional
@@ -98,10 +116,21 @@ public class CommentService {
         Comment comment = validateOptionalComment(findOptionalComment(commentId));
         validateAuthorization(member, comment);
 
+        if (comment.getParent() == null) {
+            deleteChildComment(comment);
+        }
         deleteCommentLikeByCommentId(commentId);
         notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), commentId);
         notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), commentId);
         deleteCommentByCommentId(commentId);
+    }
+
+    private void deleteChildComment(Comment comment) {
+        List<Comment> childComment = comment.getChild();
+        for (Comment c : childComment) {
+            Member childMember = c.getMember();
+            deleteComment(childMember, c.getId());
+        }
     }
 
     @Transactional
@@ -114,7 +143,7 @@ public class CommentService {
         if(isOptionalCommentLikePresent(member, commentId)){
             deleteCommentLikeByCommentIdAndMemberId(member, commentId);
         } else {
-            savePostLike(member, commentId);
+            savePostLike(member, commentId, findPost);
             saveNotification(member, commentId, findComment, findPost);
         }
         return commentLikeRepository.countByCommentId(commentId);
@@ -159,14 +188,15 @@ public class CommentService {
         notificationRepository.save(notification);
     }
 
-    private void savePostLike(Member member, Long commentId) {
-        commentLikeRepository.save(createCommentLike(member, commentId));
+    private void savePostLike(Member member, Long commentId, Post post) {
+        commentLikeRepository.save(createCommentLike(member, commentId, post));
     }
 
-    private CommentLike createCommentLike(Member member, Long commentId) {
+    private CommentLike createCommentLike(Member member, Long commentId, Post post) {
         return CommentLike.builder()
                 .member(member)
                 .comment(validateOptionalComment(findOptionalComment(commentId)))
+                .post(post)
                 .build();
     }
 
@@ -194,8 +224,8 @@ public class CommentService {
         return (Member) userDetailsService.loadUserByUsername(header);
     }
 
-    private CommentRetrieveRespDto createNoLoginCommentRetrieveRespDto(Comment comment, ArrayList<CommentLike> commentLikeList) {
-        return new CommentRetrieveRespDto(comment, Long.valueOf(commentLikeList.size()), null);
+    private CommentRetrieveRespDto createNoLoginCommentRetrieveRespDto(Comment comment, ArrayList<CommentLike> commentLikeList, List<CommentLike> findCommentLikeList) {
+        return new CommentRetrieveRespDto(comment, (long) commentLikeList.size(), null, findCommentLikeList, null);
     }
 
     private ArrayList<CommentLike> getCommentLikeListByComment(List<CommentLike> findCommentLikeList, Comment comment) {
@@ -232,7 +262,7 @@ public class CommentService {
         return ids;
     }
 
-    private Slice<Comment> findAllCommentByIdWithFetchJoinMember(Long postId, Pageable pageable) {
+    private Slice<Comment> findAllCommentByPostIdWithFetchJoinMember(Long postId, Pageable pageable) {
         return commentRepository.findAllByIdWithFetchJoinMemberPaging(postId, pageable);
     }
 
@@ -270,9 +300,19 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    private Comment createComment(Member member, Post findPost, CommentWriteReqDto commentWriteRequestDto) {
+    private Comment createParentComment(Member member, Post findPost, CommentWriteReqDto commentWriteRequestDto) {
         return Comment.builder()
                 .member(member)
+                .content(commentWriteRequestDto.getContent())
+                .post(findPost)
+                .createdDate(LocalDateTime.now())
+                .build();
+    }
+
+    private Comment createChildComment(Member member, Post findPost, CommentWriteReqDto commentWriteRequestDto, Comment parentComment) {
+        return Comment.builder()
+                .member(member)
+                .parent(parentComment)
                 .content(commentWriteRequestDto.getContent())
                 .post(findPost)
                 .createdDate(LocalDateTime.now())
