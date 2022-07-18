@@ -39,9 +39,9 @@ public class PostCommentController {
     @ApiOperation(value = "대댓글 작성 API", notes = "대댓글 작성을 위해 header 에 토큰을 입력해주세요")
     public ResponseEntity<CommentWriteRespDto> writeChildComment(@ApiParam(value = "댓글 작성 DTO", required = true) @RequestBody CommentWriteReqDto commentWriteRequestDto,
                                                                  @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
-                                                                 @ApiParam(value = "댓글 ID", required = true) @PathVariable String commentId,
+                                                                 @ApiParam(value = "댓글 ID", required = true) @PathVariable Long commentId,
                                                                  Authentication authentication) {
-        CommentWriteRespDto respDto = commentService.writeComment(getMember(authentication), commentWriteRequestDto, postId);
+        CommentWriteRespDto respDto = commentService.writeChildComment(getMember(authentication), commentWriteRequestDto, postId, commentId);
         return ResponseEntity.
                 status(HttpStatus.CREATED)
                 .body(respDto);

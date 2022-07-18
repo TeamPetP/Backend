@@ -11,9 +11,6 @@ public class RequestUtil {
 
     // 헤더값 검증
     public static String getAuthorizationToken(String header) {
-        log.info("************* 선희야 왜 안되냐 before  *************: ");
-        log.info("************* 선희야 왜 안되냐 *************: " + header);
-        log.info("************* 선희야 왜 안되냐 after *************: ");
         //헤더값에 Authorization 값이 없거나 유효하지 않은 경우
         if(header == null || !header.startsWith("Bearer ")) {
             throw new CustomException(ErrorCode.INVALID_AUTHORIZATION, "**** Authorization Header is Null or Empty ******");
