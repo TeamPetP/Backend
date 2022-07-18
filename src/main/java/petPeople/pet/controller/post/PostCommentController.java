@@ -45,29 +45,21 @@ public class PostCommentController {
     @ApiOperation(value = "대댓글 작성 API", notes = "대댓글 작성을 위해 header 에 토큰을 입력해주세요")
     public ResponseEntity<CommentWriteRespDto> writeChildComment(@ApiParam(value = "댓글 작성 DTO", required = true) @RequestBody CommentWriteReqDto commentWriteRequestDto,
                                                                  @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
-                                                                 @ApiParam(value = "댓글 ID", required = true) @PathVariable Long parentCommentId,
+                                                                 @ApiParam(value = "댓글 ID", required = true) @PathVariable Long commentId,
                                                                  Authentication authentication) {
-        CommentWriteRespDto respDto = commentService.writeComment(getMember(authentication), commentWriteRequestDto, postId, parentCommentId);
+        CommentWriteRespDto respDto = commentService.writeChildComment(getMember(authentication), commentWriteRequestDto, postId, commentId);
         return ResponseEntity.
                 status(HttpStatus.CREATED)
                 .body(respDto);
     }
-
 
     @GetMapping("/posts/{postId}/comments")
     @ApiOperation(value = "댓글 전체 조회 API", notes = "댓글 조회를 위해 게시글 postId 를 경로변수에 넣어주세요(헤더에 토큰이 있을 경우 좋아요 여부를 알려줍니다.)")
     public ResponseEntity<Slice<CommentRetrieveRespDto>> retrieveAllComment(@ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
                                                                             Pageable pageable, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
-        if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(commentService.localRetrieveAll(postId, ofNullable(header), pageable));
-        } else
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(commentService.retrieveAll(postId, ofNullable(header), pageable));
 
+        return ResponseEntity.ok(commentService.retrieveAll(postId, header, pageable));
     }
 
     private Member getMember(Authentication authentication) {

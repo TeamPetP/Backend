@@ -68,7 +68,7 @@ public class MeetingEditRespDto {
     @ApiModelProperty(required = true, value = "모임 모집 여부", example = "true/false")
     private Boolean status;
 
-    public MeetingEditRespDto(Meeting meeting, List<MeetingImage> meetingImageList, List<MeetingImageFile> meetingImageFileList) {
+    public MeetingEditRespDto(Meeting meeting, List<MeetingImage> meetingImageList) {
         this.meetingId = meeting.getId();
         this.title = meeting.getTitle();
         this.content = meeting.getContent();
@@ -84,10 +84,6 @@ public class MeetingEditRespDto {
 
         for (MeetingImage meetingImage : meetingImageList) {
             imgUrlList.add(meetingImage.getImgUrl());
-        }
-
-        for (MeetingImageFile meetingImageFile : meetingImageFileList) {
-            imgUrlFileList.add(meetingImageFile.getImgFileUrl());
         }
 
         this.createdDate = meeting.getCreatedDate();
