@@ -55,14 +55,10 @@ public class MeetingService {
         saveMeetingMember(createMeetingMember(member, saveMeeting));
 
         List<MeetingImage> meetingImageList = new ArrayList<>();
-        for (String url : meetingCreateReqDto.getImage()) {
+        for (String url : meetingCreateReqDto.getImgUrlList()) {
             meetingImageList.add(saveMeetingImage(createMeetingImage(saveMeeting, url)));
         }
-        List<MeetingImageFile> meetingImageFileList = new ArrayList<>();
-        for (String imgFileUrl : meetingCreateReqDto.getImageFile()) {
-            meetingImageFileList.add(saveMeetingImageFile(createMeetingImageFile(saveMeeting, imgFileUrl)));
-        }
-        return new MeetingCreateRespDto(saveMeeting, meetingImageList, meetingImageFileList);
+        return new MeetingCreateRespDto(saveMeeting, meetingImageList);
     }
 
     @Transactional
@@ -82,12 +78,8 @@ public class MeetingService {
         for (String url : meetingEditReqDto.getImgUrlList()) {
             meetingImageList.add(saveMeetingImage(createMeetingImage(findMeeting, url)));
         }
-        List<MeetingImageFile> meetingImageFileList = new ArrayList<>();
-        for (String imgFileUrl : meetingEditReqDto.getImgFileUrlList()) {
-            meetingImageFileList.add(saveMeetingImageFile(createMeetingImageFile(findMeeting, imgFileUrl)));
-        }
 
-        return new MeetingEditRespDto(findMeeting, meetingImageList, meetingImageFileList);
+        return new MeetingEditRespDto(findMeeting, meetingImageList);
     }
 
     @Transactional
@@ -136,6 +128,7 @@ public class MeetingService {
         validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
 
         deleteMeetingMemberByMeetingIdAndMemberId(meetingId, member);
+        deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, member.getId());
     }
 
     public MeetingRetrieveRespDto localRetrieveOne(Long meetingId, Optional<String> optionalHeader) {
@@ -285,6 +278,8 @@ public class MeetingService {
 
         //meetingMember 삭제
         deleteMeetingMemberByMeetingIdAndMemberId(meetingId, findMember);
+
+        deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId);
     }
 
     @Transactional
@@ -351,9 +346,13 @@ public class MeetingService {
 
     @Transactional
     public void cancelJoinRequest(Long meetingId, Member member) {
-        validateOptionalMeetingWaitingMember(meetingWaitingMemberRepository.findAllByMeetingIdAndMemberId(meetingId, member.getId()));
+        validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, member.getId()));
 
-        meetingWaitingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, member.getId());
+        deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, member.getId());
+    }
+
+    private void deleteMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
+        meetingWaitingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, memberId);
     }
 
     private Optional<Member> findMemberByMemberId(Long memberId) {
