@@ -9,39 +9,45 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import petPeople.pet.config.auth.AuthFilterContainer;
 import petPeople.pet.controller.comment.dto.req.CommentWriteReqDto;
 import petPeople.pet.controller.comment.dto.resp.CommentWriteRespDto;
 import petPeople.pet.controller.post.dto.resp.CommentRetrieveRespDto;
 import petPeople.pet.domain.comment.service.CommentService;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
+
+import static java.util.Optional.*;
 
 @RestController
 @RequiredArgsConstructor
 public class PostCommentController {
 
     private final CommentService commentService;
+    private final AuthFilterContainer authFilterContainer;
 
     @PostMapping("/posts/{postId}/comments")
     @ApiOperation(value = "댓글 작성 API", notes = "댓글 작성을 위해 header 에 토큰을 입력해주세요")
     public ResponseEntity<CommentWriteRespDto> writeComment(@ApiParam(value = "댓글 작성 DTO", required = true) @RequestBody CommentWriteReqDto commentWriteRequestDto,
                                                             @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
                                                             Authentication authentication) {
-        CommentWriteRespDto respDto = commentService.writeComment(getMember(authentication), commentWriteRequestDto, postId);
+        CommentWriteRespDto respDto = commentService.writeComment(getMember(authentication), commentWriteRequestDto, postId, null);
         return ResponseEntity.
                 status(HttpStatus.CREATED)
                 .body(respDto);
     }
 
-    @PostMapping("/posts/{postId}/comments/{commentId}")
+    @PostMapping("/posts/{postId}/comments/{parentCommentId}")
     @ApiOperation(value = "대댓글 작성 API", notes = "대댓글 작성을 위해 header 에 토큰을 입력해주세요")
     public ResponseEntity<CommentWriteRespDto> writeChildComment(@ApiParam(value = "댓글 작성 DTO", required = true) @RequestBody CommentWriteReqDto commentWriteRequestDto,
                                                                  @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
-                                                                 @ApiParam(value = "댓글 ID", required = true) @PathVariable String commentId,
+                                                                 @ApiParam(value = "댓글 ID", required = true) @PathVariable Long parentCommentId,
                                                                  Authentication authentication) {
-        CommentWriteRespDto respDto = commentService.writeComment(getMember(authentication), commentWriteRequestDto, postId);
+        CommentWriteRespDto respDto = commentService.writeComment(getMember(authentication), commentWriteRequestDto, postId, parentCommentId);
         return ResponseEntity.
                 status(HttpStatus.CREATED)
                 .body(respDto);
@@ -53,8 +59,15 @@ public class PostCommentController {
     public ResponseEntity<Slice<CommentRetrieveRespDto>> retrieveAllComment(@ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
                                                                             Pageable pageable, HttpServletRequest request) {
         String header = RequestUtil.getAuthorizationToken(request);
+        if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(commentService.localRetrieveAll(postId, ofNullable(header), pageable));
+        } else
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(commentService.retrieveAll(postId, ofNullable(header), pageable));
 
-        return ResponseEntity.ok(commentService.retrieveAll(postId, header, pageable));
     }
 
     private Member getMember(Authentication authentication) {

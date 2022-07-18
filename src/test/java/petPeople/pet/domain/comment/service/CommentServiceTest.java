@@ -121,7 +121,7 @@ class CommentServiceTest {
 
         //when
         //@EqualsAndHashCode 필요
-        CommentWriteRespDto result = commentService.writeComment(member, commentWriteReqDto, post.getId());
+        CommentWriteRespDto result = commentService.writeComment(member, commentWriteReqDto, post.getId(), null);
 
         //then
         assertThat(result).isEqualTo(respDto);
@@ -195,7 +195,7 @@ class CommentServiceTest {
         Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false, commentLikeList, commentMember.getId()));
 
         //when
-        Slice<CommentRetrieveRespDto> reqsDto = commentService.retrieveAll(post.getId(), null, pageRequest);
+        Slice<CommentRetrieveRespDto> reqsDto = commentService.localRetrieveAll(post.getId(), null, pageRequest);
 
         //then
         assertThat(reqsDto).isEqualTo(result);
@@ -239,7 +239,7 @@ class CommentServiceTest {
         Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false, commentLikeList, commentMember.getId()));
 
         //when
-        Slice<CommentRetrieveRespDto> reqsDto = commentService.retrieveAll(post.getId(), member.getUid(), pageRequest);
+        Slice<CommentRetrieveRespDto> reqsDto = commentService.localRetrieveAll(post.getId(), Optional.ofNullable(member.getUid()), pageRequest);
 
         //then
         assertThat(reqsDto).isEqualTo(result);
@@ -304,7 +304,7 @@ class CommentServiceTest {
     }
 
     private CommentWriteReqDto createCommentWriteReqDto(String content) {
-        return new CommentWriteReqDto(content, comment.getParent().getId());
+        return new CommentWriteReqDto(content);
     }
 
     private Post createPost(Member member, String content) {
