@@ -18,6 +18,7 @@ import petPeople.pet.controller.comment.dto.req.CommentWriteReqDto;
 import petPeople.pet.controller.comment.dto.resp.CommentEditRespDto;
 import petPeople.pet.controller.comment.dto.resp.CommentWriteRespDto;
 import petPeople.pet.controller.post.dto.resp.CommentRetrieveRespDto;
+import petPeople.pet.controller.post.dto.resp.CommentRetrieveWithCountRespDto;
 import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.comment.entity.CommentLike;
 import petPeople.pet.domain.comment.repository.CommentLikeRepository;
@@ -37,6 +38,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -83,16 +85,21 @@ public class CommentService {
         throw new CustomException(errorCode, message);
     }
 
-    public Slice<CommentRetrieveRespDto> retrieveAll(Long postId, String header, Pageable pageable) {
-        Slice<Comment> commentSlice = findAllCommentByPostIdWithFetchJoinMember(postId, pageable);
+    public CommentRetrieveWithCountRespDto retrieveAll(Long postId, String header) {
+        List<Comment> commentList = findAllCommentByPostIdWithFetchJoinMember(postId);
         List<CommentLike> findCommentLikeList = getCommentLikesByPostId(postId);
+        Long commentCnt = commentRepository.countByPostId(postId);
+
         //@OneToMany를 쓰지 않기 위해 이런 방법으로?
         if (header == null) {
-            return commentSlice.map(comment -> {
+            List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
                 ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
+                new CommentRetrieveWithCountRespDto();
 
                 return createNoLoginCommentRetrieveRespDto(comment, commentLikeList, findCommentLikeList);
-            });
+            }).collect(Collectors.toList());
+
+            return new CommentRetrieveWithCountRespDto(commentCnt, map);
         } else{
             Member member;
 
@@ -103,12 +110,13 @@ public class CommentService {
                 member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
             }
 
-            return commentSlice.map(comment -> {
+            List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
                 ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
 
                 boolean flag = commentLikeFlag(member, commentLikeList);
                 return new CommentRetrieveRespDto(comment, (long) commentLikeList.size(), flag, findCommentLikeList, member.getId());
-            });
+            }).collect(Collectors.toList());
+            return new CommentRetrieveWithCountRespDto(commentCnt, map);
         }
     }
 
@@ -301,8 +309,8 @@ public class CommentService {
         return ids;
     }
 
-    private Slice<Comment> findAllCommentByPostIdWithFetchJoinMember(Long postId, Pageable pageable) {
-        return commentRepository.findAllByIdWithFetchJoinMemberPaging(postId, pageable);
+    private List<Comment> findAllCommentByPostIdWithFetchJoinMember(Long postId) {
+        return commentRepository.findAllByIdWithFetchJoinMemberPaging(postId);
     }
 
     private Optional<Post> findOptionalPostWithId(Long postId) {
