@@ -27,41 +27,14 @@ public class CommentCustomRepositoryImpl implements CommentCustomRepository{
     private final EntityManager em;
 
     @Override
-    public Slice<Comment> findAllByIdWithFetchJoinMemberPaging(Long postId, Pageable pageable) {
-        List<Comment> commentParentList = queryFactory
+    public List<Comment> findAllByIdWithFetchJoinMemberPaging(Long postId) {
+        return queryFactory
                 .selectFrom(comment)
                 .join(comment.post, post).fetchJoin()
                 .join(comment.member, member).fetchJoin()
                 .where(comment.post.id.eq(postId), comment.parent.isNull())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize() + 1)
                 .orderBy(comment.createdDate.asc())
                 .fetch();
-
-        List<Comment> commentChildrenList = queryFactory
-                .selectFrom(comment)
-                .join(comment.member, member).fetchJoin()
-                .join(comment.post, post).fetchJoin()
-                .where(comment.post.id.eq(postId), comment.parent.isNotNull())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize() + 1)
-                .orderBy(comment.createdDate.asc())
-                .fetch();
-
-        commentParentList
-                .forEach(parent -> {
-                    parent.setChild(commentChildrenList.stream()
-                            .filter(child -> child.getParent().getId().equals(parent.getId()))
-                            .collect(Collectors.toList()));
-                });
-
-
-        boolean hasNext = false;
-        if (commentParentList.size() > pageable.getPageSize()) {
-            commentParentList.remove(pageable.getPageSize());
-            hasNext = true;
-        }
-        return new SliceImpl(commentParentList, pageable, hasNext);
     }
 
     @Override
