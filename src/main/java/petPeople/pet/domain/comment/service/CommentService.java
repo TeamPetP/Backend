@@ -1,33 +1,44 @@
 package petPeople.pet.domain.comment.service;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import petPeople.pet.config.auth.AuthFilterContainer;
 import petPeople.pet.controller.comment.dto.req.CommentEditReqDto;
 import petPeople.pet.controller.comment.dto.req.CommentWriteReqDto;
 import petPeople.pet.controller.comment.dto.resp.CommentEditRespDto;
 import petPeople.pet.controller.comment.dto.resp.CommentWriteRespDto;
 import petPeople.pet.controller.post.dto.resp.CommentRetrieveRespDto;
+import petPeople.pet.controller.post.dto.resp.CommentRetrieveWithCountRespDto;
 import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.comment.entity.CommentLike;
 import petPeople.pet.domain.comment.repository.CommentLikeRepository;
 import petPeople.pet.domain.comment.repository.CommentRepository;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.repository.PostRepository;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
+import petPeople.pet.filter.MockJwtFilter;
+import petPeople.pet.util.RequestUtil;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -38,56 +49,91 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
-    private final UserDetailsService userDetailsService;
     private final NotificationRepository notificationRepository;
+    private final FirebaseAuth firebaseAuth;
+    private final MemberRepository memberRepository;
+    private final AuthFilterContainer authFilterContainer;
 
     @Transactional
     public CommentWriteRespDto writeComment(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId) {
 
         Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
 
-        if (commentWriteRequestDto.getParentId() == null) {
-            Comment saveComment = saveComment(createParentComment(member, findPost, commentWriteRequestDto));
-            saveNotification(saveComment, member, findPost);
-            return new CommentWriteRespDto(saveComment);
-        }
-        Comment parent = commentRepository.findById(commentWriteRequestDto.getParentId())
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
-        Comment child = createChildComment(member, findPost, commentWriteRequestDto, parent);
-        Comment saveComment = saveComment(child);
+        Comment saveComment = saveComment(createParentComment(member, findPost, commentWriteRequestDto));
         saveNotification(saveComment, member, findPost);
         return new CommentWriteRespDto(saveComment);
     }
 
+    @Transactional
+    public CommentWriteRespDto writeChildComment(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId, Long parentCommentId) {
 
-    public Slice<CommentRetrieveRespDto> retrieveAll(Long postId, String header, Pageable pageable) {
-        Slice<Comment> commentSlice = findAllCommentByPostIdWithFetchJoinMember(postId, pageable);
+        Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
+
+        Comment parent = commentRepository.findById(parentCommentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
+
+        if (parent.getParent() != null) {
+            throwException(ErrorCode.BAD_REQUEST, "자식 댓글에 댓글을 달 수 없습니다.");
+        }
+
+        Comment saveComment = saveComment(createChildComment(member, findPost, commentWriteRequestDto, parent));
+        saveNotification(saveComment, member, findPost);
+        return new CommentWriteRespDto(saveComment);
+    }
+
+    private void throwException(ErrorCode errorCode, String message) {
+        throw new CustomException(errorCode, message);
+    }
+
+    public CommentRetrieveWithCountRespDto retrieveAll(Long postId, String header) {
+        List<Comment> commentList = findAllCommentByPostIdWithFetchJoinMember(postId);
         List<CommentLike> findCommentLikeList = getCommentLikesByPostId(postId);
-        /**
-         * 모든 CommentLike는 현재 post엔티티가 없음. 그러므로 commentLike엔티티에 postId를 식별할 수 있는 엔티티를 추가하여
-         * 모든 commentLike를 가져오는 게 아니라 해당 post에 맞는 commentLike만 가져오도록 변경 ㅇㄸ
-         * 그러면 그걸 dto에 넘겨줘서 거기에 맞게 로직 설정
-         *
-         * 그리고 PostCommentController에서 댓글 작성 API는 dto로 parentCommentId를 받는 게 낫지 않을까?
-         * 그러면 댓글작성 api + 대댓글 작성 api도 하나 더 만들어야 할텐데
-         */
-
+        Long commentCnt = commentRepository.countByPostId(postId);
 
         //@OneToMany를 쓰지 않기 위해 이런 방법으로?
         if (header == null) {
-            return commentSlice.map(comment -> {
+            List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
                 ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
+                new CommentRetrieveWithCountRespDto();
 
                 return createNoLoginCommentRetrieveRespDto(comment, commentLikeList, findCommentLikeList);
-            });
+            }).collect(Collectors.toList());
+
+            return new CommentRetrieveWithCountRespDto(commentCnt, map);
         } else{
-            Member member = getLocalMemberByHeader(header);
-            return commentSlice.map(comment -> {
+            Member member;
+
+            if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
+                member = validateOptionalMember(findOptionalMemberByUid(header));
+            } else {
+                FirebaseToken firebaseToken = decodeToken(header);
+                member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+            }
+
+            List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
                 ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
 
                 boolean flag = commentLikeFlag(member, commentLikeList);
                 return new CommentRetrieveRespDto(comment, (long) commentLikeList.size(), flag, findCommentLikeList, member.getId());
-            });
+            }).collect(Collectors.toList());
+            return new CommentRetrieveWithCountRespDto(commentCnt, map);
+        }
+    }
+
+    private Member validateOptionalMember(Optional<Member> optionalMember) {
+        return optionalMember
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.NOT_FOUND_MEMBER, "존재하지 않은 회원입니다."));
+    }
+
+    public FirebaseToken decodeToken(String header) {
+        try {
+            header = "Bearer " + header;
+            String token = RequestUtil.getAuthorizationToken(header);
+            return firebaseAuth.verifyIdToken(token);
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "{\"code\":\"INVALID_TOKEN\", \"message\":\"" + e.getMessage() + "\"}");
         }
     }
 
@@ -220,8 +266,9 @@ public class CommentService {
         commentLikeRepository.deleteByCommentId(commentId);
     }
 
-    private Member getLocalMemberByHeader(String header) {
-        return (Member) userDetailsService.loadUserByUsername(header);
+
+    private Optional<Member> findOptionalMemberByUid(String uid) {
+        return memberRepository.findByUid(uid);
     }
 
     private CommentRetrieveRespDto createNoLoginCommentRetrieveRespDto(Comment comment, ArrayList<CommentLike> commentLikeList, List<CommentLike> findCommentLikeList) {
@@ -262,8 +309,8 @@ public class CommentService {
         return ids;
     }
 
-    private Slice<Comment> findAllCommentByPostIdWithFetchJoinMember(Long postId, Pageable pageable) {
-        return commentRepository.findAllByIdWithFetchJoinMemberPaging(postId, pageable);
+    private List<Comment> findAllCommentByPostIdWithFetchJoinMember(Long postId) {
+        return commentRepository.findAllByIdWithFetchJoinMemberPaging(postId);
     }
 
     private Optional<Post> findOptionalPostWithId(Long postId) {
@@ -305,7 +352,6 @@ public class CommentService {
                 .member(member)
                 .content(commentWriteRequestDto.getContent())
                 .post(findPost)
-                .createdDate(LocalDateTime.now())
                 .build();
     }
 
@@ -315,7 +361,6 @@ public class CommentService {
                 .parent(parentComment)
                 .content(commentWriteRequestDto.getContent())
                 .post(findPost)
-                .createdDate(LocalDateTime.now())
                 .build();
     }
 }
