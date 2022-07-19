@@ -92,32 +92,24 @@ public class MeetingService {
         validateDuplicatedJoin(member, meetingId);//중복 가입 회원 검증
         validateFullMeeting(meeting.getMaxPeople(), countMeetingMember(meetingId));//인원 검증
 
-        // TODO: 2022-07-06 회원이 미팅에 참여했을 때 알람 구현
-        saveNotification(meeting, member);
-
         saveMeetingWaitingMember(createMeetingWaitingMember(member, meeting));
+
+        //미팅에 참여 요청 시 방장에게 알림
+        saveNotification(createNotification(meeting.getMember(), member, meeting, JoinRequestStatus.WAITING));
     }
 
-    private void saveNotification(Meeting meeting, Member member) {
-        if (isNotSameMember(member, meeting.getMember())) {
-            if (!isExistMemberLikePostNotification(meeting.getMember().getId(), member)) {
-                saveNotification(createNotification(member, meeting));
-            }
-        }
-    }
 
-    // TODO: 2022-07-06 회원이 미팅에 참여했을 때 알람 구현
     private void saveNotification(Notification notification) {
+        notificationRepository.save(notification);
     }
 
-    private Notification createNotification(Member member, Meeting meeting) {
+    private Notification createNotification(Member meetingMember, Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
         return Notification.builder()
-                .member(member)
+                .member(joinRequestMember)
+                .meetingJoinRequestFlag(requestStatus)
+                .ownerMember(meetingMember)
+                .meeting(meeting)
                 .build();
-    }
-
-    private boolean isExistMemberLikePostNotification(Long postId, Member member) {
-        return notificationRepository.findByMemberIdAndPostId(member.getId(), postId).isPresent();
     }
 
     @Transactional
@@ -251,20 +243,6 @@ public class MeetingService {
     }
 
     @Transactional
-    public void approve(Member member, Long meetingId, Long memberId) {
-        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-        Long joinMemberCount = countMeetingMember(meetingId);
-
-        validateMemberAuthorization(member, findMeeting.getMember());//권한 검증
-        validateFullMeeting(findMeeting.getMaxPeople(), joinMemberCount);//인원 검즘
-
-        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
-        changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
-
-        saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
-    }
-
-    @Transactional
     public void expelMeetingMember(Long meetingId, Long memberId, Member member) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         Member findMember = validateOptionalMember(findMemberByMemberId(memberId));
@@ -283,13 +261,35 @@ public class MeetingService {
     }
 
     @Transactional
-    public void decline(Member member, Long meetingId, Long memberId) {
+    public void approve(Member member, Long meetingId, Long memberId) {
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Long joinMemberCount = countMeetingMember(meetingId);
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+        validateMemberAuthorization(member, findMeeting.getMember());//권한 검증
+        validateFullMeeting(findMeeting.getMaxPeople(), joinMemberCount);//인원 검즘
+
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
+
+        changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
+
+        saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
+        for (MeetingMember meetingMember : meetingMemberList) {
+            saveNotification(createNotification(meetingMember.getMember(), meetingWaitingMember.getMember(), findMeeting, JoinRequestStatus.APPROVED));
+        }
+    }
+
+    @Transactional
+    public void decline(Member member, Long meetingId, Long joinRequestMemberId) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
         validateMemberAuthorization(member, findMeeting.getMember());
 
-        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId));
+        MeetingWaitingMember meetingWaitingMember = validateOptionalMeetingWaitingMember(findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, joinRequestMemberId));
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
+        saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
+
+        saveNotification(createNotification( meetingWaitingMember.getMember(),member, findMeeting, JoinRequestStatus.DECLINED));
     }
 
     @Transactional

@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface CommentCustomRepository {
 
-    Slice<Comment> findAllByIdWithFetchJoinMemberPaging(Long postId, Pageable pageable);
+    List<Comment> findAllByIdWithFetchJoinMemberPaging(Long postId);
     List<Comment> findByPostIds(List<Long> ids);
 
     List<Comment> findByPostId(Long postId);

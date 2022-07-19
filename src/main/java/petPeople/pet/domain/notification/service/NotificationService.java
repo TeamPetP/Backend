@@ -6,6 +6,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.member.dto.resp.notificationResp.*;
+import petPeople.pet.domain.meeting.entity.JoinRequestStatus;
 import petPeople.pet.domain.meeting.entity.MeetingPostImage;
 import petPeople.pet.domain.meeting.repository.MeetingPostImageRepository;
 import petPeople.pet.domain.member.entity.Member;
@@ -16,6 +17,7 @@ import petPeople.pet.domain.post.repository.PostImageRepository;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,11 +32,11 @@ public class NotificationService {
     public Slice<MemberNotificationResponseDto> retrieveNotifications(Long memberId, Pageable pageable) {
         return notificationRepository.findByOwnerMemberId(pageable, memberId)
                 .map(notification -> {
-                    List<MeetingPostImage> meetingPostImages = null;
-                    List<PostImage> postImages = null;
+                    List<MeetingPostImage> meetingPostImages = new ArrayList<>();
+                    List<PostImage> postImages = new ArrayList<>();
                     if (notification.getPost() != null) {
                         postImages = postImageRepository.findByPostId(notification.getPost().getId());
-                    } else {
+                    } else if(notification.getMeetingPost() != null){
                         meetingPostImages = meetingPostImageRepository.findAllMeetingPostImageByMeetingPostId(notification.getMeetingPost().getId());
                     }
 
@@ -50,8 +52,14 @@ public class NotificationService {
                         return new NotificationMeetingPostWriteRetrieveResponseDto(notification, meetingPostImages);
                     } else if (notification.getWriteMeetingComment() != null) {
                         return new NotificationMeetingCommentWriteRetrieveResponseDto(notification, meetingPostImages);
-                    } else {
+                    }  else if (notification.getMeetingComment() != null){
                         return new NotificationMeetingCommentRetrieveResponseDto(notification, meetingPostImages);
+                    } else if (notification.getMeetingJoinRequestFlag() == JoinRequestStatus.APPROVED) {
+                        return new NotificationMeetingJoinApprovedResponseDto(notification);
+                    } else if (notification.getMeetingJoinRequestFlag() == JoinRequestStatus.DECLINED) {
+                        return new NotificationMeetingJoinDeclinedResponseDto(notification);
+                    } else {
+                        return new NotificationMeetingJoinedResponseDto(notification);
                     }
                 });
     }
@@ -83,11 +91,6 @@ public class NotificationService {
     public long countMemberNotReadNotifications(Long memberId) {
         return notificationRepository.countUnReadMemberNotifications(memberId);
     }
-
-    /**
-     *
-     *
-     */
 
     private Optional<Notification> findOptionalNotification(Long notificationId) {
         return notificationRepository.findById(notificationId);

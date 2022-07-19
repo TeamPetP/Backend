@@ -3,8 +3,10 @@ package petPeople.pet.domain.notification.entity;
 
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.lang.Nullable;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.comment.entity.Comment;
+import petPeople.pet.domain.meeting.entity.JoinRequestStatus;
 import petPeople.pet.domain.meeting.entity.Meeting;
 import petPeople.pet.domain.meeting.entity.MeetingComment;
 import petPeople.pet.domain.meeting.entity.MeetingPost;
@@ -52,6 +54,7 @@ public class Notification extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_post_id")
+    @Nullable
     private MeetingPost meetingPost;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -65,6 +68,9 @@ public class Notification extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_comment_id2")
     private MeetingComment writeMeetingComment;
+
+    @Enumerated(EnumType.STRING)
+    private JoinRequestStatus meetingJoinRequestFlag;
 
     private boolean isChecked;
 
