@@ -134,21 +134,21 @@ public class MeetingController {
                 .body(meetingService.retrieveAllImage(meetingId));
     }
 
-    @PostMapping("/{meetingId}/members/{memberId}/approve")
+    @PostMapping("/{meetingId}/members/{joinRequestMemberId}/approve")
     @ApiOperation(value = "모임 가입 요청 승인 API", notes = "모임을 가입 요청 위해 meetingId 와 memberId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
     public ResponseEntity approveJoin(Authentication authentication,
                                       @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
-                                      @ApiParam(value = "회원 ID", required = true) @PathVariable Long memberId) {
-        meetingService.approve(getMember(authentication), meetingId, memberId);
+                                      @ApiParam(value = "회원 ID", required = true) @PathVariable Long joinRequestMemberId) {
+        meetingService.approve(getMember(authentication), meetingId, joinRequestMemberId);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{meetingId}/members/{memberId}/decline")
+    @DeleteMapping("/{meetingId}/members/{joinRequestMemberId}/decline")
     @ApiOperation(value = "모임 가입 요청 거절 API", notes = "모임을 가입 요청 거부를 위해 meetingId 와 memberId 를 경로변수에 넣어주세요. (헤더에 토큰을 입력해주세요.)")
     public ResponseEntity declineJoin(Authentication authentication,
                                       @ApiParam(value = "모임 ID", required = true) @PathVariable Long meetingId,
-                                      @ApiParam(value = "회원 ID", required = true) @PathVariable Long memberId) {
-        meetingService.decline(getMember(authentication), meetingId, memberId);
+                                      @ApiParam(value = "회원 ID", required = true) @PathVariable Long joinRequestMemberId) {
+        meetingService.decline(getMember(authentication), meetingId, joinRequestMemberId);
         return ResponseEntity.noContent().build();
     }
 

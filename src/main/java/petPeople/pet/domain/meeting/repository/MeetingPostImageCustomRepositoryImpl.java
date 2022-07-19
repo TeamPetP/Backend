@@ -2,6 +2,7 @@ package petPeople.pet.domain.meeting.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 import petPeople.pet.domain.meeting.entity.MeetingPostImage;
 import petPeople.pet.domain.meeting.repository.MeetingPostImageCustomRepository;
 
@@ -16,10 +17,12 @@ public class MeetingPostImageCustomRepositoryImpl implements MeetingPostImageCus
 
     @Override
     public List<MeetingPostImage> findAllMeetingPostImageByMeetingPostId(Long meetingPostId) {
-        return queryFactory
+        List<MeetingPostImage> fetch = queryFactory
                 .selectFrom(meetingPostImage)
                 .where(meetingPostImage.meetingPost.id.eq(meetingPostId))
                 .fetch();
+
+        return fetch;
     }
 
     @Override

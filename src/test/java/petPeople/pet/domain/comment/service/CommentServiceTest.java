@@ -122,7 +122,7 @@ class CommentServiceTest {
 
         //when
         //@EqualsAndHashCode 필요
-        CommentWriteRespDto result = commentService.writeComment(member, commentWriteReqDto, post.getId());
+        CommentWriteRespDto result = commentService.writeComment(member, commentWriteReqDto, post.getId(), null);
 
         //then
         assertThat(result).isEqualTo(respDto);
@@ -196,6 +196,7 @@ class CommentServiceTest {
         Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false, commentLikeList, commentMember.getId()));
 
         //when
+
 //        CommentRetrieveWithCountRespDto reqsDto = commentService.retrieveAll(post.getId(), null, pageRequest);
 
         //then
@@ -240,6 +241,7 @@ class CommentServiceTest {
         Slice<CommentRetrieveRespDto> result = commentSlice.map(comment -> new CommentRetrieveRespDto(comment, likeCnt, false, commentLikeList, commentMember.getId()));
 
         //when
+
 //        CommentRetrieveWithCountRespDto reqsDto = commentService.retrieveAll(post.getId(), member.getUid(), pageRequest);
 
         //then

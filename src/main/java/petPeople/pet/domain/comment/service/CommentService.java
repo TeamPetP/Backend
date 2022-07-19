@@ -55,7 +55,7 @@ public class CommentService {
     private final AuthFilterContainer authFilterContainer;
 
     @Transactional
-    public CommentWriteRespDto writeComment(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId) {
+    public CommentWriteRespDto writeComment(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId, Long parentCommentId) {
 
         Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
 
@@ -193,6 +193,10 @@ public class CommentService {
             saveNotification(member, commentId, findComment, findPost);
         }
         return commentLikeRepository.countByCommentId(commentId);
+    }
+
+    private boolean isLogined(Optional<String> header) {
+        return header.isPresent();
     }
 
     private void saveNotification(Member member, Long commentId, Comment findComment, Post findPost) {

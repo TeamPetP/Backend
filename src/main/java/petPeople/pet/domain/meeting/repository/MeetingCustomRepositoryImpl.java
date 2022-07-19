@@ -9,6 +9,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.util.StringUtils;
 import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.Meeting;
+import petPeople.pet.domain.member.entity.Member;
 
 import java.util.List;
 
