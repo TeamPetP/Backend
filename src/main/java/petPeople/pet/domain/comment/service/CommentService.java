@@ -91,8 +91,8 @@ public class CommentService {
         Long commentCnt = commentRepository.countByPostId(postId);
 
         //@OneToMany를 쓰지 않기 위해 이런 방법으로?
-        if (header == null) {
-            List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
+            if (header == null) {
+                List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
                 ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
                 new CommentRetrieveWithCountRespDto();
 
