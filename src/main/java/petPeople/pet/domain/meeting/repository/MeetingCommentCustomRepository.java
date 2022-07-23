@@ -4,6 +4,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import petPeople.pet.domain.meeting.entity.MeetingComment;
 
+import java.util.List;
+
 public interface MeetingCommentCustomRepository {
-    Slice<MeetingComment> findByMeetingPostId(Pageable pageable, Long meetingPostId);
+    List<MeetingComment> findByMeetingPostId(Long meetingPostId);
+
+    Long countByMeetingPostId(Long meetingPostId);
 }

@@ -34,6 +34,10 @@ public class QMeetingComment extends EntityPathBase<MeetingComment> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> lastModifiedDate = _super.lastModifiedDate;
 
+    public final ListPath<MeetingComment, QMeetingComment> meetingCommentChild = this.<MeetingComment, QMeetingComment>createList("meetingCommentChild", MeetingComment.class, QMeetingComment.class, PathInits.DIRECT2);
+
+    public final QMeetingComment meetingCommentParent;
+
     public final QMeetingPost meetingPost;
 
     public final petPeople.pet.domain.member.entity.QMember member;
@@ -56,6 +60,7 @@ public class QMeetingComment extends EntityPathBase<MeetingComment> {
 
     public QMeetingComment(Class<? extends MeetingComment> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
+        this.meetingCommentParent = inits.isInitialized("meetingCommentParent") ? new QMeetingComment(forProperty("meetingCommentParent"), inits.get("meetingCommentParent")) : null;
         this.meetingPost = inits.isInitialized("meetingPost") ? new QMeetingPost(forProperty("meetingPost"), inits.get("meetingPost")) : null;
         this.member = inits.isInitialized("member") ? new petPeople.pet.domain.member.entity.QMember(forProperty("member")) : null;
     }
