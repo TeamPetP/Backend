@@ -26,6 +26,9 @@ public class MeetingPostRetrieveRespDto {
     @ApiModelProperty(required = true, value = "회원 ID", example = "1")
     private Long memberId;
 
+    @ApiModelProperty(required = true, value = "회원 이미지 url", example = "www.img.com")
+    private String memberImgUrl;
+
     @ApiModelProperty(required = true, value = "회원 닉네임", example = "abcd")
     private String nickname;
 
@@ -51,6 +54,7 @@ public class MeetingPostRetrieveRespDto {
         this.meetingPostId = meetingPost.getId();
         this.meetingId = meetingPost.getMeeting().getId();
         this.memberId = meetingPost.getMember().getId();
+        this.memberImgUrl = meetingPost.getMember().getImgUrl();
         this.nickname = meetingPost.getMember().getNickname();
         this.title = meetingPost.getTitle();
         this.content = meetingPost.getContent();
