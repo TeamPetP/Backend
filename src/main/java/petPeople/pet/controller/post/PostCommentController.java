@@ -29,7 +29,6 @@ import static java.util.Optional.*;
 public class PostCommentController {
 
     private final CommentService commentService;
-    private final AuthFilterContainer authFilterContainer;
 
     @PostMapping("/posts/{postId}/comments")
     @ApiOperation(value = "댓글 작성 API", notes = "댓글 작성을 위해 header 에 토큰을 입력해주세요")
@@ -42,7 +41,7 @@ public class PostCommentController {
                 .body(respDto);
     }
 
-    @PostMapping("/posts/{postId}/comments/{parentCommentId}")
+    @PostMapping("/posts/{postId}/comments/{commentId}")
     @ApiOperation(value = "대댓글 작성 API", notes = "대댓글 작성을 위해 header 에 토큰을 입력해주세요")
     public ResponseEntity<CommentWriteRespDto> writeChildComment(@ApiParam(value = "댓글 작성 DTO", required = true) @RequestBody CommentWriteReqDto commentWriteRequestDto,
                                                                  @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId,
