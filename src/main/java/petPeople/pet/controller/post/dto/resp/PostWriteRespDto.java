@@ -23,11 +23,11 @@ public class PostWriteRespDto {
     @ApiModelProperty(required = true, value = "회원 ID", example = "1")
     private Long memberId;
 
-    @ApiModelProperty(required = true, value = "회원 닉네임", example = "1")
-    private String nickname;
-
     @ApiModelProperty(required = true, value = "게시글 ID", example = "1")
     private Long postId;
+
+    @ApiModelProperty(required = true, value = "회원 닉네임", example = "1")
+    private String nickname;
 
     @ApiModelProperty(required = true, value = "게시글 내용", example = "강아지 좋아")
     private String content;
