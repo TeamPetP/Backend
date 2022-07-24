@@ -29,7 +29,6 @@ import static java.util.Optional.*;
 public class PostCommentController {
 
     private final CommentService commentService;
-    private final AuthFilterContainer authFilterContainer;
 
     @PostMapping("/posts/{postId}/comments")
     @ApiOperation(value = "댓글 작성 API", notes = "댓글 작성을 위해 header 에 토큰을 입력해주세요")

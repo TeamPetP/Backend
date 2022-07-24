@@ -20,6 +20,9 @@ public class MemberNotificationResponseDto {
     @ApiModelProperty(required = true, value = "회원 ID", example = "1")
     private Long memberId;
 
+    @ApiModelProperty(required = true, value = "회원 이미지 url", example = "www.img.com")
+    private String memberImgUrl;
+
     @ApiModelProperty(required = true, value = "회원 별명", example = "아스방가르드")
     private String nickname;
 
@@ -40,5 +43,6 @@ public class MemberNotificationResponseDto {
         this.isChecked = notification.isChecked();
         this.createdDate = notification.getCreatedDate();
         this.notificationType = notificationType;
+        this.memberImgUrl = notification.getMember().getImgUrl();
     }
 }
