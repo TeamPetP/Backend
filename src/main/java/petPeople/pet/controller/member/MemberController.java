@@ -177,7 +177,7 @@ public class MemberController {
 
     @ApiOperation(value = "회원의 모임 북마크 조회 API", notes = "회원의 모임 북마크 조회")
     @GetMapping("/me/meetingBookmark")
-    public ResponseEntity retrieveMemberBookMarkMeeting(Authentication authentication, Pageable pageable) {
+    public ResponseEntity<Slice<MemberMeetingBookMarkRespDto>> retrieveMemberBookMarkMeeting(Authentication authentication, Pageable pageable) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(meetingService.retrieveMemberBookMarkMeeting(getMember(authentication), pageable));
