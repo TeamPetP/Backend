@@ -5,8 +5,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import petPeople.pet.controller.comment.dto.req.CommentWriteReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingCommentWriteReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCommentRetrieveRespDto;
+import petPeople.pet.controller.meeting.dto.resp.MeetingCommentRetrieveWithCountRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCommentWriteRespDto;
 import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.meeting.entity.*;
@@ -21,6 +23,7 @@ import petPeople.pet.exception.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,37 +49,43 @@ public class MeetingCommentService {
 
         saveNotification(member, findMeetingPost, saveMeetingComment);
 
-        return new MeetingCommentWriteRespDto(saveMeetingComment.getId(), meetingPostId, meetingId, meetingCommentWriteReqDto.getContent());
+        return new MeetingCommentWriteRespDto(saveMeetingComment);
     }
 
-    public Slice<MeetingCommentRetrieveRespDto> retrieveComments(Long meetingId, Long meetingPostId, Member member, Pageable pageable) {
+    @Transactional
+    public MeetingCommentWriteRespDto writeChildComment(Member member, MeetingCommentWriteReqDto meetingCommentWriteReqDto, Long meetingId, Long meetingPostId, Long meetingCommentId) {
 
         validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
-
         validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-        validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
 
-        Slice<MeetingComment> meetingCommentSlice = findMeetingCommentByMeetingPostId(meetingPostId, pageable);
+        MeetingPost findMeetingPost = validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
+        MeetingComment meetingParentComment = validateOptionalMeetingComment(findMeetingCommentByMeetingCommentId(meetingCommentId));
 
-        List<Long> meetingCommentIds = getMeetingCommentIds(meetingCommentSlice.getContent());
+        if (meetingParentComment.getMeetingCommentParent() != null) {
+            throwException(ErrorCode.BAD_REQUEST, "자식 댓글에 댓글을 달 수 없습니다.");
+        }
 
-        List<MeetingCommentLike> findMeetingCommentLikeList = findMeetingCommentLikeByMeetingCommentIds(meetingCommentIds);
-
-        return meetingCommentSlice
-                .map(meetingComment -> {
-                    List<MeetingCommentLike> meetingCommentLikeList = getMeetingCommentLikeByMeetingComment(findMeetingCommentLikeList, meetingComment);
-
-                    return new MeetingCommentRetrieveRespDto(meetingComment.getId(), meetingPostId, meetingId, meetingComment.getContent(), isMemberLikedMeetingComment(member, meetingCommentLikeList), Long.valueOf(meetingCommentLikeList.size()));
-                });
+        MeetingComment saveMeetingChildComment = saveMeetingComment(createMeetingChildComment(meetingCommentWriteReqDto, member, findMeetingPost, meetingParentComment));
+        return new MeetingCommentWriteRespDto(saveMeetingChildComment);
     }
 
-    private List<Long> getMeetingCommentIds(List<MeetingComment> content) {
-        List<Long> meetingCommentIds = new ArrayList<>();
+    private MeetingComment saveMeetingComment(MeetingComment meetingChildComment) {
+        return meetingCommentRepository.save(meetingChildComment);
+    }
 
-        for (MeetingComment meetingComment : content) {
-            meetingCommentIds.add(meetingComment.getId());
-        }
-        return meetingCommentIds;
+    public MeetingCommentRetrieveWithCountRespDto retrieveComments(Long meetingId, Long meetingPostId, Member member) {
+        Long countMeetingComment = meetingCommentRepository.countByMeetingPostId(meetingPostId);
+
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+        validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
+        
+        List<MeetingComment> meetingCommentList = findMeetingCommentByMeetingPostId(meetingPostId);
+
+        List<MeetingCommentRetrieveRespDto> map = meetingCommentList.stream().map(meetingComment ->{
+                    return new MeetingCommentRetrieveRespDto(meetingComment, meetingPostId, meetingId);
+        }).collect(Collectors.toList());
+        return new MeetingCommentRetrieveWithCountRespDto(countMeetingComment, map);
     }
 
     @Transactional
@@ -199,8 +208,8 @@ public class MeetingCommentService {
         return meetingCommentLikeRepository.findByMeetingCommentIds(meetingCommentIds);
     }
 
-    private Slice<MeetingComment> findMeetingCommentByMeetingPostId(Long meetingPostId, Pageable pageable) {
-        return meetingCommentRepository.findByMeetingPostId(pageable, meetingPostId);
+    private List<MeetingComment> findMeetingCommentByMeetingPostId(Long meetingPostId) {
+        return meetingCommentRepository.findByMeetingPostId(meetingPostId);
     }
 
     private MeetingComment saveMeetingComment(MeetingCommentWriteReqDto meetingCommentWriteReqDto, Member member, MeetingPost findMeetingPost) {
@@ -210,6 +219,15 @@ public class MeetingCommentService {
     private MeetingComment createMeetingComment(MeetingCommentWriteReqDto meetingCommentWriteReqDto, Member member, MeetingPost findMeetingPost) {
         return MeetingComment.builder()
                 .member(member)
+                .meetingPost(findMeetingPost)
+                .content(meetingCommentWriteReqDto.getContent())
+                .build();
+    }
+
+    private MeetingComment createMeetingChildComment(MeetingCommentWriteReqDto meetingCommentWriteReqDto, Member member, MeetingPost findMeetingPost, MeetingComment meetingComment) {
+        return MeetingComment.builder()
+                .member(member)
+                .meetingCommentParent(meetingComment)
                 .meetingPost(findMeetingPost)
                 .content(meetingCommentWriteReqDto.getContent())
                 .build();
@@ -255,4 +273,5 @@ public class MeetingCommentService {
     private MeetingPost validateOptionalMeetingPost(Optional<MeetingPost> optionalMeetingPost) {
         return optionalMeetingPost.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_MEETING, "존재하지 않은 모임입니다."));
     }
+
 }

@@ -40,6 +40,8 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public final petPeople.pet.domain.meeting.entity.QMeetingComment meetingComment;
 
+    public final EnumPath<petPeople.pet.domain.meeting.entity.JoinRequestStatus> meetingJoinRequestFlag = createEnum("meetingJoinRequestFlag", petPeople.pet.domain.meeting.entity.JoinRequestStatus.class);
+
     public final petPeople.pet.domain.meeting.entity.QMeetingPost meetingPost;
 
     public final petPeople.pet.domain.meeting.entity.QMeetingPost meetingWritePost;

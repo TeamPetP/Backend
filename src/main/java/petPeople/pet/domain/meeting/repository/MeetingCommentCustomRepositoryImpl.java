@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 
 import java.util.List;
 
+import static petPeople.pet.domain.comment.entity.QComment.comment;
 import static petPeople.pet.domain.meeting.entity.QMeetingComment.*;
 
 @RequiredArgsConstructor
@@ -21,21 +22,20 @@ public class MeetingCommentCustomRepositoryImpl implements MeetingCommentCustomR
     private final EntityManager em;
 
     @Override
-    public Slice<MeetingComment> findByMeetingPostId(Pageable pageable, Long meetingPostId) {
-        List<MeetingComment> content = queryFactory
+    public List<MeetingComment> findByMeetingPostId(Long meetingPostId) {
+        return queryFactory
                 .selectFrom(meetingComment)
-                .where(meetingComment.meetingPost.id.eq(meetingPostId))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize() + 1)
+                .where(meetingComment.meetingPost.id.eq(meetingPostId), meetingComment.meetingCommentParent.isNull())
                 .orderBy(meetingComment.createdDate.desc())
                 .fetch();
+    }
 
-        boolean hasNext = false;
-        if (content.size() > pageable.getPageSize()) {
-            content.remove(pageable.getPageSize());
-            hasNext = true;
-        }
-
-        return new SliceImpl<>(content, pageable, hasNext);
+    @Override
+    public Long countByMeetingPostId(Long meetingPostId) {
+        return queryFactory
+                .select(meetingComment.count())
+                .from(meetingComment)
+                .where(meetingComment.meetingPost.id.eq(meetingPostId))
+                .fetchOne();
     }
 }

@@ -5,6 +5,8 @@ import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -24,6 +26,13 @@ public class MeetingComment extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_post_id")
     private MeetingPost meetingPost;
+
+    @JoinColumn(name = "meeting_comment_parent_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private MeetingComment meetingCommentParent;
+
+    @OneToMany(mappedBy = "meetingCommentParent", orphanRemoval = true)
+    private List<MeetingComment> meetingCommentChild = new ArrayList<>();
 
     private String content;
 
