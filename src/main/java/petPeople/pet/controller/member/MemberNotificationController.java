@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -47,10 +48,12 @@ public class MemberNotificationController {
 
     @ApiOperation(value = "회원 알림 전체 삭제 API", notes = "알림 삭제를 위해 header에 토큰을 입력해주세요")
     @DeleteMapping("/notifications")
-    public ResponseEntity deleteAllNotification(Authentication authentication) {
+    public ResponseEntity deleteAllNotification(Authentication authentication, Pageable pageable) {
         Long memberId = (getMember(authentication)).getId();
         notificationService.deleteAllNotification(memberId);
-        return ResponseEntity.noContent().build();
+        Slice<MemberNotificationResponseDto> memberNotificationResponseDtos = notificationService.retrieveNotifications(memberId, pageable);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(memberNotificationResponseDtos);
     }
 
     @ApiOperation(value = "회원 알림 개수 조회 API", notes = "알림 개수 조회를 위해 header에 토큰을 입력해주세요")
