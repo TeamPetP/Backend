@@ -8,13 +8,16 @@ import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.member.dto.resp.MeetingJoinApplyRespDto;
 import petPeople.pet.controller.member.dto.resp.MeetingWaitingMemberRespDto;
 import petPeople.pet.domain.meeting.entity.Meeting;
+import petPeople.pet.domain.meeting.entity.MeetingMember;
 import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
+import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
 import petPeople.pet.domain.meeting.repository.MeetingRepository;
 import petPeople.pet.domain.meeting.repository.MeetingWaitingMemberRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MeetingWaitingMemberService {
 
+    private final MeetingMemberRepository meetingMemberRepository;
     private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
     private final MeetingRepository meetingRepository;
 
@@ -37,34 +41,36 @@ public class MeetingWaitingMemberService {
                 .collect(Collectors.toList());
     }
 
+    private List<MeetingMember> findMeetingMemberListByMeetingIds(List<Long> meetingIds) {
+        return meetingMemberRepository.findByMeetingIds(meetingIds);
+    }
+
     public Slice<MeetingJoinApplyRespDto> retrieveMeetingWaitingMemberApply(Pageable pageable, Member member) {
         Slice<MeetingWaitingMember> MeetingWaitingMemberSlicing = findMeetingWaitingMemberByMemberIdFetchJoinMemberAndMeeting(pageable, member);
-        return meetingWaitingMemberSlicingMapToRespDto(MeetingWaitingMemberSlicing);
+        List<MeetingWaitingMember> content = MeetingWaitingMemberSlicing.getContent();
+
+        List<Long> ids = new ArrayList<>();
+        for (MeetingWaitingMember meetingWaitingMember : content) {
+            ids.add(meetingWaitingMember.getMeeting().getId());
+        }
+
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingIds(ids);
+
+        return meetingWaitingMemberSlicingMapToRespDto(MeetingWaitingMemberSlicing, meetingMemberList);
     }
 
-    private Slice<MeetingJoinApplyRespDto> meetingWaitingMemberSlicingMapToRespDto(Slice<MeetingWaitingMember> meetingWaitingMemberSlice) {
-        return meetingWaitingMemberSlice.map(mwm -> createMeetingJoinApplyRespDto(mwm));
-    }
+    private Slice<MeetingJoinApplyRespDto> meetingWaitingMemberSlicingMapToRespDto(Slice<MeetingWaitingMember> meetingWaitingMemberSlice, List<MeetingMember> meetingMemberList) {
+        return meetingWaitingMemberSlice.map(mwm -> {
+            int joinPeopleSize = 0;
 
-    private MeetingJoinApplyRespDto createMeetingJoinApplyRespDto(MeetingWaitingMember mwm) {
-        return MeetingJoinApplyRespDto.builder()
-                .meetingId(mwm.getMeeting().getId())
-                .doName(mwm.getMeeting().getDoName())
-                .sigungu(mwm.getMeeting().getSigungu())
-                .location(mwm.getMeeting().getLocation())
-                .conditions(mwm.getMeeting().getConditions())
-                .maxPeople(mwm.getMeeting().getMaxPeople())
-                .sex(mwm.getMeeting().getSex().getDetail())
-                .category(mwm.getMeeting().getCategory().getDetail())
-                .meetingType(mwm.getMeeting().getMeetingType().getDetail())
-                .period(mwm.getMeeting().getPeriod())
-                .title(mwm.getMeeting().getTitle())
-                .content(mwm.getMeeting().getContent())
-                .isOpened(mwm.getMeeting().getIsOpened())
-                .joinRequestStatus(mwm.getJoinRequestStatus().getDetail())
-                .build();
+            for (MeetingMember meetingMember : meetingMemberList) {
+                if (meetingMember.getMeeting().getId() == mwm.getMeeting().getId()) {
+                    joinPeopleSize++;
+                }
+            }
+            return new MeetingJoinApplyRespDto(mwm, joinPeopleSize);
+        });
     }
-
 
     private MeetingWaitingMemberRespDto createMeetingWaitingMemberRespDto(MeetingWaitingMember meetingWaitingMember) {
         return MeetingWaitingMemberRespDto.builder()
