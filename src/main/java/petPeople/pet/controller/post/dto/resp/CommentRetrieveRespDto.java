@@ -18,6 +18,7 @@ import java.util.List;
 @ApiModel(description = "댓글 작성 응답 DTO")
 public class CommentRetrieveRespDto {
 
+    @ApiModelProperty(required = true, value = "댓글 ID", example = "3")
     private Long commentId;
 
     @ApiModelProperty(required = true, value = "회원 ID", example = "2")
