@@ -10,4 +10,6 @@ public interface MeetingCommentCustomRepository {
     List<MeetingComment> findByMeetingPostId(Long meetingPostId);
 
     Long countByMeetingPostId(Long meetingPostId);
+
+    void deleteMeetingCommentByMeetingPostId(Long meetingPostId);
 }

@@ -34,10 +34,10 @@ public class NotificationMeetingPostWriteRetrieveResponseDto extends MemberNotif
 
     public NotificationMeetingPostWriteRetrieveResponseDto(Notification notification, List<MeetingPostImage> meetingPostImages) {
         super(notification, "meetingPostWrite");
-        this.meetingPostId = notification.getMeetingPost().getId();
-        this.content = notification.getMeetingPost().getContent();
-        this.postTitle = notification.getMeetingPost().getTitle();
-        this.meetingPostId = notification.getMeetingPost().getId();
+        this.meetingPostId = notification.getMeetingWritePost().getId();
+        this.content = notification.getMeetingWritePost().getContent();
+        this.postTitle = notification.getMeetingWritePost().getTitle();
+        this.meetingPostId = notification.getMeetingWritePost().getId();
 
         for (MeetingPostImage meetingPostImage : meetingPostImages) {
             this.postImgUrlList.add(meetingPostImage.getImgUrl());

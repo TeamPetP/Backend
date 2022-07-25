@@ -44,6 +44,7 @@ public class MeetingCommentWriteRespDto {
         this.meetingCommentId = meetingComment.getId();
         this.memberId = meetingComment.getMember().getId();
         this.meetingPostId = meetingComment.getMeetingPost().getId();
+        this.meetingId = meetingComment.getMeetingPost().getMeeting().getId();
         this.content = meetingComment.getContent();
         this.createDate = meetingComment.getCreatedDate();
         if (meetingComment.getMeetingCommentParent() != null) {

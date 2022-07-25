@@ -116,4 +116,16 @@ public class NotificationCustomRepositoryImpl implements NotificationCustomRepos
 
         return new SliceImpl<>(content, pageable, hasNext);
     }
+
+    @Override
+    public void deleteNotificationByMemberIdAndMeetingPostId(Long meetingPostId, Long memberId) {
+        queryFactory
+                .delete(notification)
+                .where(notification.meetingPost.id.eq(meetingPostId)
+                        .and(notification.writeMeetingComment.id.eq(meetingPostId))
+                        .or(notification.ownerMember.id.eq(memberId)))
+                .execute();
+        em.flush();
+        em.clear();
+    }
 }
