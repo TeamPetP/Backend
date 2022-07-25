@@ -29,6 +29,7 @@ public class MeetingPostService {
     private final MeetingPostRepository meetingPostRepository;
     private final MeetingMemberRepository meetingMemberRepository;
     private final MeetingPostImageRepository meetingPostImageRepository;
+    private final MeetingCommentRepository meetingCommentRepository;
     private final MeetingRepository meetingRepository;
     private final MeetingPostLikeRepository meetingPostLikeRepository;
     private final NotificationRepository notificationRepository;
@@ -145,9 +146,21 @@ public class MeetingPostService {
 
         validateMemberAuthorization(member, findMeetingPost.getMember());
 
+        deleteNotificationByMeetingPostIdAndMemberId(meetingPostId, member);
+
+        deleteMeetingCommentByMeetingPostId(meetingPostId);
+
         deleteMeetingPostLikeByMeetingPostId(meetingPostId);
         deleteMeetingPostImageByMeetingPostId(meetingPostId);
         deleteMeetingPostByMeetingPostId(meetingPostId);
+    }
+
+    private void deleteMeetingCommentByMeetingPostId(Long meetingPostId) {
+        meetingCommentRepository.deleteMeetingCommentByMeetingPostId(meetingPostId);
+    }
+
+    private void deleteNotificationByMeetingPostIdAndMemberId(Long meetingPostId, Member member) {
+        notificationRepository.deleteNotificationByMemberIdAndMeetingPostId(meetingPostId, member.getId());
     }
 
     private void saveMeetingPostNotification(Member member, MeetingPost findMeetingPost, Notification notification) {

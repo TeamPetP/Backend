@@ -333,11 +333,12 @@ public class MeetingService {
     public Slice<MemberMeetingBookMarkRespDto> retrieveMemberBookMarkMeeting(Member member, Pageable pageable) {
 
         return findPostBookmarkByMemberId(member, pageable)
-                .map(meetingBookmark -> new MemberMeetingBookMarkRespDto(
-                        meetingBookmark.getId(),
-                        meetingBookmark.getMeeting().getId(),
-                        meetingBookmark.getMeeting().getTitle()
-                ));
+                .map(meetingBookmark -> {
+                    List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingBookmark.getMeeting().getId());
+                    List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingBookmark.getMeeting().getId());
+                    boolean isJoined = isJoined(member, meetingMemberList);
+                    return new MemberMeetingBookMarkRespDto(meetingBookmark, meetingMemberList, meetingImageList, isJoined);
+                });
     }
 
     private Slice<MeetingBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
