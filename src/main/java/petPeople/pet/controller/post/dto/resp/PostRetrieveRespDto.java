@@ -50,7 +50,7 @@ public class PostRetrieveRespDto {
     private String nickname;
 
     @ApiModelProperty(required = true, value = "회원 이미지 url", example = "www.img.url")
-    private String imgUrl;
+    private String memberImgUrl;
 
     @ApiModelProperty(required = true, value = "댓글 개수", example = "1")
     private Long commentCnt;
@@ -96,7 +96,7 @@ public class PostRetrieveRespDto {
         this.isLiked = isLiked;
 
         this.nickname = post.getMember().getNickname();
-        this.imgUrl = post.getMember().getImgUrl();
+        this.memberImgUrl = post.getMember().getImgUrl();
         this.commentCnt = commentCnt;
 
         if (member == null) {

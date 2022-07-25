@@ -61,7 +61,7 @@ public class MeetingWaitingMemberCustomRepositoryImpl implements MeetingWaitingM
                 .selectFrom(meetingWaitingMember)
                 .join(meetingWaitingMember.member, member).fetchJoin()
                 .join(meetingWaitingMember.meeting, meeting).fetchJoin()
-                .where(meetingWaitingMember.member.id.eq(memberId))
+                .where(meetingWaitingMember.member.id.eq(memberId), meetingWaitingMember.joinRequestStatus.eq(JoinRequestStatus.WAITING))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize() + 1)
                 .orderBy(meetingWaitingMember.createdDate.desc())
