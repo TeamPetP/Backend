@@ -54,6 +54,9 @@ public class MemberMeetingBookMarkRespDto {
     @ApiModelProperty(required = true, value = "모임 주기", example = "1회성, 주기성")
     private String meetingType;
 
+    @ApiModelProperty(required = true, value = "성별", example = "남/여")
+    private String sex;
+
     @ApiModelProperty(required = true, value = "1회성일 경우 작성 x/주기 적인 만남일 경우만 작성", example = "주 2회")
     private String period;
 
@@ -92,6 +95,7 @@ public class MemberMeetingBookMarkRespDto {
         this.doName = meetingBookmark.getMeeting().getDoName();
         this.sigungu = meetingBookmark.getMeeting().getSigungu();
         this.location = meetingBookmark.getMeeting().getLocation();
+        this.sex = meetingBookmark.getMeeting().getSex().getDetail();
         this.category = meetingBookmark.getMeeting().getCategory().getDetail();
         this.meetingType = meetingBookmark.getMeeting().getMeetingType().getDetail();
         this.period = meetingBookmark.getMeeting().getPeriod();
