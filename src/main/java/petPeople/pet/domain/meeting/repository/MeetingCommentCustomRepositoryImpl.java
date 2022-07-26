@@ -38,4 +38,14 @@ public class MeetingCommentCustomRepositoryImpl implements MeetingCommentCustomR
                 .where(meetingComment.meetingPost.id.eq(meetingPostId))
                 .fetchOne();
     }
+
+    @Override
+    public void deleteMeetingCommentByMeetingPostId(Long meetingPostId) {
+        queryFactory
+                .delete(meetingComment)
+                .where(meetingComment.meetingPost.id.eq(meetingPostId))
+                .execute();
+        em.clear();
+        em.flush();
+    }
 }

@@ -30,20 +30,27 @@ public class MemberNotificationController {
 
     @ApiOperation(value = "회원 전체 알림 갱신 API", notes = "알림 갱신울 위해 header에 토큰을 입력해주세요")
     @PatchMapping("/notifications")
-    public ResponseEntity updateMemberNotifications(Authentication authentication) {
+    public ResponseEntity updateMemberNotifications(Authentication authentication,
+                                                    Pageable pageable) {
         Long memberId = (getMember(authentication)).getId();
         notificationService.updateNotifications(memberId);
-        return ResponseEntity.noContent().build();
+        Slice<MemberNotificationResponseDto> memberNotificationResponseDtos = notificationService.retrieveNotifications(memberId, pageable);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(memberNotificationResponseDtos);
     }
 
     @ApiOperation(value = "회원 단건 알림 갱신 API", notes = "갱신할 알림의 notificationId를 경로변수에 넣어주세요. 알림 단건 갱신울 위해 header에 토큰을 입력해주세요")
     @PatchMapping("/notifications/{notificationId}")
     public ResponseEntity updateMemberNotification(Authentication authentication,
-                                                   @ApiParam(value = "알림 ID", required = true) @PathVariable Long notificationId) {
+                                                   @ApiParam(value = "알림 ID", required = true) @PathVariable Long notificationId,
+                                                   Pageable pageable) {
         Member member = getMember(authentication);
         notificationService.updateNotification(member, notificationId);
+        Slice<MemberNotificationResponseDto> memberNotificationResponseDtos = notificationService.retrieveNotifications(member.getId(), pageable);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(memberNotificationResponseDtos);
     }
 
     @ApiOperation(value = "회원 알림 전체 삭제 API", notes = "알림 삭제를 위해 header에 토큰을 입력해주세요")
