@@ -31,10 +31,21 @@ public class CorsFilter implements Filter {
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
 
+        String method = ((HttpServletRequest) req).getMethod();
+
+        log.info("***************");
+        log.info("method = {}", method);
+        log.info("***************");
+
         if("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             log.info("host : " + req.getRemoteHost());
             log.info("addr : " + req.getRemoteAddr());
             log.info("port : " + req.getRemotePort());
+
+            log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            log.info("method = {}", method);
+            log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
             response.setStatus(HttpServletResponse.SC_OK);
         }else {
             chain.doFilter(req, res);
