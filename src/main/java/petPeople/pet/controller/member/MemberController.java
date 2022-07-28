@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseToken;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/members")
 public class MemberController {
 
@@ -80,6 +82,7 @@ public class MemberController {
     @GetMapping("/me")
     @ApiOperation(value = "로그인 API", notes = "파이어베이스 인증 토큰을 Header 에 넣어 로그인을 요청합니다.")
     public ResponseEntity<MemberRegisterRespDto> login(Authentication authentication) {
+
         Member member = getMember(authentication);
         Long countMemberPost = postService.countMemberPost(member);
         Long countMemberMeeting = meetingService.countMemberMeeting(member);
