@@ -26,7 +26,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests() // 요청에 대한 권한 지정
-                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Preflight Request 허용해주기
                 .anyRequest().authenticated() // 모든 요청이 인증되어야한다.
                 .and()
                 .addFilterBefore(authFilterContainer.getFilter(),
@@ -42,6 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/meetings")
                 .antMatchers(HttpMethod.GET, "/meetings/*")
                 .antMatchers(HttpMethod.GET, "/posts/**")
+                .antMatchers(HttpMethod.OPTIONS, "/**")
                 .antMatchers("/css/**")
                 .antMatchers("/static/**")
                 .antMatchers("/js/**")

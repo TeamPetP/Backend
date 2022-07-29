@@ -341,7 +341,7 @@ class MeetingServiceTest {
                 .category(category)
                 .conditions(conditions)
                 .maxPeople(maxPeople)
-                .image(imgUrlList)
+//                .image(imgUrlList)
                 .build();
     }
 
