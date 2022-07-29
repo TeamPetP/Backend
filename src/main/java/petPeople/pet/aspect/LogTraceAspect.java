@@ -19,7 +19,7 @@ public class LogTraceAspect {
         this.logTrace = logTrace;
     }
 
-    @Around("execution(public * petPeople.pet.controller..*(..)) || execution(public * petPeople.pet.domain..*(..))")//포인트 컷
+    @Around("execution(public * petPeople.pet.controller..*(..))")//포인트 컷
     public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {//어드바이스
         TraceStatus status = null;
 
