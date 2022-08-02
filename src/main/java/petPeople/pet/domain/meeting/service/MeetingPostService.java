@@ -80,8 +80,13 @@ public class MeetingPostService {
             List<MeetingPostLike> meetingPostLikesByMeetingPost = getMeetingPostLikesByMeetingPost(findMeetingPostLikeList, meetingPost);
 
             boolean isLiked = isMemberLikedMeetingPost(member, meetingPostLikesByMeetingPost);
+            boolean isOwner = false;
 
-            return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked);
+            if (meetingPost.getMember() == member) {
+                isOwner = true;
+            }
+
+            return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked, isOwner);
         });
     }
 
