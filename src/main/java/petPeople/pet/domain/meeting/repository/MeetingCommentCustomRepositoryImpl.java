@@ -48,4 +48,25 @@ public class MeetingCommentCustomRepositoryImpl implements MeetingCommentCustomR
         em.clear();
         em.flush();
     }
+
+
+    @Override
+    public void deleteMeetingCommentByIds(List<Long> meetingPostIds) {
+        queryFactory
+                .delete(meetingComment)
+                .where(meetingComment.id.in(meetingPostIds))
+                .execute();
+        em.clear();
+        em.flush();
+    }
+
+    @Override
+    public void deleteMeetingCommentById(Long meetingCommentId) {
+        queryFactory
+                .delete(meetingComment)
+                .where(meetingComment.id.eq(meetingCommentId))
+                .execute();
+        em.clear();
+        em.flush();
+    }
 }
