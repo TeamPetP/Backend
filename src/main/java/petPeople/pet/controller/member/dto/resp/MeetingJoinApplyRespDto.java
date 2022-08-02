@@ -6,10 +6,13 @@ import petPeople.pet.domain.meeting.entity.Category;
 import petPeople.pet.domain.meeting.entity.MeetingType;
 import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
 import petPeople.pet.domain.meeting.entity.Sex;
+import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -48,7 +51,9 @@ public class MeetingJoinApplyRespDto {
 
     private String joinRequestStatus;
 
-    public MeetingJoinApplyRespDto(MeetingWaitingMember mwm, Integer joinPeople) {
+    private List<String> joinMembers = new ArrayList<>();
+
+    public MeetingJoinApplyRespDto(MeetingWaitingMember mwm, List<Member> joinPeople) {
         this.meetingId = mwm.getMeeting().getId();
         this.doName = mwm.getMeeting().getDoName();
         this.sigungu = mwm.getMeeting().getSigungu();
@@ -63,6 +68,9 @@ public class MeetingJoinApplyRespDto {
         this.content = mwm.getMeeting().getContent();
         this.isOpened = mwm.getMeeting().getIsOpened();
         this.joinRequestStatus = mwm.getJoinRequestStatus().getDetail();
-        this.joinPeople = joinPeople;
+        this.joinPeople = joinPeople.size();
+        for (Member joinMember : joinPeople) {
+            joinMembers.add(joinMember.getNickname());
+        }
     }
 }

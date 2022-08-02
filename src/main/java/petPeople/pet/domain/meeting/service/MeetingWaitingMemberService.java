@@ -61,14 +61,13 @@ public class MeetingWaitingMemberService {
 
     private Slice<MeetingJoinApplyRespDto> meetingWaitingMemberSlicingMapToRespDto(Slice<MeetingWaitingMember> meetingWaitingMemberSlice, List<MeetingMember> meetingMemberList) {
         return meetingWaitingMemberSlice.map(mwm -> {
-            int joinPeopleSize = 0;
-
+            List<Member> joinMembers = new ArrayList<>();
             for (MeetingMember meetingMember : meetingMemberList) {
                 if (meetingMember.getMeeting().getId() == mwm.getMeeting().getId()) {
-                    joinPeopleSize++;
+                    joinMembers.add(meetingMember.getMember());
                 }
             }
-            return new MeetingJoinApplyRespDto(mwm, joinPeopleSize);
+            return new MeetingJoinApplyRespDto(mwm, joinMembers);
         });
     }
 

@@ -1,4 +1,4 @@
-package petPeople.pet.Trace;
+package petPeople.pet.trace;
 
 
 public class TraceStatus {

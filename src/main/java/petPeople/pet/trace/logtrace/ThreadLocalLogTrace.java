@@ -1,9 +1,9 @@
-package petPeople.pet.Trace.logtrace;
+package petPeople.pet.trace.logtrace;
 
 
 import lombok.extern.slf4j.Slf4j;
-import petPeople.pet.Trace.TraceId;
-import petPeople.pet.Trace.TraceStatus;
+import petPeople.pet.trace.TraceId;
+import petPeople.pet.trace.TraceStatus;
 
 @Slf4j
 public class ThreadLocalLogTrace implements LogTrace {

@@ -1,6 +1,6 @@
-package petPeople.pet.Trace.logtrace;
+package petPeople.pet.trace.logtrace;
 
-import petPeople.pet.Trace.TraceStatus;
+import petPeople.pet.trace.TraceStatus;
 
 public interface LogTrace {
 
