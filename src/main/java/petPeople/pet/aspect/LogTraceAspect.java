@@ -5,8 +5,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 
-import petPeople.pet.Trace.TraceStatus;
-import petPeople.pet.Trace.logtrace.LogTrace;
+import petPeople.pet.trace.TraceStatus;
+import petPeople.pet.trace.logtrace.LogTrace;
 
 
 @Slf4j
