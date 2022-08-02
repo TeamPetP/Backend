@@ -50,6 +50,9 @@ public class MeetingPostRetrieveRespDto {
     @ApiModelProperty(required = true, value = "좋아여 요부", example = "true/false")
     private Boolean isLiked;
 
+    @ApiModelProperty(required = true, value = "자신의 게시글인지", example = "true/false")
+    private Boolean owner;
+
     public MeetingPostRetrieveRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList, Long likeCnt, boolean isLiked) {
         this.meetingPostId = meetingPost.getId();
         this.meetingId = meetingPost.getMeeting().getId();
@@ -66,5 +69,24 @@ public class MeetingPostRetrieveRespDto {
 
         this.likeCnt = likeCnt;
         this.isLiked = isLiked;
+    }
+
+    public MeetingPostRetrieveRespDto(MeetingPost meetingPost, List<MeetingPostImage> meetingPostImageList, Long likeCnt, boolean isLiked, boolean isOwner) {
+        this.meetingPostId = meetingPost.getId();
+        this.meetingId = meetingPost.getMeeting().getId();
+        this.memberId = meetingPost.getMember().getId();
+        this.memberImgUrl = meetingPost.getMember().getImgUrl();
+        this.nickname = meetingPost.getMember().getNickname();
+        this.title = meetingPost.getTitle();
+        this.content = meetingPost.getContent();
+        this.createdDate = meetingPost.getCreatedDate();
+
+        for (MeetingPostImage meetingPostImage : meetingPostImageList) {
+            imgUrlList.add(meetingPostImage.getImgUrl());
+        }
+
+        this.likeCnt = likeCnt;
+        this.isLiked = isLiked;
+        this.owner = isOwner;
     }
 }
