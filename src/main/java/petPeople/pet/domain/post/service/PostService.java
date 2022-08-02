@@ -174,19 +174,33 @@ public class PostService {
     @Transactional
     public void delete(Member member, Long postId) {
         Post post = validateOptionalPost(findOptionalPost(postId));
-        List<Comment> findCommentList = getFindCommentList(postId);
+        List<Comment> findCommentList = findByCommentByPostId(postId);
         validateMemberAuthorization(member, post.getMember());
 
         deleteTagByPostId(postId);
         deletePostImageByPostId(postId);
         deletePostLikeByPostId(postId);
         deleteNotificationByMemberIdAndPostId(member, postId);
+
         for (Comment comment : findCommentList) {
             deleteCommentLikeByCommentId(comment);
             deleteNotificationByMemberIdAndCommentId(member, comment);
             deleteNotification(member, comment);
-            commentRepository.deleteById(comment.getId());
         }
+
+        findCommentList = findByCommentByPostId(postId);
+
+        List<Long> childCommentIds = new ArrayList<>();
+        for (Comment comment : findCommentList) {
+            List<Comment> child = comment.getChild();
+            for (Comment childComment : child) {
+                childCommentIds.add(childComment.getId());
+            }
+        }
+
+        commentRepository.deleteByCommentIds(childCommentIds);
+        commentRepository.deleteCommentByPostId(postId);
+
         deletePostByPostId(postId);
     }
 
@@ -202,7 +216,7 @@ public class PostService {
         commentLikeRepository.deleteByCommentId(comment.getId());
     }
 
-    private List<Comment> getFindCommentList(Long postId) {
+    private List<Comment> findByCommentByPostId(Long postId) {
         return commentRepository.findByPostId(postId);
     }
 
