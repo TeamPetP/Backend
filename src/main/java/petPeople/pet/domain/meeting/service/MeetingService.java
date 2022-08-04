@@ -107,11 +107,20 @@ public class MeetingService {
         notificationRepository.save(notification);
     }
 
-    private Notification createNotification(Member meetingMember, Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
+    private Notification createNotification(Member member, Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
         return Notification.builder()
                 .member(joinRequestMember)
                 .meetingJoinRequestFlag(requestStatus)
-                .ownerMember(meetingMember)
+                .ownerMember(member)
+                .meeting(meeting)
+                .build();
+    }
+
+    private Notification createNotification(Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
+        return Notification.builder()
+                .member(joinRequestMember)
+                .meetingJoinRequestFlag(requestStatus)
+                .ownerMember(joinRequestMember)
                 .meeting(meeting)
                 .build();
     }
@@ -285,6 +294,7 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
 
         saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
+        saveNotification(createNotification(meetingWaitingMember.getMember(), findMeeting, JoinRequestStatus.APPROVED));
 
         Long afterJoinMemberCount = countMeetingMember(meetingId);
 
@@ -294,9 +304,6 @@ public class MeetingService {
 
         log.info("joinMemberCount = {}, afterJoinMemberCount = {}", joinMemberCount, afterJoinMemberCount);
 
-        for (MeetingMember meetingMember : meetingMemberList) {
-            saveNotification(createNotification(meetingMember.getMember(), meetingWaitingMember.getMember(), findMeeting, JoinRequestStatus.APPROVED));
-        }
     }
 
     @Transactional
@@ -309,7 +316,7 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
         saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
 
-        saveNotification(createNotification( meetingWaitingMember.getMember(),member, findMeeting, JoinRequestStatus.DECLINED));
+        saveNotification(createNotification(meetingWaitingMember.getMember(), findMeeting, JoinRequestStatus.DECLINED));
     }
 
     @Transactional
