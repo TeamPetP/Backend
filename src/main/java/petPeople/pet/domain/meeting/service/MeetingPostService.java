@@ -40,9 +40,13 @@ public class MeetingPostService {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         MeetingPost saveMeetingPost = saveMeetingPost(createMeetingPost(member, meetingPostWriteReqDto, findMeeting));
         List<MeetingPostImage> saveMeetingPostImageList = saveMeetingPostImageList(member, saveMeetingPost, meetingPostWriteReqDto.getImgUrlList());
+        List<MeetingMember> meetingMemberList = meetingMemberRepository.findByMeetingId(meetingId);
 
-        Notification findMeetingWritePost = createWritePostNotification(member, findMeeting, saveMeetingPost);
-        saveMeetingPostNotification(member, saveMeetingPost, findMeetingWritePost);
+        for (MeetingMember meetingMember : meetingMemberList) {
+            if (meetingMember.getMember() != member) {
+                saveNotification(createWritePostNotification(member, meetingMember.getMember(), findMeeting, saveMeetingPost));
+            }
+        }
 
         return new MeetingPostWriteRespDto(saveMeetingPost, saveMeetingPostImageList);
     }
@@ -187,12 +191,6 @@ public class MeetingPostService {
         notificationRepository.deleteNotificationByMemberIdAndMeetingPostId(meetingPostId, member.getId());
     }
 
-    private void saveMeetingPostNotification(Member member, MeetingPost findMeetingPost, Notification notification) {
-        if (!isExistMemberLikePostNotification(findMeetingPost.getId(), member)) {
-            saveNotification(notification);
-        }
-    }
-
     private void saveMeetingPostLikeNotification(Member member, MeetingPost findMeetingPost, Notification notification) {
         if (isNotSameMember(member, findMeetingPost.getMember())) {
             if (!isExistMemberLikePostNotification(findMeetingPost.getId(), member)) {
@@ -201,10 +199,10 @@ public class MeetingPostService {
         }
     }
 
-    private Notification createWritePostNotification(Member member, Meeting findMeeting, MeetingPost findMeetingPost) {
+    private Notification createWritePostNotification(Member member, Member meetingMemberMember, Meeting findMeeting, MeetingPost findMeetingPost) {
         return Notification.builder()
                 .meetingWritePost(findMeetingPost)
-                .ownerMember(findMeetingPost.getMember())
+                .ownerMember(meetingMemberMember)
                 .meeting(findMeeting)
                 .member(member)
                 .build();
