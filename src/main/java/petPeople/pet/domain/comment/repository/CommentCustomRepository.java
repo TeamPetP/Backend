@@ -17,4 +17,6 @@ public interface CommentCustomRepository {
     Long countByPostId(Long postId);
 
     void deleteCommentByPostId(Long postId);
+
+    void deleteByCommentIds(List<Long> commentIds);
 }

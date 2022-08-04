@@ -72,4 +72,16 @@ public class CommentCustomRepositoryImpl implements CommentCustomRepository{
         em.flush();
         em.clear();
     }
+
+    @Override
+    public void deleteByCommentIds(List<Long> commentIds) {
+        queryFactory
+                .delete(comment)
+                .where(comment.id.in(commentIds))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+    }
 }

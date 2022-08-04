@@ -13,7 +13,6 @@ import petPeople.pet.domain.meeting.repository.*;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
-import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 
@@ -84,8 +83,13 @@ public class MeetingPostService {
             List<MeetingPostLike> meetingPostLikesByMeetingPost = getMeetingPostLikesByMeetingPost(findMeetingPostLikeList, meetingPost);
 
             boolean isLiked = isMemberLikedMeetingPost(member, meetingPostLikesByMeetingPost);
+            boolean isOwner = false;
 
-            return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked);
+            if (meetingPost.getMember() == member) {
+                isOwner = true;
+            }
+
+            return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked, isOwner);
         });
     }
 
@@ -152,6 +156,18 @@ public class MeetingPostService {
 
         deleteNotificationByMeetingPostIdAndMemberId(meetingPostId, member);
 
+        List<MeetingComment> meetingCommentList = findMeetingCommentByMeetingPostId(meetingPostId);
+        
+        List<Long> meetingCommentIds = new ArrayList<>();
+                
+        for (MeetingComment meetingComment : meetingCommentList) {
+            List<MeetingComment> meetingCommentChild = meetingComment.getMeetingCommentChild();
+            for (MeetingComment childMeetingComment : meetingCommentChild) {
+                meetingCommentIds.add(childMeetingComment.getId());
+            }
+        }
+
+        deleteMeetingCommentByMeetingCommentIds(meetingCommentIds);
         deleteMeetingCommentByMeetingPostId(meetingPostId);
 
         deleteMeetingPostLikeByMeetingPostId(meetingPostId);
@@ -159,8 +175,16 @@ public class MeetingPostService {
         deleteMeetingPostByMeetingPostId(meetingPostId);
     }
 
+    private List<MeetingComment> findMeetingCommentByMeetingPostId(Long meetingPostId) {
+        return meetingCommentRepository.findByMeetingPostId(meetingPostId);
+    }
+
     private void deleteMeetingCommentByMeetingPostId(Long meetingPostId) {
         meetingCommentRepository.deleteMeetingCommentByMeetingPostId(meetingPostId);
+    }
+
+    private void deleteMeetingCommentByMeetingCommentIds(List<Long> meetingPostId) {
+        meetingCommentRepository.deleteMeetingCommentByIds(meetingPostId);
     }
 
     private void deleteNotificationByMeetingPostIdAndMemberId(Long meetingPostId, Member member) {

@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
@@ -28,11 +29,13 @@ import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 import petPeople.pet.util.RequestUtil;
 
+import javax.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,6 +50,7 @@ public class MeetingService {
     private final MemberRepository memberRepository;
     private final FirebaseAuth firebaseAuth;
     private final NotificationRepository notificationRepository;
+    private final EntityManager em;
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
@@ -123,10 +127,14 @@ public class MeetingService {
 
     @Transactional
     public void resign(Long meetingId, Member member) {
-        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
 
-        validateOwnMeetingResign(member, meeting.getMember());
+        validateOwnMeetingResign(member, findMeeting.getMember());
         validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+
+        if (isFull(findMeeting.getMaxPeople(), countMeetingMember(meetingId))) {
+            findMeeting.setIsOpened(true);
+        }
 
         deleteMeetingMemberByMeetingIdAndMemberId(meetingId, member);
         deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, member.getId());
@@ -263,12 +271,15 @@ public class MeetingService {
         //회원이 개셜한 모임인지 확인하는 로직
         validateMemberAuthorization(findMeeting.getMember(), member);
 
+        if (isFull(findMeeting.getMaxPeople(), countMeetingMember(meetingId))) {
+            findMeeting.setIsOpened(true);
+        }
+
         //meetingMember 삭제
         deleteMeetingMemberByMeetingIdAndMemberId(meetingId, findMember);
 
         deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId);
     }
-
     @Transactional
     public void approve(Member member, Long meetingId, Long memberId) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
@@ -284,6 +295,15 @@ public class MeetingService {
 
         saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
         saveNotification(createNotification(meetingWaitingMember.getMember(), findMeeting, JoinRequestStatus.APPROVED));
+
+        Long afterJoinMemberCount = countMeetingMember(meetingId);
+
+        if (isFull(findMeeting.getMaxPeople(), afterJoinMemberCount)) {
+            findMeeting.setIsOpened(false);
+        }
+
+        log.info("joinMemberCount = {}, afterJoinMemberCount = {}", joinMemberCount, afterJoinMemberCount);
+
     }
 
     @Transactional

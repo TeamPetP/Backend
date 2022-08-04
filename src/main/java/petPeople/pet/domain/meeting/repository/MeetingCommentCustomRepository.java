@@ -11,5 +11,7 @@ public interface MeetingCommentCustomRepository {
 
     Long countByMeetingPostId(Long meetingPostId);
 
+    void deleteMeetingCommentById(Long meetingCommentId);
     void deleteMeetingCommentByMeetingPostId(Long meetingPostId);
+    void deleteMeetingCommentByIds(List<Long> meetingPostIds);
 }

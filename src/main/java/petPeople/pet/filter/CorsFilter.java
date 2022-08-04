@@ -22,19 +22,21 @@ public class CorsFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-        HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
-
-        response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+        HttpServletRequest request = (HttpServletRequest) req;
+        response.setHeader("Access-Control-Allow-Origin", "https://www.pet-p.click");
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Methods","*");
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
 
         if("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            log.info("method = {}", ((HttpServletRequest) req).getMethod());
             log.info("host : " + req.getRemoteHost());
             log.info("addr : " + req.getRemoteAddr());
             log.info("port : " + req.getRemotePort());
+
+
             response.setStatus(HttpServletResponse.SC_OK);
         }else {
             chain.doFilter(req, res);

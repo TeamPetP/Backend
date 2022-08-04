@@ -27,9 +27,12 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
 	implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
 	implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '3.0.0'
 
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.6'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -44,8 +47,6 @@ dependencies {
 
 	implementation group: 'com.google.firebase', name: 'firebase-admin', version: '8.0.1'
 	implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.4.2'
-	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.6'
-
 
 	// querydsl 추가
 	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
