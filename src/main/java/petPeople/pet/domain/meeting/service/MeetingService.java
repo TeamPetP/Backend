@@ -284,7 +284,9 @@ public class MeetingService {
     public void approve(Member member, Long meetingId, Long memberId) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         Long joinMemberCount = countMeetingMember(meetingId);
-        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+        Member joinRequestMember = findOptionalMemberById(memberId).orElseThrow(() -> {
+            throw new CustomException(ErrorCode.NOT_FOUND_MEMBER, "회원을 찾을 수 없습니다.");
+                });
 
         validateMemberAuthorization(member, findMeeting.getMember());//권한 검증
         validateFullMeeting(findMeeting.getMaxPeople(), joinMemberCount);//인원 검즘
@@ -294,7 +296,7 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.APPROVED);
 
         saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
-        saveNotification(createNotification(meetingWaitingMember.getMember(), findMeeting, JoinRequestStatus.APPROVED));
+        saveNotification(createNotification(joinRequestMember, findMeeting, JoinRequestStatus.APPROVED));
 
         Long afterJoinMemberCount = countMeetingMember(meetingId);
 
@@ -304,6 +306,10 @@ public class MeetingService {
 
         log.info("joinMemberCount = {}, afterJoinMemberCount = {}", joinMemberCount, afterJoinMemberCount);
 
+    }
+
+    private Optional<Member> findOptionalMemberById(Long memberId) {
+        return memberRepository.findById(memberId);
     }
 
     @Transactional
@@ -316,7 +322,11 @@ public class MeetingService {
         changeMeetingWaitingMemberStatus(meetingWaitingMember, JoinRequestStatus.DECLINED);
         saveMeetingMember(createMeetingMember(meetingWaitingMember.getMember(), findMeeting));
 
-        saveNotification(createNotification(meetingWaitingMember.getMember(), findMeeting, JoinRequestStatus.DECLINED));
+        Member joinRequestMember = findOptionalMemberById(joinRequestMemberId).orElseThrow(() -> {
+            throw new CustomException(ErrorCode.NOT_FOUND_MEMBER, "회원을 찾을 수 없습니다.");
+        });
+
+        saveNotification(createNotification(joinRequestMember, findMeeting, JoinRequestStatus.DECLINED));
     }
 
     @Transactional
@@ -384,7 +394,7 @@ public class MeetingService {
     }
 
     private Optional<Member> findMemberByMemberId(Long memberId) {
-        return memberRepository.findById(memberId);
+        return findOptionalMemberById(memberId);
     }
 
     public List<MeetingPostImageRetrieveRespDto> retrieveAllImage(Long meetingId) {

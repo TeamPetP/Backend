@@ -43,7 +43,7 @@ public class MeetingPostService {
         List<MeetingMember> meetingMemberList = meetingMemberRepository.findByMeetingId(meetingId);
 
         for (MeetingMember meetingMember : meetingMemberList) {
-            if (meetingMember.getMember() != member) {
+            if (meetingMember.getMember().getId() != member.getId()) {
                 saveNotification(createWritePostNotification(member, meetingMember.getMember(), findMeeting, saveMeetingPost));
             }
         }
