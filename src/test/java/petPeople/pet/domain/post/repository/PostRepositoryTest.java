@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
-class PostCustomRepositoryImplTest extends BaseControllerTest {
+class PostRepositoryTest extends BaseControllerTest {
 
     @Autowired
     EntityManagerFactory emf;
