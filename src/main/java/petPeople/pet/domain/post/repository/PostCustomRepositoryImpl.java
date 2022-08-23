@@ -56,7 +56,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
                 .from(tag1)
                 .join(tag1.post, post)
                 .join(post.member, member).fetchJoin()
-                .where(tag1.tag.eq(tag))
+                .where(tag1.tag.contains(tag))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize() + 1)
                 .groupBy(post.id)
