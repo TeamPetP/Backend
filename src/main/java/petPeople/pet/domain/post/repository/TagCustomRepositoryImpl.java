@@ -19,14 +19,16 @@ public class TagCustomRepositoryImpl implements TagCustomRepository {
     private final EntityManager em;
 
     @Override
-    public void deleteByPostId(Long postId) {
-        queryFactory
+    public Long deleteByPostId(Long postId) {
+        long count = queryFactory
                 .delete(tag1)
                 .where(tag1.post.id.eq(postId))
                 .execute();
 
         em.flush();
         em.clear();
+
+        return count;
     }
 
     @Override
