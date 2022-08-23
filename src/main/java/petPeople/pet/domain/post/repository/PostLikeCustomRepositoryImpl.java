@@ -43,25 +43,27 @@ public class PostLikeCustomRepositoryImpl implements PostLikeCustomRepository {
     }
 
     @Override
-    public void deleteByPostId(Long postId) {
-        queryFactory
+    public Long deleteByPostId(Long postId) {
+        long count = queryFactory
                 .delete(postLike)
                 .where(postLike.post.id.eq(postId))
                 .execute();
 
         em.flush();
         em.clear();
+        return count;
     }
 
     @Override
-    public void deleteByPostIdAndMemberId(Long postId, Long memberId) {
-        queryFactory
+    public Long deleteByPostIdAndMemberId(Long postId, Long memberId) {
+        long count = queryFactory
                 .delete(postLike)
                 .where(postLike.post.id.eq(postId), postLike.member.id.eq(memberId))
                 .execute();
 
         em.flush();
         em.clear();
+        return count;
     }
 
     @Override
