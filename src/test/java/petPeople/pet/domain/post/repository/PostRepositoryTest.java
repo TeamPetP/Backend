@@ -31,18 +31,20 @@ class PostRepositoryTest extends BaseControllerTest {
     @Autowired
     TagRepository tagRepository;
 
+    final String uid = "abcd";
+    final String email = "issiscv@naver.com";
+    final String name = "김상운";
+    final String nickname = "balladang";
+    final String imgUrl = "www.imgurl.com";
+    final String introduce = "잘지내요 우리";
+
+    final String content = "강아지 좋아해요";
+
     @DisplayName("member 와 fetchJoin 한 post 를 pk 로 조회")
     @Test
     void findByIdWithFetchJoinMemberTest() {
 
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
         Member saveMember = memberRepository.save(createMember(uid, email, name, nickname, imgUrl, introduce));
 
         Post post1 = createPost(saveMember, "게시글 입니다1.");
@@ -78,13 +80,6 @@ class PostRepositoryTest extends BaseControllerTest {
         int size = 5;
         PageRequest pageRequest = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdDate"));
 
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
         Member saveMember = memberRepository.save(createMember(uid, email, name, nickname, imgUrl, introduce));
         List<Post> postList = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
@@ -108,13 +103,6 @@ class PostRepositoryTest extends BaseControllerTest {
         //given
         int size = 5;
         PageRequest pageRequest = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdDate"));
-
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
 
         Member saveMember = memberRepository.save(createMember(uid, email, name, nickname, imgUrl, introduce));
 
@@ -150,13 +138,6 @@ class PostRepositoryTest extends BaseControllerTest {
         int size = 5;
         PageRequest pageRequest = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdDate"));
 
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
         Member saveMember = memberRepository.save(createMember(uid, email, name, nickname, imgUrl, introduce));
         Member otherSaveMember = memberRepository.save(createMember(uid+1, email+1, name+1, nickname+1, imgUrl+1, introduce+1));
 
@@ -190,13 +171,6 @@ class PostRepositoryTest extends BaseControllerTest {
     public void countByMemberIdTest() throws Exception {
         //given
         int size = 5;
-
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
 
         Member saveMember = memberRepository.save(createMember(uid, email, name, nickname, imgUrl, introduce));
         Member otherSaveMember = memberRepository.save(createMember(uid+1, email+1, name+1, nickname+1, imgUrl+1, introduce+1));

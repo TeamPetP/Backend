@@ -25,19 +25,20 @@ class TagRepositoryTest extends BaseControllerTest {
     @Autowired
     PostRepository postRepository;
 
+    final String uid = "abcd";
+    final String email = "issiscv@naver.com";
+    final String name = "김상운";
+    final String nickname = "balladang";
+    final String imgUrl = "www.imgurl.com";
+    final String introduce = "잘지내요 우리";
+
+    final String content = "강아지 좋아해요";
+    final String tagName = "tag";
 
     @DisplayName("post pk 로 tag 조회")
     @Test
     public void findByPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String tagName = "tag";
 
         Member saveMember = memberRepository.save(createMember(uid, email, name, nickname, imgUrl, introduce));
 
@@ -75,13 +76,6 @@ class TagRepositoryTest extends BaseControllerTest {
     @Test
     public void findTagsByPostIdsTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
         String tagName = "tag";
 
         Member saveMember = memberRepository.save(createMember(uid, email, name, nickname, imgUrl, introduce));
@@ -129,12 +123,6 @@ class TagRepositoryTest extends BaseControllerTest {
     @Test
     public void deleteByPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
 
         String tagName = "tag";
 

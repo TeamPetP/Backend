@@ -24,24 +24,24 @@ class MeetingRepositoryTest extends BaseControllerTest {
     @Autowired
     MeetingMemberRepository meetingMemberRepository;
 
-    String uid = "abcd";
-    String email = "issiscv@naver.com";
-    String name = "김상운";
-    String nickname = "balladang";
-    String imgUrl = "www.imgurl.com";
-    String introduce = "잘지내요 우리";
+    final String uid = "abcd";
+    final String email = "issiscv@naver.com";
+    final String name = "김상운";
+    final String nickname = "balladang";
+    final String imgUrl = "www.imgurl.com";
+    final String introduce = "잘지내요 우리";
 
-    String title = "이번 주말에 댕댕이 사료 만드실 분 구해요";
-    String content = "서울 신촌 근처에서 강아지 간식 및 사료 직접 만드실 분 구합니다~~ ";
-    String doName = "서울시";
-    String sigungu = "마포구";
-    Sex sex = Sex.MALE;
-    Category category = Category.WALK;
-    String conditions = "탈모아닌사람만";
-    Integer maxPeople = 5;
-    String period = "주 2회";
-    String location = "올림픽 공원";
-    MeetingType meetingType = MeetingType.REGULAR;
+    final String title = "이번 주말에 댕댕이 사료 만드실 분 구해요";
+    final String content = "서울 신촌 근처에서 강아지 간식 및 사료 직접 만드실 분 구합니다~~ ";
+    final String doName = "서울시";
+    final String sigungu = "마포구";
+    final Sex sex = Sex.MALE;
+    final Category category = Category.WALK;
+    final String conditions = "탈모아닌사람만";
+    final Integer maxPeople = 5;
+    final String period = "주 2회";
+    final String location = "올림픽 공원";
+    final MeetingType meetingType = MeetingType.REGULAR;
 
     @DisplayName("회원이 가입한 모임 조회")
     @Test

@@ -29,18 +29,19 @@ class PostLikeRepositoryTest extends BaseControllerTest {
     @Autowired
     MemberRepository memberRepository;
 
+    final String uid = "abcd";
+    final String email = "issiscv@naver.com";
+    final String name = "김상운";
+    final String nickname = "balladang";
+    final String imgUrl = "www.imgurl.com";
+    final String introduce = "잘지내요 우리";
+
+    final String content = "강아지 좋아해요";
+
     @DisplayName("여러 post PK 를 통해 postLike 조회")
     @Test
     public void findPostLikesByPostIds() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
 
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
         Post post1 = createPost(member, content);
@@ -83,14 +84,6 @@ class PostLikeRepositoryTest extends BaseControllerTest {
     @Test
     public void findPostLikeByPostIdAndMemberIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
 
         Member member1 = createMember(uid, email, name, nickname, imgUrl, introduce);
         Member member2 = createMember(uid, email, name, nickname, imgUrl, introduce);
@@ -135,14 +128,6 @@ class PostLikeRepositoryTest extends BaseControllerTest {
     @Test
     public void deleteByPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
 
         Member member1 = createMember(uid, email, name, nickname, imgUrl, introduce);
         Member member2 = createMember(uid, email, name, nickname, imgUrl, introduce);
@@ -188,15 +173,6 @@ class PostLikeRepositoryTest extends BaseControllerTest {
     @Test
     public void deleteByPostIdAndMemberIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
-
         Member member1 = createMember(uid, email, name, nickname, imgUrl, introduce);
         Member member2 = createMember(uid, email, name, nickname, imgUrl, introduce);
         Member member3 = createMember(uid, email, name, nickname, imgUrl, introduce);
@@ -237,15 +213,6 @@ class PostLikeRepositoryTest extends BaseControllerTest {
     @Test
     public void countByPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
-
         Member member1 = createMember(uid, email, name, nickname, imgUrl, introduce);
         Member member2 = createMember(uid, email, name, nickname, imgUrl, introduce);
         Member member3 = createMember(uid, email, name, nickname, imgUrl, introduce);
@@ -271,19 +238,10 @@ class PostLikeRepositoryTest extends BaseControllerTest {
     
     @Test
     public void findByMemberIdWithFetchJoinPostTest() throws Exception {
+        //given
+
         int size = 3;
         PageRequest pageRequest = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdDate"));
-
-        //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
-
         Member member1 = createMember(uid, email, name, nickname, imgUrl, introduce);
 
         Post post1 = createPost(member1, content);
