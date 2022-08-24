@@ -18,7 +18,11 @@ import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.post.entity.*;
-import petPeople.pet.domain.post.repository.*;
+import petPeople.pet.domain.post.repository.post.PostRepository;
+import petPeople.pet.domain.post.repository.post_bookmark.PostBookmarkRepository;
+import petPeople.pet.domain.post.repository.post_image.PostImageRepository;
+import petPeople.pet.domain.post.repository.post_like.PostLikeRepository;
+import petPeople.pet.domain.post.repository.tag.TagRepository;
 import petPeople.pet.exception.CustomException;
 
 import java.util.ArrayList;

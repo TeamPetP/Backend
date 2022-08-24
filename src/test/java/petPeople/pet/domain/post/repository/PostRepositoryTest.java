@@ -11,6 +11,8 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.Tag;
+import petPeople.pet.domain.post.repository.post.PostRepository;
+import petPeople.pet.domain.post.repository.tag.TagRepository;
 
 import javax.persistence.EntityManagerFactory;
 

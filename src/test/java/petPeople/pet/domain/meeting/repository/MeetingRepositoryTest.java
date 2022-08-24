@@ -1,6 +1,5 @@
 package petPeople.pet.domain.meeting.repository;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +8,11 @@ import org.springframework.data.domain.Slice;
 import petPeople.pet.common.BaseControllerTest;
 import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.*;
+import petPeople.pet.domain.meeting.entity.vo.Category;
+import petPeople.pet.domain.meeting.entity.vo.MeetingType;
+import petPeople.pet.domain.meeting.entity.vo.Sex;
+import petPeople.pet.domain.meeting.repository.meeting.MeetingRepository;
+import petPeople.pet.domain.meeting.repository.meeting_member.MeetingMemberRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 

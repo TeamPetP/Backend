@@ -6,8 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import petPeople.pet.domain.meeting.entity.*;
+import petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus;
 import petPeople.pet.domain.meeting.service.MeetingRetrieveOneMemberDto;
-import petPeople.pet.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

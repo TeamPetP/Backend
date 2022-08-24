@@ -1,6 +1,5 @@
 package petPeople.pet.domain.post.repository;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,13 +8,14 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostImage;
+import petPeople.pet.domain.post.repository.post.PostRepository;
+import petPeople.pet.domain.post.repository.post_image.PostImageRepository;
 
 import javax.persistence.EntityManagerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 class PostImageRepositoryTest extends BaseControllerTest {
 

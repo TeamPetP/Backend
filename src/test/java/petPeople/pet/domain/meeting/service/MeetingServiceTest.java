@@ -17,9 +17,12 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingEditRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.*;
-import petPeople.pet.domain.meeting.repository.MeetingImageRepository;
-import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
-import petPeople.pet.domain.meeting.repository.MeetingRepository;
+import petPeople.pet.domain.meeting.entity.vo.Category;
+import petPeople.pet.domain.meeting.entity.vo.MeetingType;
+import petPeople.pet.domain.meeting.entity.vo.Sex;
+import petPeople.pet.domain.meeting.repository.meeting_image.MeetingImageRepository;
+import petPeople.pet.domain.meeting.repository.meeting_member.MeetingMemberRepository;
+import petPeople.pet.domain.meeting.repository.meeting.MeetingRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.exception.CustomException;
 

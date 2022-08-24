@@ -8,6 +8,7 @@ import com.querydsl.core.types.PathMetadata;
 import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathInits;
+import petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus;
 
 
 /**
@@ -40,7 +41,7 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public final petPeople.pet.domain.meeting.entity.QMeetingComment meetingComment;
 
-    public final EnumPath<petPeople.pet.domain.meeting.entity.JoinRequestStatus> meetingJoinRequestFlag = createEnum("meetingJoinRequestFlag", petPeople.pet.domain.meeting.entity.JoinRequestStatus.class);
+    public final EnumPath<JoinRequestStatus> meetingJoinRequestFlag = createEnum("meetingJoinRequestFlag", JoinRequestStatus.class);
 
     public final petPeople.pet.domain.meeting.entity.QMeetingPost meetingPost;
 

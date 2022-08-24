@@ -2,6 +2,7 @@ package petPeople.pet.domain.meeting.entity;
 
 import lombok.*;
 import petPeople.pet.domain.base.BaseTimeEntity;
+import petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus;
 import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;

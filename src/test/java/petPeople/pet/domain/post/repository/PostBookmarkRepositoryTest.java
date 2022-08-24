@@ -11,6 +11,8 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostBookmark;
+import petPeople.pet.domain.post.repository.post.PostRepository;
+import petPeople.pet.domain.post.repository.post_bookmark.PostBookmarkRepository;
 
 import javax.persistence.EntityManagerFactory;
 import java.util.ArrayList;

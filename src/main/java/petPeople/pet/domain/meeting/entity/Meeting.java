@@ -3,10 +3,12 @@ package petPeople.pet.domain.meeting.entity;
 import lombok.*;
 import petPeople.pet.controller.meeting.dto.req.MeetingEditReqDto;
 import petPeople.pet.domain.base.BaseTimeEntity;
+import petPeople.pet.domain.meeting.entity.vo.Category;
+import petPeople.pet.domain.meeting.entity.vo.MeetingType;
+import petPeople.pet.domain.meeting.entity.vo.Sex;
 import petPeople.pet.domain.member.entity.Member;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
