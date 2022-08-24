@@ -10,5 +10,5 @@ public interface MeetingPostLikeCustomRepository {
     void deleteByMemberIdAndMeetingPostId(Long memberId, Long meetingPostId);
     long countByMeetingPostsId(Long meetingPostId);
     List<MeetingPostLike> findByMeetingPostIds(List<Long> meetingPostIds);
-    void deleteByMeetingPostId(Long meetingPostId);
+    Long deleteByMeetingPostId(Long meetingPostId);
 }

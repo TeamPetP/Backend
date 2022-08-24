@@ -54,13 +54,14 @@ public class MeetingPostLikeCustomRepositoryImpl implements MeetingPostLikeCusto
     }
 
     @Override
-    public void deleteByMeetingPostId(Long meetingPostId) {
-        queryFactory
+    public Long deleteByMeetingPostId(Long meetingPostId) {
+        long count = queryFactory
                 .delete(meetingPostLike)
                 .where(meetingPostLike.meetingPost.id.eq(meetingPostId))
                 .execute();
 
         em.flush();
         em.clear();
+        return count;
     }
 }
