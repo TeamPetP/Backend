@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import petPeople.pet.domain.meeting.entity.MeetingImage;
 import petPeople.pet.domain.meeting.repository.MeetingImageCustomRepository;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 
 import static petPeople.pet.domain.meeting.entity.QMeetingImage.*;
@@ -12,6 +13,7 @@ import static petPeople.pet.domain.meeting.entity.QMeetingImage.*;
 @RequiredArgsConstructor
 public class MeetingImageCustomRepositoryImpl implements MeetingImageCustomRepository {
 
+    private final EntityManager em;
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -31,10 +33,15 @@ public class MeetingImageCustomRepositoryImpl implements MeetingImageCustomRepos
     }
 
     @Override
-    public void deleteByMeetingId(Long meetingId) {
-        queryFactory
+    public Long deleteByMeetingId(Long meetingId) {
+        long count = queryFactory
                 .delete(meetingImage)
                 .where(meetingImage.meeting.id.eq(meetingId))
                 .execute();
+
+        em.flush();
+        em.clear();
+
+        return count;
     }
 }
