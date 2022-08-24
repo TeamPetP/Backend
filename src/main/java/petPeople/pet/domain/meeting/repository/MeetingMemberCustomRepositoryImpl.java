@@ -51,13 +51,15 @@ public class MeetingMemberCustomRepositoryImpl implements MeetingMemberCustomRep
     }
 
     @Override
-    public void deleteByMeetingIdAndMemberId(Long meetingId, Long memberId) {
-        queryFactory
+    public Long deleteByMeetingIdAndMemberId(Long meetingId, Long memberId) {
+        long count = queryFactory
                 .delete(meetingMember)
                 .where(meetingMember.meeting.id.eq(meetingId), meetingMember.member.id.eq(memberId))
                 .execute();
 
         em.flush();
         em.clear();
+
+        return count;
     }
 }

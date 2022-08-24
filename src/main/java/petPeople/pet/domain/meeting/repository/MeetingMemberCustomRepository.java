@@ -9,5 +9,5 @@ public interface MeetingMemberCustomRepository {
     List<MeetingMember> findByMeetingId(Long meetingId);
     Long countByMeetingId(Long meetingId);
     Long countByMemberId(Long memberId);
-    void deleteByMeetingIdAndMemberId(Long meetingId, Long memberId);
+    Long deleteByMeetingIdAndMemberId(Long meetingId, Long memberId);
 }
