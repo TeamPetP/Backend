@@ -74,13 +74,15 @@ public class MeetingWaitingMemberCustomRepositoryImpl implements MeetingWaitingM
     }
 
     @Override
-    public void deleteByMeetingIdAndMemberId(Long meetingId, Long memberId) {
-        queryFactory
+    public Long deleteByMeetingIdAndMemberId(Long meetingId, Long memberId) {
+        long count = queryFactory
                 .delete(meetingWaitingMember)
                 .where(meetingWaitingMember.meeting.id.eq(meetingId), meetingWaitingMember.member.id.eq(memberId))
                 .execute();
         em.flush();
         em.clear();
+
+        return count;
     }
 
     @Override
