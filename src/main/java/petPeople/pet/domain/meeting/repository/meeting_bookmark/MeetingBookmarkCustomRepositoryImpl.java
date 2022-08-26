@@ -31,18 +31,20 @@ public class MeetingBookmarkCustomRepositoryImpl implements MeetingBookmarkCusto
     }
 
     @Override
-    public void deleteByMemberIdAndMeetingId(Long memberId, Long meetingId) {
-        queryFactory
+    public Long deleteByMemberIdAndMeetingId(Long memberId, Long meetingId) {
+        long count = queryFactory
                 .delete(meetingBookmark)
                 .where(meetingBookmark.member.id.eq(memberId), meetingBookmark.meeting.id.eq(meetingId))
                 .execute();
 
         em.flush();
         em.clear();
+
+        return count;
     }
 
     @Override
-    public Slice<MeetingBookmark> findByMemberIdWithFetchJoinMeeting(Long memberId, Pageable pageable) {
+    public Slice<MeetingBookmark> findByMemberIdWithFetchJoinMeetingSlicing(Long memberId, Pageable pageable) {
         List<MeetingBookmark> content = queryFactory
                 .select(meetingBookmark)
                 .from(meetingBookmark)

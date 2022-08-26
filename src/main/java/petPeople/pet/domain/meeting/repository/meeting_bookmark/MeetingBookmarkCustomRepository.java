@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface MeetingBookmarkCustomRepository {
 
     Optional<MeetingBookmark> findByMemberIdAndMeetingId(Long memberId, Long meetingId);
-    void deleteByMemberIdAndMeetingId(Long memberId, Long meetingId);
-    Slice<MeetingBookmark> findByMemberIdWithFetchJoinMeeting(Long memberId, Pageable pageable);
+    Long deleteByMemberIdAndMeetingId(Long memberId, Long meetingId);
+    Slice<MeetingBookmark> findByMemberIdWithFetchJoinMeetingSlicing(Long memberId, Pageable pageable);
     Long countByMemberId(Long id);
 }

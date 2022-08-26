@@ -383,7 +383,7 @@ public class MeetingService {
     }
 
     private Slice<MeetingBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
-        return meetingBookmarkRepository.findByMemberIdWithFetchJoinMeeting(member.getId(), pageable);
+        return meetingBookmarkRepository.findByMemberIdWithFetchJoinMeetingSlicing(member.getId(), pageable);
     }
 
     @Transactional
