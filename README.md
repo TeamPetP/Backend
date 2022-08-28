@@ -1,7 +1,11 @@
 ![](https://velog.velcdn.com/images/789456jang/post/bad82bed-3a4e-4860-84aa-17467d5bbe3f/image.png)
 
 <br>
-<br>
+
+## 🎥시연 영상
+<video width="100%" height="100%" controls="controls">
+  <source src="introduce2.mp4" type="video/mp4">
+</video>
 
 ## 반려동물과 함께하는 일상 플랫폼 "PET-P"
 ### 🐶배포 주소🐱 https://www.pet-p.click
