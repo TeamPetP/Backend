@@ -4,7 +4,7 @@
 
 ## 🎥시연 영상
 <video width="100%" height="100%" controls="controls">
-  <source src="introduce2.mp4" type="video/mp4">
+  <source src="introduce.mp4" type="video/mp4">
 </video>
 
 ## 반려동물과 함께하는 일상 플랫폼 "PET-P"
