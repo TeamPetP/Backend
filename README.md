@@ -95,4 +95,4 @@
 ### ERD 설계
 
 ![erd](https://velog.velcdn.com/images/789456jang/post/510d9bab-2577-419a-82b6-58745a3f4166/image.png)
-####이미지를 ⭕클릭하시면 확대해서 볼 수 있어요!
+### 이미지를 ⭕클릭하시면 확대해서 볼 수 있어요!
