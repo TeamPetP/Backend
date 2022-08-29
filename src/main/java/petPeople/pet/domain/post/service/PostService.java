@@ -17,16 +17,20 @@ import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
-import petPeople.pet.datastructure.PostChildList;
+import petPeople.pet.datastructure.PostRelatedEntity;
 import petPeople.pet.domain.comment.entity.Comment;
-import petPeople.pet.domain.comment.repository.CommentLikeRepository;
-import petPeople.pet.domain.comment.repository.CommentRepository;
+import petPeople.pet.domain.comment.repository.commentLike.CommentLikeRepository;
+import petPeople.pet.domain.comment.repository.comment.CommentRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
 import petPeople.pet.domain.post.entity.*;
-import petPeople.pet.domain.post.repository.*;
+import petPeople.pet.domain.post.repository.post.PostRepository;
+import petPeople.pet.domain.post.repository.post_bookmark.PostBookmarkRepository;
+import petPeople.pet.domain.post.repository.post_image.PostImageRepository;
+import petPeople.pet.domain.post.repository.post_like.PostLikeRepository;
+import petPeople.pet.domain.post.repository.tag.TagRepository;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 import petPeople.pet.filter.MockJwtFilter;
@@ -58,12 +62,12 @@ public class PostService {
     //의도와 구현을 분리
     @Transactional
     public PostWriteRespDto write(Member member, PostWriteReqDto postWriteReqDto) {
+
         Post savePost = savePost(createPost(member, postWriteReqDto.getContent()));
-        return new PostWriteRespDto(
-                savePost,
-                saveTagList(postWriteReqDto.getTagList(), savePost),
-                savePostImageList(postWriteReqDto.getImgUrlList(), savePost)
-        );
+        List<Tag> tags = saveTagList(postWriteReqDto.getTagList(), savePost);
+        List<PostImage> imgUrls = savePostImageList(postWriteReqDto.getImgUrlList(), savePost);
+
+        return new PostWriteRespDto(savePost, tags, imgUrls);
     }
 
     public PostRetrieveRespDto localRetrieveOne(Long postId, Optional<String> optionalHeader) {
@@ -74,22 +78,30 @@ public class PostService {
         Long likeCnt = countPostLikeByPostId(postId);
         Long commentCnt = countCommentByPostId(postId);
 
-        PostRetrieveRespDto respDto;
-
-        if (isLogined(optionalHeader)) {
+        if (isLogined(optionalHeader)) {//로그인할 경우
             Member member = getLocalMemberByHeader(optionalHeader.get());
             Long memberId = member.getId();
-            boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(memberId, postId));
-            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
-        } else {
-            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
-        }
 
-        return respDto;
+            //좋아요를 눌렀는지
+            boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(memberId, postId));
+            return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
+        } else {//로그인하지 않을 경우
+            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
+        }
     }
 
-    private Long countCommentByPostId(Long postId) {
-        return commentRepository.countByPostId(postId);
+    public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
+        Slice<Post> postSlice = findAllPostSlicing(pageable, optionalTag);
+        List<Long> ids = getPostIdList(postSlice.getContent());
+
+        PostRelatedEntity postRelatedEntity = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
+
+        if (isLogined(optionalHeader)) {
+            Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
+            return getPostRetrieveRespDtos(postSlice, postRelatedEntity, member);
+        } else {
+            return getPostNoLoginRetrieveRespDtos(postSlice, postRelatedEntity);
+        }
     }
 
     public PostRetrieveRespDto retrieveOne(Long postId, Optional<String> optionalHeader) {
@@ -100,42 +112,30 @@ public class PostService {
         Long likeCnt = countPostLikeByPostId(postId);
         Long commentCnt = countCommentByPostId(postId);
 
-        PostRetrieveRespDto respDto;
-
         if (isLogined(optionalHeader)) {
             String uid = decodeToken(optionalHeader.get()).getUid();
             Member member = validateOptionalMember(findOptionalMemberByUid(uid));
 
             boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId));
-            respDto = createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
+            return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
         } else {
-            respDto = createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
+            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
         }
-
-        return respDto;
-    }
-
-    public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
-
-        Slice<Post> postSlice;
-        if (isSearchTag(optionalTag)) {
-            postSlice = findAllPostByTagSlicing(pageable, optionalTag.get());
-        } else {
-            postSlice = findAllPostSlicing(pageable);
-        }
-
-        return postSliceMapToRespDtoSlice(optionalHeader, postSlice);
     }
 
     public Slice<PostRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
+        Slice<Post> postSlice = findAllPostSlicing(pageable, optionalTag);
+        List<Long> ids = getPostIdList(postSlice.getContent());
 
-        Slice<Post> postSlice;
-        if (isSearchTag(optionalTag)) {
-            postSlice = findAllPostByTagSlicing(pageable, optionalTag.get());
+        PostRelatedEntity postRelatedEntity = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
+
+        if (isLogined(optionalHeader)) {
+            FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
+            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+            return getPostRetrieveRespDtos(postSlice, postRelatedEntity, member);
         } else {
-            postSlice = findAllPostSlicing(pageable);
+            return getPostNoLoginRetrieveRespDtos(postSlice, postRelatedEntity);
         }
-        return postSliceMapToRespDtoSlice(optionalHeader, postSlice);
     }
 
     @Transactional
@@ -159,8 +159,7 @@ public class PostService {
 
     @Transactional
     public Long like(Member member, Long postId) {
-
-        Post findPost = findPostOrElseThrow(postId);
+        Post findPost = validateOptionalPost(findOptionalPost(postId));
 
         if (isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId))) {
             deletePostLikeByPostIdAndMemberId(postId, member.getId());
@@ -204,6 +203,24 @@ public class PostService {
         deletePostByPostId(postId);
     }
 
+    public Slice<PostRetrieveRespDto> retrieveMemberLikedPost(Member member, Pageable pageable) {
+
+        Slice<PostLike> postLikesSlice = findPostLikeByMemberId(member, pageable);
+
+        List<Long> ids = getPostIdByPostLikeId(postLikesSlice.getContent());
+
+        PostRelatedEntity postRelatedEntity = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
+
+        return postLikesSlice.map(postLike -> {
+            List<Tag> tagList = getTagListByPost(postRelatedEntity.getTagList(), postLike.getPost());
+            List<PostImage> postImageList = getPostImageListByPost(postRelatedEntity.getPostImageList(), postLike.getPost());
+            List<PostLike> postLikeList = getPostLikeListByPost(postRelatedEntity.getPostLikeList(), postLike.getPost());
+            List<Comment> commentList = getCommentListByPost(postRelatedEntity.getCommentList(), postLike.getPost());
+
+            return new PostRetrieveRespDto(postLike.getPost(), tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()), member);
+        });
+    }
+
     private void deleteNotification(Member member, Comment comment) {
         notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), comment.getId());
     }
@@ -220,45 +237,27 @@ public class PostService {
         return commentRepository.findByPostId(postId);
     }
 
-    @Transactional
-    public void bookmark(Member member, Long postId) {
-        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
-            throwException(ErrorCode.BOOKMARKED_POST, "이미 북마크를 눌렀습니다.");
-        } else {
-            savePostBookmark(createPostBookmark(member, validateOptionalPost(findOptionalPost(postId))));
-        }
-    }
-
-    @Transactional
-    public void deleteBookmark(Member member, Long postId) {
-        if (isOptionalPostBookmarkPresent(findPostBookmarkByMemberIdAndPostId(member.getId(), postId))) {
-            postBookmarkRepository.deleteByMemberIdAndPostId(member.getId(), postId);
-        } else {
-            throwException(ErrorCode.NEVER_BOOKMARKED_POST, "북마크 하지 않은 피드입니다.");
-        }
-    }
-
-    public Slice<PostRetrieveRespDto> retrieveMemberBookMarkPost(Member member, Pageable pageable) {
-
-        Slice<PostLike> postLikesSlice = findPostLikeByMemberId(member, pageable);
-
-        List<Long> ids = getPostIdByPostLikeId(postLikesSlice.getContent());
-
-        PostChildList postChildList =
-                createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
-
-        return postLikesSlice.map(postLike -> {
-            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), postLike.getPost());
-            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), postLike.getPost());
-            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), postLike.getPost());
-            List<Comment> commentList = getCommentListByPost(postChildList.getCommentList(), postLike.getPost());
-
-            return new PostRetrieveRespDto(postLike.getPost(), tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()), member);
-        });
-    }
-
     public long countMemberPost(Member member) {
         return postRepository.countByMemberId(member.getId());
+    }
+
+    public Slice<PostRetrieveRespDto> retrieveMemberPost(Member member, Pageable pageable, String header) {
+        Slice<Post> postSlice = findAllPostByMemberIdSlicing(member, pageable);
+        List<Long> ids = getPostIdList(postSlice.getContent());
+
+        PostRelatedEntity postRelatedEntity = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
+        return postSliceMapToRespDtoWithLogin(header, postSlice, postRelatedEntity);
+    }
+
+    public FirebaseToken decodeToken(String header) {
+        try {
+            header = "Bearer " + header;
+            String token = RequestUtil.getAuthorizationToken(header);
+            return firebaseAuth.verifyIdToken(token);
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "{\"code\":\"INVALID_TOKEN\", \"message\":\"" + e.getMessage() + "\"}");
+        }
     }
 
     private void saveNotification(Long postId, Member member, Post findPost) {
@@ -282,10 +281,6 @@ public class PostService {
         notificationRepository.deleteNotificationByMemberIdAndPostId(member.getId(), postId);
     }
 
-    private void deleteCommentByPostId(Long postId) {
-        commentRepository.deleteCommentByPostId(postId);
-    }
-
     private boolean isExistMemberLikePostNotification(Long postId, Member member) {
         return notificationRepository.findByMemberIdAndPostId(member.getId(), postId).isPresent();
     }
@@ -294,19 +289,8 @@ public class PostService {
         notificationRepository.save(notification);
     }
 
-    private Slice<PostBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
-        return postBookmarkRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
-    }
-
     private Slice<PostLike> findPostLikeByMemberId(Member member, Pageable pageable) {
         return postLikeRepository.findByMemberIdWithFetchJoinPost(member.getId(), pageable);
-    }
-
-    public Slice<PostRetrieveRespDto> retrieveMemberPost(Member member, Pageable pageable, String header) {
-        Slice<Post> postSlice = findAllPostByMemberIdSlicing(member, pageable);
-        List<Long> ids = getPostId(postSlice.getContent());
-        PostChildList postChildList = createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
-        return postSliceMapToRespDtoWithLogin(header, postSlice, postChildList);
     }
 
     private Slice<Post> findAllPostByMemberIdSlicing(Member member, Pageable pageable) {
@@ -323,42 +307,12 @@ public class PostService {
         return memberRepository.findByUid(uid);
     }
 
-    public FirebaseToken decodeToken(String header) {
-        try {
-            header = "Bearer " + header;
-            String token = RequestUtil.getAuthorizationToken(header);
-            return firebaseAuth.verifyIdToken(token);
-        } catch (IllegalArgumentException | FirebaseAuthException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "{\"code\":\"INVALID_TOKEN\", \"message\":\"" + e.getMessage() + "\"}");
-        }
-    }
-
-    private void savePostBookmark(PostBookmark postBookmark) {
-        postBookmarkRepository.save(postBookmark);
-    }
-
-    private Optional<PostBookmark> findPostBookmarkByMemberIdAndPostId(Long memberId, Long postId) {
-        return postBookmarkRepository.findByMemberIdAndPostId(memberId, postId);
-    }
-
     private void throwException(ErrorCode errorCode, String message) {
         throw new CustomException(errorCode, message);
     }
 
-    private boolean isOptionalPostBookmarkPresent(Optional<PostBookmark> optionalPostBookmark) {
-        return optionalPostBookmark.isPresent();
-    }
-
-    private PostBookmark createPostBookmark(Member member, Post post) {
-        return PostBookmark.builder()
-                .post(post)
-                .member(member)
-                .build();
-    }
-
-    private PostChildList createPostChildList(List<Tag> findTagList, List<PostImage> findPostImageList, List<PostLike> findPostLikeList, List<Comment> findCommentList) {
-        return PostChildList.builder()
+    private PostRelatedEntity createPostChildList(List<Tag> findTagList, List<PostImage> findPostImageList, List<PostLike> findPostLikeList, List<Comment> findCommentList) {
+        return PostRelatedEntity.builder()
                 .tagList(findTagList)
                 .postImageList(findPostImageList)
                 .postLikeList(findPostLikeList)
@@ -370,21 +324,36 @@ public class PostService {
         return (Member) userDetailsService.loadUserByUsername(header);
     }
 
-    private boolean isSearchTag(Optional<String> optionalTag) {
-        return optionalTag.isPresent();
+    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostRelatedEntity postRelatedEntity) {
+
+        if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
+            Member member = validateOptionalMember(findOptionalMemberByUid(header));
+            return getPostRetrieveRespDtos(postPage, postRelatedEntity, member);
+        } else {
+            FirebaseToken firebaseToken = decodeToken(header);
+            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+            return getPostRetrieveRespDtos(postPage, postRelatedEntity, member);
+        }
     }
 
-    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoSlice(Optional<String> optionalHeader, Slice<Post> postSlice) {
-        List<Long> ids = getPostId(postSlice.getContent());
+    private Slice<PostRetrieveRespDto> getPostRetrieveRespDtos(Slice<Post> postPage, PostRelatedEntity postRelatedEntity, Member member) {
+        return postPage.map(post -> {
+            List<Tag> tagList = getTagListByPost(postRelatedEntity.getTagList(), post);
+            List<PostImage> postImageList = getPostImageListByPost(postRelatedEntity.getPostImageList(), post);
+            List<PostLike> postLikeList = getPostLikeListByPost(postRelatedEntity.getPostLikeList(), post);
+            List<Comment> commentList = getCommentListByPost(postRelatedEntity.getCommentList(), post);
 
-        PostChildList postChildList =
-                createPostChildList(findTagsByPostIds(ids), findPostImagesByPostIds(ids), findPostLikesByPostIds(ids), findCommentsByPostIds(ids));
+            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()), member);
+        });
+    }
 
-        if (isLogined(optionalHeader)) {
-            return postSliceMapToRespDtoWithLogin(optionalHeader.get(), postSlice, postChildList);
-        } else {
-            return postSliceMapToRespDtoWithNoLogin(postSlice, postChildList);
-        }
+    private Slice<PostRetrieveRespDto> getPostNoLoginRetrieveRespDtos(Slice<Post> postPage, PostRelatedEntity postRelatedEntity) {
+        return postPage.map(post -> {
+            List<Tag> tagList = getTagListByPost(postRelatedEntity.getTagList(), post);
+            List<PostImage> postImageList = getPostImageListByPost(postRelatedEntity.getPostImageList(), post);
+            List<PostLike> postLikeList = getPostLikeListByPost(postRelatedEntity.getPostLikeList(), post);
+            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), null, Long.valueOf(getCommentListByPost(postRelatedEntity.getCommentList(), post).size()), null);
+        });
     }
 
     private List<Comment> findCommentsByPostIds(List<Long> ids) {
@@ -393,33 +362,6 @@ public class PostService {
 
     private boolean isLogined(Optional<String> optionalHeader) {
         return optionalHeader.isPresent();
-    }
-
-    private Slice<Post> findAllPostByTagSlicing(Pageable pageable, String tag) {
-        return postRepository.findPostSlicingByTag(pageable, tag);
-    }
-
-    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithLogin(String header, Slice<Post> postPage, PostChildList postChildList) {
-
-        if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
-            Member member = validateOptionalMember(findOptionalMemberByUid(header));
-            return getPostRetrieveRespDtos(postPage, postChildList, member);
-        } else {
-            FirebaseToken firebaseToken = decodeToken(header);
-            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
-            return getPostRetrieveRespDtos(postPage, postChildList, member);
-        }
-    }
-
-    private Slice<PostRetrieveRespDto> getPostRetrieveRespDtos(Slice<Post> postPage, PostChildList postChildList, Member member) {
-        return postPage.map(post -> {
-            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
-            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
-            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
-            List<Comment> commentList = getCommentListByPost(postChildList.getCommentList(), post);
-
-            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), isMemberLikedPostInPostLikeList(member, postLikeList), Long.valueOf(commentList.size()), member);
-        });
     }
 
     private boolean isMemberLikedPostInPostLikeList(Member member, List<PostLike> postLikeList) {
@@ -434,14 +376,7 @@ public class PostService {
         return flag;
     }
 
-    private Slice<PostRetrieveRespDto> postSliceMapToRespDtoWithNoLogin(Slice<Post> postPage, PostChildList postChildList) {
-        return postPage.map(post -> {
-            List<Tag> tagList = getTagListByPost(postChildList.getTagList(), post);
-            List<PostImage> postImageList = getPostImageListByPost(postChildList.getPostImageList(), post);
-            List<PostLike> postLikeList = getPostLikeListByPost(postChildList.getPostLikeList(), post);
-            return new PostRetrieveRespDto(post, tagList, postImageList, Long.valueOf(postLikeList.size()), null, Long.valueOf(getCommentListByPost(postChildList.getCommentList(), post).size()), null);
-        });
-    }
+
 
     private PostRetrieveRespDto createLoginPostRetrieveRespDto(Post post, List<Tag> tagList, List<PostImage> postImageList, Long likeCnt, boolean flag, Long commentCnt, Member member) {
         return new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, flag, commentCnt, member);
@@ -534,7 +469,7 @@ public class PostService {
         return tagRepository.findTagsByPostIds(ids);
     }
 
-    private List<Long> getPostId(List<Post> content) {
+    private List<Long> getPostIdList(List<Post> content) {
         List<Long> ids = new ArrayList<>();
         for (Post post : content) {
             ids.add(post.getId());
@@ -550,8 +485,8 @@ public class PostService {
         return ids;
     }
 
-    private Slice<Post> findAllPostSlicing(Pageable pageable) {
-        return postRepository.findAllSlicing(pageable);
+    private Slice<Post> findAllPostSlicing(Pageable pageable, Optional<String> tag) {
+        return postRepository.findAllSlicing(pageable, tag);
     }
 
     private Long countPostLikeByPostId(Long postId) {
@@ -594,6 +529,10 @@ public class PostService {
 
     private Post validateOptionalPost(Optional<Post> optionalPost) {
         return optionalPost.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "존재하지 않은 게시글입니다."));
+    }
+
+    private Long countCommentByPostId(Long postId) {
+        return commentRepository.countByPostId(postId);
     }
 
     private Optional<Post> findOptionalPostFetchJoinedWithMember(Long postId) {

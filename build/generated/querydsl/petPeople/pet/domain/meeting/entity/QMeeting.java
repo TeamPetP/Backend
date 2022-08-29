@@ -8,6 +8,9 @@ import com.querydsl.core.types.PathMetadata;
 import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathInits;
+import petPeople.pet.domain.meeting.entity.vo.Category;
+import petPeople.pet.domain.meeting.entity.vo.MeetingType;
+import petPeople.pet.domain.meeting.entity.vo.Sex;
 
 
 /**

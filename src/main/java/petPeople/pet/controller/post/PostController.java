@@ -105,24 +105,6 @@ public class PostController {
                 .build();
     }
 
-    @ApiOperation(value = "게시글 북마크 API", notes = "header 에 토큰을 입력해주세요, 북마크할 postId 를 경로변수에 넣어주세요")
-    @PatchMapping("/{postId}/bookmarks")
-    public ResponseEntity bookmarkPost(Authentication authentication,
-                                       @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId) {
-        postService.bookmark(getMember(authentication), postId);
-
-        return ResponseEntity.noContent().build();
-    }
-
-    @ApiOperation(value = "게시글 북마크 취소 API", notes = "header 에 토큰을 입력해주세요, 북마크 취소할 postId 를 경로변수에 넣어주세요")
-    @DeleteMapping("/{postId}/bookmarks")
-    public ResponseEntity deleteBookmarkPost(Authentication authentication,
-                                             @ApiParam(value = "게시글 ID", required = true) @PathVariable Long postId) {
-        postService.deleteBookmark(getMember(authentication), postId);
-
-        return ResponseEntity.noContent().build();
-    }
-
     private Member getMember(Authentication authentication) {
         return (Member) authentication.getPrincipal();
     }

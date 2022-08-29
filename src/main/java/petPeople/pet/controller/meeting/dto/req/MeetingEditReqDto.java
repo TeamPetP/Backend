@@ -6,11 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import petPeople.pet.domain.meeting.entity.Category;
-import petPeople.pet.domain.meeting.entity.MeetingType;
-import petPeople.pet.domain.meeting.entity.Sex;
+import petPeople.pet.domain.meeting.entity.vo.Category;
+import petPeople.pet.domain.meeting.entity.vo.MeetingType;
+import petPeople.pet.domain.meeting.entity.vo.Sex;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

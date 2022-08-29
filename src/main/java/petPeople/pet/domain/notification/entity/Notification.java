@@ -6,7 +6,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.lang.Nullable;
 import petPeople.pet.domain.base.BaseTimeEntity;
 import petPeople.pet.domain.comment.entity.Comment;
-import petPeople.pet.domain.meeting.entity.JoinRequestStatus;
+import petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus;
 import petPeople.pet.domain.meeting.entity.Meeting;
 import petPeople.pet.domain.meeting.entity.MeetingComment;
 import petPeople.pet.domain.meeting.entity.MeetingPost;

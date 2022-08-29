@@ -12,7 +12,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import petPeople.pet.config.auth.AuthFilterContainer;
@@ -23,9 +22,8 @@ import petPeople.pet.controller.member.dto.req.MemberLocalRegisterReqDto;
 import petPeople.pet.controller.member.dto.req.MemberRegisterReqDto;
 import petPeople.pet.controller.member.dto.resp.*;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
-import petPeople.pet.domain.meeting.repository.MeetingBookmarkRepository;
-import petPeople.pet.domain.meeting.repository.MeetingMemberRepository;
-import petPeople.pet.domain.meeting.repository.MeetingRepository;
+import petPeople.pet.domain.meeting.repository.meeting_bookmark.MeetingBookmarkRepository;
+import petPeople.pet.domain.meeting.repository.meeting_member.MeetingMemberRepository;
 import petPeople.pet.domain.meeting.service.MeetingPostService;
 import petPeople.pet.domain.meeting.service.MeetingService;
 import petPeople.pet.domain.meeting.service.MeetingWaitingMemberService;
@@ -34,7 +32,6 @@ import petPeople.pet.domain.member.service.MemberRegisterDto;
 import petPeople.pet.domain.member.service.MemberService;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
 import petPeople.pet.domain.post.service.PostService;
-import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -175,7 +172,7 @@ public class MemberController {
     public ResponseEntity<Slice<PostRetrieveRespDto>> retrieveMemberLikePost(Authentication authentication, Pageable pageable) {
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(postService.retrieveMemberBookMarkPost(getMember(authentication), pageable));
+                .body(postService.retrieveMemberLikedPost(getMember(authentication), pageable));
     }
 
     @ApiOperation(value = "회원의 모임 북마크 조회 API", notes = "회원의 모임 북마크 조회")
