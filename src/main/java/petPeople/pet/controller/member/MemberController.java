@@ -172,7 +172,7 @@ public class MemberController {
     public ResponseEntity<Slice<PostRetrieveRespDto>> retrieveMemberLikePost(Authentication authentication, Pageable pageable) {
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(postService.retrieveMemberBookMarkPost(getMember(authentication), pageable));
+                .body(postService.retrieveMemberLikedPost(getMember(authentication), pageable));
     }
 
     @ApiOperation(value = "회원의 모임 북마크 조회 API", notes = "회원의 모임 북마크 조회")

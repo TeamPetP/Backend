@@ -1,5 +1,7 @@
 package petPeople.pet.domain.post.repository.post;
 
+import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -29,10 +31,11 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
     }
 
     @Override
-    public Slice<Post> findAllSlicing(Pageable pageable) {
+    public Slice<Post> findAllSlicing(Pageable pageable, Optional<String> tag) {
 
         List<Post> content = queryFactory
                 .selectFrom(post)
+                .where(tagContain(tag))
                 .join(post.member, member).fetchJoin()
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize() + 1)
@@ -46,6 +49,10 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
         }
 
         return new SliceImpl<>(content, pageable, hasNext);
+    }
+
+    private BooleanExpression tagContain(Optional<String> tag) {
+        return tag.isPresent() ? tag1.tag.contains(tag.get()) : null;
     }
 
     @Override
