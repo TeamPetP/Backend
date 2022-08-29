@@ -1,6 +1,7 @@
 package petPeople.pet.domain.post.service;
 import static org.mockito.Mockito.verify;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,7 +20,10 @@ import petPeople.pet.controller.post.dto.req.PostWriteReqDto;
 import petPeople.pet.controller.post.dto.resp.PostEditRespDto;
 import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
+import petPeople.pet.domain.comment.entity.Comment;
+import petPeople.pet.domain.comment.repository.comment.CommentRepository;
 import petPeople.pet.domain.member.entity.Member;
+import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.post.entity.*;
 import petPeople.pet.domain.post.repository.post.PostRepository;
 import petPeople.pet.domain.post.repository.post_bookmark.PostBookmarkRepository;
@@ -24,11 +31,13 @@ import petPeople.pet.domain.post.repository.post_image.PostImageRepository;
 import petPeople.pet.domain.post.repository.post_like.PostLikeRepository;
 import petPeople.pet.domain.post.repository.tag.TagRepository;
 import petPeople.pet.exception.CustomException;
+import petPeople.pet.exception.ErrorCode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,18 +46,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)//테스트 클래스가 Mockito를 사용함을 의미합니다.
 class PostServiceTest {
-
-    final String uid = "abcd";
-    final String email = "issiscv@naver.com";
-    final String name = "김상운";
-    final String nickname = "balladang";
-    final String imgUrl = "www.imgurl.com";
-    final String introduce = "잘지내요 우리";
-
-    final List<String> tags = Arrays.asList("사진", "내새끼", "장난감");
-    final List<String> imgUrls = Arrays.asList("www.방울이귀엽죠?.com", "www.imgaeABC.com");
-
-    final String content = "게시글 및 피드입니다.";
 
     @Mock //mock 객체를 생성함
     PostRepository postRepository;
@@ -62,343 +59,487 @@ class PostServiceTest {
     UserDetailsService userDetailsService;
     @Mock
     PostBookmarkRepository postBookmarkRepository;
+    @Mock
+    CommentRepository commentRepository;
+    @Mock
+    MemberRepository memberRepository;
 
-    @InjectMocks //생성한 mock 객체를 @InjectMocks이 붙은 객체에 주입
-    //주로 @InjectMocks(Service) @Mock(Repository) 이러한 식으로 Service 테스트 목객체에 DAO 목객체를 주입시켜 사용함
+    @InjectMocks //생성한 mock 객체를 @InjectMocks이 붙은 객체에 주입 주로 @InjectMocks(Service) @Mock(Repository) 이러한 식으로 Service 테스트 목객체에 DAO 목객체를 주입시켜 사용함
     PostService postService;
 
-    Long id;
-    Member member;
-    PostWriteReqDto postWriteReqDto;
-    Post post;
-    List<Tag> tagList;
-    List<PostImage> postImageList;
-    List<PostLike> postLikeList;
+    final String uid = "abcd";
+    final String email = "issiscv@naver.com";
+    final String name = "김상운";
+    final String nickname = "balladang";
+    final String imgUrl = "www.imgurl.com";
+    final String introduce = "잘지내요 우리";
 
-    @BeforeEach
-    void beforeEach() {
-        id = 1L;
-        member = createMember(uid, email, name, nickname, imgUrl, introduce);
-        postWriteReqDto = createPostWriteReqDto(content, tags, imgUrls);
-        post = createPost(member, postWriteReqDto.getContent());
-        tagList = createTagList(tags, post);
-        postImageList = createPostImageList(imgUrls, post);
-        postLikeList = createPostLikeList();
-    }
+    final String content = "강아지 좋아해요";
 
+    final String tagName = "태그";
+
+    final String postImageUrl = "www.postimgurl.com";
+
+    @DisplayName("게시글 정상 작성 테스트")
     @Test
-    @DisplayName("게시글 작성 테스트")
-    public void writePostTest() throws Exception {
+    public void 게시글_작성() throws Exception {
         //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Post post = createPost(member, content);
+
+        List<String> tagStrList = new ArrayList<>();
+        List<Tag> tagList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            String tagName = this.tagName + i;
+            tagStrList.add(tagName);
+
+            Tag tag = createTag(post, tagName);
+            tagList.add(tag);
+        }
+
+        List<String> postImageStrList = new ArrayList<>();
+        List<PostImage> postImageList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            String postImageUrl = this.postImageUrl + i;
+            postImageStrList.add(postImageUrl);
+
+            PostImage postImage = createPostImage(postImageUrl, post);
+            postImageList.add(postImage);
+        }
+
         when(postRepository.save(any())).thenReturn(post);
-
         when(tagRepository.save(any()))
                 .thenReturn(tagList.get(0))
                 .thenReturn(tagList.get(1))
                 .thenReturn(tagList.get(2));
-
         when(postImageRepository.save(any()))
                 .thenReturn(postImageList.get(0))
-                .thenReturn(postImageList.get(1));
+                .thenReturn(postImageList.get(1))
+                .thenReturn(postImageList.get(2));
 
-        PostWriteRespDto respDto = new PostWriteRespDto(post, tagList, postImageList);
-
-        //when
-        PostWriteRespDto result = postService.write(member, postWriteReqDto);
-
-        //then
-        assertThat(result).isEqualTo(respDto);
-    }
-
-    @Test
-    @DisplayName("로그인 하지 않고 게시글 단건 조회")
-    public void noLoginRetrievePostTest() throws Exception {
-        //given
-        long likeCnt = 3L;
-        when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
-        when(tagRepository.findByPostId(any())).thenReturn(tagList);
-        when(postImageRepository.findByPostId(any())).thenReturn(postImageList);
-        when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
-
-        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, null);
+        PostWriteRespDto expected = new PostWriteRespDto(post, tagList, postImageList);
 
         //when
-        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), Optional.empty());
+        PostWriteRespDto postWriteRespDto = postService.write(member, new PostWriteReqDto(content, tagStrList, postImageStrList));
 
         //then
-        assertThat(postRetrieveRespDto).isEqualTo(result);
+        assertThat(postWriteRespDto).isEqualTo(expected);
     }
 
+    @DisplayName("로그인 하지 않고 게시글 단건 조회 성공")
     @Test
-    @DisplayName("로그인 하고 좋아요 누른 게시글 단건 조회")
-    public void loginRetrieveNotLikedPostTest() throws Exception {
+    public void 로그인하지않고_게시글_단건조회_성공() throws Exception {
         //given
-        long likeCnt = 3L;
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Post post = createPost(member, content);
 
+        List<Tag> tagList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Tag tag = createTag(post, this.tagName + i);
+            tagList.add(tag);
+        }
 
-        String uid = "abcd";
+        List<PostImage> postImageList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            PostImage postImage = createPostImage(this.postImageUrl + i, post);
+            postImageList.add(postImage);
+        }
+
+        long postLikeCnt = 3;
+        long commentCnt = 5;
 
         when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
         when(tagRepository.findByPostId(any())).thenReturn(tagList);
         when(postImageRepository.findByPostId(any())).thenReturn(postImageList);
-        when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
-        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
-        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.ofNullable(postLikeList.get(0)));
+        when(postLikeRepository.countByPostId(any())).thenReturn(postLikeCnt);
+        when(commentRepository.countByPostId(any())).thenReturn(commentCnt);
 
-        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, true);
+        PostRetrieveRespDto expected = new PostRetrieveRespDto(post, tagList, postImageList, postLikeCnt, null, commentCnt, null);
 
         //when
-        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), Optional.ofNullable(uid));
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(any(), Optional.empty());
 
         //then
-        assertThat(postRetrieveRespDto).isEqualTo(result);
+        assertThat(postRetrieveRespDto).isEqualTo(expected);
     }
 
+    @DisplayName("로그인 하지 않고 게시글 단건 조회 실패")
     @Test
-    @DisplayName("로그인 하고 좋아요 누르지 않은 게시글 단건 조회")
-    public void loginRetrieveLikedPostTest() throws Exception {
+    public void 게시글_단건조회_실패() throws Exception {
         //given
-        long likeCnt = 3L;
+        when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.empty());//게시글 단건 검색시 empty
 
-        String uid = "abcd";
+        //when
+        //then
+        Assertions.assertThrows(CustomException.class, () -> postService.localRetrieveOne(any(), Optional.empty()));
+    }
+
+    @DisplayName("로그인 후 좋아요 한 게시글 단건 조회 성공")
+    @Test
+    public void 로그인후_좋아요_누른_게시글_단건조회_성공() throws Exception {
+        //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Post post = createPost(member, content);
+        PostLike postLike = createPostLike(member, post);
+
+        List<Tag> tagList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Tag tag = createTag(post, this.tagName + i);
+            tagList.add(tag);
+        }
+
+        List<PostImage> postImageList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            PostImage postImage = createPostImage(this.postImageUrl + i, post);
+            postImageList.add(postImage);
+        }
+
+        long postLikeCnt = 3;
+        long commentCnt = 5;
 
         when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
         when(tagRepository.findByPostId(any())).thenReturn(tagList);
         when(postImageRepository.findByPostId(any())).thenReturn(postImageList);
-        when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
-        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
+        when(postLikeRepository.countByPostId(any())).thenReturn(postLikeCnt);
+        when(commentRepository.countByPostId(any())).thenReturn(commentCnt);
         when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.empty());
+        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
 
-        PostRetrieveRespDto result = new PostRetrieveRespDto(post, tagList, postImageList, likeCnt, false);
-
-        //when
-        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(post.getId(), Optional.ofNullable(uid));
-
-        //then
-        assertThat(postRetrieveRespDto).isEqualTo(result);
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 게시글 조회")
-    public void retrieveNotFoundPostTest() throws Exception {
-        //given
-        when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.empty());
+        PostRetrieveRespDto expected = new PostRetrieveRespDto(post, tagList, postImageList, postLikeCnt, false, commentCnt, member);
 
         //when
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(any(), Optional.ofNullable(member.getUid()));
+
         //then
-        assertThrows(CustomException.class, () -> postService.localRetrieveOne(post.getId(), null));
+        assertThat(postRetrieveRespDto).isEqualTo(expected);
     }
 
+    @DisplayName("로그인 후 게시글 단건 조회 성공")
     @Test
-    @DisplayName("게시글 수정 테스트")
-    public void editPostTest() throws Exception {
+    public void 로그인후_게시글_단건조회_성공() throws Exception {
         //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Post post = createPost(member, content);
+        PostLike postLike = createPostLike(member, post);
 
-        Long likeCnt = 3L;
+        List<Tag> tagList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Tag tag = createTag(post, this.tagName + i);
+            tagList.add(tag);
+        }
 
-        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
+        List<PostImage> postImageList = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            PostImage postImage = createPostImage(this.postImageUrl + i, post);
+            postImageList.add(postImage);
+        }
+
+        long postLikeCnt = 3;
+        long commentCnt = 5;
+
+        when(postRepository.findByIdWithFetchJoinMember(any())).thenReturn(Optional.ofNullable(post));
+        when(tagRepository.findByPostId(any())).thenReturn(tagList);
+        when(postImageRepository.findByPostId(any())).thenReturn(postImageList);
+        when(postLikeRepository.countByPostId(any())).thenReturn(postLikeCnt);
+        when(commentRepository.countByPostId(any())).thenReturn(commentCnt);
+        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.ofNullable(postLike));
+        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
+
+        PostRetrieveRespDto expected = new PostRetrieveRespDto(post, tagList, postImageList, postLikeCnt, true, commentCnt, member);
+
+        //when
+        PostRetrieveRespDto postRetrieveRespDto = postService.localRetrieveOne(any(), Optional.ofNullable(member.getUid()));
+
+        //then
+        assertThat(postRetrieveRespDto).isEqualTo(expected);
+    }
+
+    @DisplayName("로그인하지 않고 게시글 전체 조회")
+    @Test
+    public void 로그인_하지않고_게시글_전체_조회() throws Exception {
+        //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+
+        Post post1 = createPost(member, content);
+        post1.setId(1L);
+        Post post2 = createPost(member, content);
+        post2.setId(2L);
+        Post post3 = createPost(member, content);
+        post3.setId(3L);
+
+        List<Tag> tagList = new ArrayList<>();
+        List<PostImage> postImageList = new ArrayList<>();
+        List<PostLike> postLikeList = new ArrayList<>();
+        List<Comment> commentList = new ArrayList<>();
+
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post1, "tag"));
+            postImageList.add(createPostImage("postImageUrl", post1));
+            postLikeList.add(createPostLike(member, post1));
+            commentList.add(createComment(member, post1));
+        }
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post2, "tag"));
+            postImageList.add(createPostImage("postImageUrl", post2));
+            postLikeList.add(createPostLike(member, post2));
+            commentList.add(createComment(member, post2));
+        }
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post3, "tag"));
+            postImageList.add(createPostImage("postImageUrl", post3));
+            postLikeList.add(createPostLike(member, post3));
+            commentList.add(createComment(member, post3));
+        }
+
+
+        SliceImpl<Post> postSlice = new SliceImpl<>(List.of(post1, post2, post3));
+
+        when(postRepository.findAllSlicing(any(), any())).thenReturn(postSlice);
+        when(tagRepository.findTagsByPostIds(any())).thenReturn(tagList);
+        when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(postImageList);
+        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(postLikeList);
+        when(commentRepository.findByPostIds(any())).thenReturn(commentList);
+
+        Slice<PostRetrieveRespDto> expected = postSlice.map(post -> {
+            List<Tag> tagByPostList = getTagListByPost(tagList, post);
+            List<PostImage> postImageByTagList = getPostImageListByPost(postImageList, post);
+            List<PostLike> postLikeByPostList = getPostLikeListByPost(postLikeList, post);
+            List<Comment> commentListByPost = getCommentListByPost(commentList, post);
+            return new PostRetrieveRespDto(post, tagByPostList, postImageByTagList, Long.valueOf(postLikeByPostList.size()), null, Long.valueOf(commentListByPost.size()), null);
+        });
+
+        //when
+        Slice<PostRetrieveRespDto> retrieveRespDtoSlice = postService.localRetrieveAll(PageRequest.of(0, 3), Optional.empty(), Optional.empty());
+
+        //then
+        assertThat(retrieveRespDtoSlice).isEqualTo(expected);
+    }
+
+    @DisplayName("로그인 하고 게시글 전체 조회")
+    @Test
+    public void 로그인_하고_게시글_전체_조회() throws Exception {
+        //given
+        String loginUid = "qwer";
+        Member memberLogined = createMember(loginUid, email, name, nickname, imgUrl, introduce);
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+
+        Post post1 = createPost(member, content);
+        post1.setId(1L);
+        Post post2 = createPost(member, content);
+        post2.setId(2L);
+        Post post3 = createPost(member, content);
+        post3.setId(3L);
+
+        List<Tag> tagList = new ArrayList<>();
+        List<PostImage> postImageList = new ArrayList<>();
+        List<PostLike> postLikeList = new ArrayList<>();
+        List<Comment> commentList = new ArrayList<>();
+
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post1, "tag"));
+            postImageList.add(createPostImage("postImageUrl", post1));
+            postLikeList.add(createPostLike(member, post1));
+            commentList.add(createComment(member, post1));
+        }
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post2, "tag"));
+            postImageList.add(createPostImage("postImageUrl", post2));
+            postLikeList.add(createPostLike(member, post2));
+            commentList.add(createComment(member, post2));
+        }
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post3, "tag"));
+            postImageList.add(createPostImage("postImageUrl", post3));
+            postLikeList.add(createPostLike(member, post3));
+            commentList.add(createComment(member, post3));
+        }
+
+
+        SliceImpl<Post> postSlice = new SliceImpl<>(List.of(post1, post2, post3));
+
+        when(postRepository.findAllSlicing(any(), any())).thenReturn(postSlice);
+        when(tagRepository.findTagsByPostIds(any())).thenReturn(tagList);
+        when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(postImageList);
+        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(postLikeList);
+        when(commentRepository.findByPostIds(any())).thenReturn(commentList);
+        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(memberLogined));
+
+        Slice<PostRetrieveRespDto> expected = postSlice.map(post -> {
+            List<Tag> tagByPostList = getTagListByPost(tagList, post);
+            List<PostImage> postImageByTagList = getPostImageListByPost(postImageList, post);
+            List<PostLike> postLikeByPostList = getPostLikeListByPost(postLikeList, post);
+            List<Comment> commentListByPost = getCommentListByPost(commentList, post);
+            return new PostRetrieveRespDto(post, tagByPostList, postImageByTagList, Long.valueOf(postLikeByPostList.size()), isMemberLikedPostInPostLikeList(memberLogined, postLikeByPostList), Long.valueOf(commentListByPost.size()), memberLogined);
+        });
+
+        //when
+        Slice<PostRetrieveRespDto> retrieveRespDtoSlice = postService.localRetrieveAll(PageRequest.of(0, 3), Optional.empty(), Optional.ofNullable(loginUid));
+
+        //then
+        assertThat(retrieveRespDtoSlice).isEqualTo(expected);
+    }
+
+    @DisplayName("로그인 하고 태그로 게시글 전체 조회")
+    @Test
+    public void 로그인_하고_태그로_게시글_전체_조회() throws Exception {
+        //given
+        String loginUid = "qwer";
+        Member memberLogined = createMember(loginUid, email, name, nickname, imgUrl, introduce);
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+
+        Post post1 = createPost(member, content);
+        post1.setId(1L);
+        Post post2 = createPost(member, content);
+        post2.setId(2L);
+        Post post3 = createPost(member, content);
+        post3.setId(3L);
+
+        List<Tag> tagList = new ArrayList<>();
+        List<PostImage> postImageList = new ArrayList<>();
+        List<PostLike> postLikeList = new ArrayList<>();
+        List<Comment> commentList = new ArrayList<>();
+        
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post1, "tag1"));
+            postImageList.add(createPostImage("postImageUrl", post1));
+            postLikeList.add(createPostLike(member, post1));
+            commentList.add(createComment(member, post1));
+        }
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post2, "tag2"));
+            postImageList.add(createPostImage("postImageUrl", post2));
+            postLikeList.add(createPostLike(member, post2));
+            commentList.add(createComment(member, post2));
+        }
+
+        for (int i = 0; i < 3; i++) {
+            tagList.add(createTag(post3, "tag3"));
+            postImageList.add(createPostImage("postImageUrl", post3));
+            postLikeList.add(createPostLike(member, post3));
+            commentList.add(createComment(member, post3));
+        }
+
+
+        SliceImpl<Post> postSlice = new SliceImpl<>(List.of(post1));
+
+        when(postRepository.findAllSlicing(any(), any())).thenReturn(postSlice);
+        when(tagRepository.findTagsByPostIds(any())).thenReturn(tagList);
+        when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(postImageList);
+        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(postLikeList);
+        when(commentRepository.findByPostIds(any())).thenReturn(commentList);
+        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(memberLogined));
+
+        Slice<PostRetrieveRespDto> expected = postSlice.map(post -> {
+            List<Tag> tagByPostList = getTagListByPost(tagList, post);
+            List<PostImage> postImageByTagList = getPostImageListByPost(postImageList, post);
+            List<PostLike> postLikeByPostList = getPostLikeListByPost(postLikeList, post);
+            List<Comment> commentListByPost = getCommentListByPost(commentList, post);
+            return new PostRetrieveRespDto(post, tagByPostList, postImageByTagList, Long.valueOf(postLikeByPostList.size()), isMemberLikedPostInPostLikeList(memberLogined, postLikeByPostList), Long.valueOf(commentListByPost.size()), memberLogined);
+        });
+
+        //when
+        Slice<PostRetrieveRespDto> retrieveRespDtoSlice = postService.localRetrieveAll(PageRequest.of(0, 3), Optional.of("tag1"), Optional.ofNullable(loginUid));
+
+        //then
+        assertThat(retrieveRespDtoSlice).isEqualTo(expected);
+    }
+    
+    @DisplayName("게시글 수정")
+    @Test
+    public void 게시글_수정() throws Exception {
+        //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Post post = createPost(member, content);
+        post.setId(1L);
+
+        String editContent = "수정 내용";
+        List<String> tagStrList = List.of("tag1", "tag2", "tag3");
+        List<Tag> tagList = tagStrList.stream().map(t -> createTag(post, t)).collect(Collectors.toList());
+
+        List<String> postImgStrList = List.of("img1", "img2", "img3");
+        List<PostImage> postImageList = postImgStrList.stream().map(p -> createPostImage(p, post)).collect(Collectors.toList());
+
+        long likeCnt = 3L;
+
+        when(postRepository.findById(any())).thenReturn(Optional.of(post));
+        when(tagRepository.deleteByPostId(any())).thenReturn(3L);
+        doNothing().when(postImageRepository).deleteByPostId(any());
 
         when(tagRepository.save(any()))
-                .thenReturn(tagList.get(0))
-                .thenReturn(tagList.get(1))
-                .thenReturn(tagList.get(2));
+                .thenReturn(createTag(post, tagStrList.get(0)))
+                .thenReturn(createTag(post, tagStrList.get(1)))
+                .thenReturn(createTag(post, tagStrList.get(2)));
 
         when(postImageRepository.save(any()))
-                .thenReturn(postImageList.get(0))
-                .thenReturn(postImageList.get(1));
+                .thenReturn(createPostImage(postImgStrList.get(0), post))
+                .thenReturn(createPostImage(postImgStrList.get(1), post))
+                .thenReturn(createPostImage(postImgStrList.get(2), post));
 
         when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
 
-        PostEditRespDto result = new PostEditRespDto(post, tagList, postImageList, likeCnt);
+        PostWriteReqDto postWriteReqDto = new PostWriteReqDto(editContent, tagStrList, postImgStrList);
+
 
         //when
-        PostEditRespDto respDto = postService.editPost(member, post.getId(), postWriteReqDto);
+        PostEditRespDto result = postService.editPost(member, post.getId(), postWriteReqDto);
+
+        post.setContent(editContent);
+        PostEditRespDto expected = new PostEditRespDto(post, tagList, postImageList, likeCnt);
 
         //then
-        verify(tagRepository, times(1)).deleteByPostId(any());
-        verify(postImageRepository, times(1)).deleteByPostId(any());
-        assertThat(respDto).isEqualTo(result);
+        assertThat(result).isEqualTo(expected);
     }
-
+    
+    @DisplayName("좋아요 하지 않은 게시글 좋아요")
     @Test
-    @DisplayName("권한 없는 게시글 수정 테스트")
-    public void editNotOwnPostTest() throws Exception {
+    public void 게시글_좋아요() throws Exception {
         //given
-        Member postMember = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Post post = createPost(member, content);
+        post.setId(1L);
+
+        Long likeCnt = 5L;
+
         when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
+        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.empty());
+        when(postLikeRepository.countByPostId(any())).thenReturn(likeCnt);
 
         //when
+        Long result = postService.like(member, post.getId());
+
         //then
-        assertThrows(CustomException.class, () -> postService.editPost(postMember, post.getId(), postWriteReqDto));
+        assertThat(result).isEqualTo(likeCnt);
     }
 
+    @DisplayName("이미 좋아요 한 게시글 좋아요")
     @Test
-    @DisplayName("없는 게시글 수정 테스트")
-    public void editNotFoundPostTest() throws Exception {
+    public void 이미_좋아요_한_게시글_좋아요() throws Exception {
         //given
-        when(postRepository.findById(any())).thenReturn(Optional.empty());
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Post post = createPost(member, content);
+        PostLike postLike = createPostLike(member, post);
+        post.setId(1L);
+
+        Long likeCnt = 5L;
+
+        Long expected = likeCnt - 1;
+        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
+        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.of(postLike));
+        when(postLikeRepository.deleteByPostIdAndMemberId(any(), any())).thenReturn(expected);
+        when(postLikeRepository.countByPostId(any())).thenReturn(expected);
 
         //when
-        //then
-        assertThrows(CustomException.class, () -> postService.editPost(member, post.getId(), postWriteReqDto));
-    }
-
-    @Test
-    @DisplayName("로그인 하지 않고 게시글 전체 조회 테스트")
-    public void retrieveAllPostTest() throws Exception {
-        //given
-        PageRequest pageRequest = PageRequest.of(0, 10);
-
-        List<String> tags1 = Arrays.asList("사진1", "내새끼1", "장난감1");
-        List<String> tags2 = Arrays.asList("사진2", "내새끼2", "장난감2");
-        List<String> tags3 = Arrays.asList("사진3", "내새끼3", "장난감3");
-
-        List<String> imgUrls1 = Arrays.asList("www.방울이귀엽죠?.com1", "www.qkddnfdlrnlduqwy.com1");
-        List<String> imgUrls2 = Arrays.asList("www.방울이귀엽죠?.com2", "www.qkddnfdlrnlduqwy.com2");
-        List<String> imgUrls3 = Arrays.asList("www.방울이귀엽죠?.com3", "www.qkddnfdlrnlduqwy.com3");
-
-        PostWriteReqDto writeReqDto1 = createPostWriteReqDto("게시글1", tags1, imgUrls1);
-        PostWriteReqDto writeReqDto2 = createPostWriteReqDto("게시글2", tags2, imgUrls2);
-        PostWriteReqDto writeReqDto3 = createPostWriteReqDto("게시글3", tags3, imgUrls3);
-
-        List<PostWriteReqDto> writeReqDtoList = Arrays.asList(writeReqDto1, writeReqDto2, writeReqDto3);
-
-        List<Post> postList = createPostList(writeReqDtoList);
-
-        PostLike postLike1 = new PostLike(id++, postList.get(0), createMember(uid, email, name, nickname, imgUrl, introduce));
-        PostLike postLike2 = new PostLike(id++, postList.get(1), createMember(uid, email, name, nickname, imgUrl, introduce));
-        PostLike postLike3 = new PostLike(id++, postList.get(2), createMember(uid, email, name, nickname, imgUrl, introduce));
-
-        SliceImpl<Post> postSlice = new SliceImpl<>(postList, pageRequest, false);
-
-        List<Tag> allTagList = addAllTagList(tags1, tags2, tags3, postList);
-        List<PostImage> allPostImageList = addAllPostImageList(imgUrls1, imgUrls2, imgUrls3, postList);
-        List<PostLike> allPostLikeList = Arrays.asList(postLike1, postLike2, postLike3);
-
-        when(postRepository.findAllSlicing(any())).thenReturn(postSlice);
-        when(tagRepository.findTagsByPostIds(any())).thenReturn(allTagList);
-        when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(allPostImageList);
-        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(allPostLikeList);
-
-        Slice<PostRetrieveRespDto> result = postSlice.map(post -> {
-            List<Tag> tags = getTagsByPost(allTagList, post);
-            List<PostImage> postImages = getPostImagesByPost(allPostImageList, post);
-            List<PostLike> postLikes = getPostsLikeByPost(allPostLikeList, post);
-
-            return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()), null);
-        });
-
-
-        //when
-        Slice<PostRetrieveRespDto> respDtoPage = postService.localRetrieveAll(pageRequest, Optional.empty(),Optional.empty());
+        Long result = postService.like(member, post.getId());
 
         //then
-        assertThat(respDtoPage).isEqualTo(result);
-    }
-
-    @Test
-    @DisplayName("로그인 한 상태에서 게시글 전체 조회 테스트")
-    public void retrieveAllPostLoginTest() throws Exception {
-        //given
-        PageRequest pageRequest = PageRequest.of(0, 10);
-
-        List<String> tags1 = Arrays.asList("사진1", "내새끼1", "장난감1");
-        List<String> tags2 = Arrays.asList("사진2", "내새끼2", "장난감2");
-        List<String> tags3 = Arrays.asList("사진3", "내새끼3", "장난감3");
-
-        List<String> imgUrls1 = Arrays.asList("www.방울이귀엽죠?.com1", "www.qkddnfdlrnlduqwy.com1");
-        List<String> imgUrls2 = Arrays.asList("www.방울이귀엽죠?.com2", "www.qkddnfdlrnlduqwy.com2");
-        List<String> imgUrls3 = Arrays.asList("www.방울이귀엽죠?.com3", "www.qkddnfdlrnlduqwy.com3");
-
-        PostWriteReqDto writeReqDto1 = createPostWriteReqDto("게시글1", tags1, imgUrls1);
-        PostWriteReqDto writeReqDto2 = createPostWriteReqDto("게시글2", tags2, imgUrls2);
-        PostWriteReqDto writeReqDto3 = createPostWriteReqDto("게시글3", tags3, imgUrls3);
-
-        List<PostWriteReqDto> writeReqDtoList = Arrays.asList(writeReqDto1, writeReqDto2, writeReqDto3);
-
-        List<Post> postList = createPostList(writeReqDtoList);
-
-        PostLike postLike1 = new PostLike(id++, postList.get(0), member);
-        PostLike postLike2 = new PostLike(id++, postList.get(1), member);
-        PostLike postLike3 = new PostLike(id++, postList.get(2), member);
-
-        SliceImpl<Post> postSlice = new SliceImpl<>(postList, pageRequest, false);
-
-        List<Tag> allTagList = addAllTagList(tags1, tags2, tags3, postList);
-        List<PostImage> allPostImageList = addAllPostImageList(imgUrls1, imgUrls2, imgUrls3, postList);
-        List<PostLike> allPostLikeList = Arrays.asList(postLike1, postLike2, postLike3);
-
-        when(postRepository.findAllSlicing(any())).thenReturn(postSlice);
-        when(tagRepository.findTagsByPostIds(any())).thenReturn(allTagList);
-        when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(allPostImageList);
-        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(allPostLikeList);
-        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
-
-        Slice<PostRetrieveRespDto> result = postSlice.map(post -> {
-            List<Tag> tags = getTagsByPost(allTagList, post);
-            List<PostImage> postImages = getPostImagesByPost(allPostImageList, post);
-            List<PostLike> postLikes = getPostsLikeByPost(allPostLikeList, post);
-
-            return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()), isMemberLikedPostInPostLikeList(post.getMember(), postLikes));
-        });
-
-        //when
-        Slice<PostRetrieveRespDto> respDtoSlice = postService.localRetrieveAll(pageRequest, Optional.empty(), Optional.ofNullable(member.getUid()));
-
-        //then
-        assertThat(respDtoSlice).isEqualTo(result);
-    }
-
-    @Test
-    public void retrieveMemberPostTest() throws Exception {
-        //given
-        PageRequest pageRequest = PageRequest.of(0, 10);
-
-        List<String> tags1 = Arrays.asList("사진1", "내새끼1", "장난감1");
-        List<String> tags2 = Arrays.asList("사진2", "내새끼2", "장난감2");
-        List<String> tags3 = Arrays.asList("사진3", "내새끼3", "장난감3");
-
-        List<String> imgUrls1 = Arrays.asList("www.방울이귀엽죠?.com1", "www.qkddnfdlrnlduqwy.com1");
-        List<String> imgUrls2 = Arrays.asList("www.방울이귀엽죠?.com2", "www.qkddnfdlrnlduqwy.com2");
-        List<String> imgUrls3 = Arrays.asList("www.방울이귀엽죠?.com3", "www.qkddnfdlrnlduqwy.com3");
-
-        PostWriteReqDto writeReqDto1 = createPostWriteReqDto("게시글1", tags1, imgUrls1);
-        PostWriteReqDto writeReqDto2 = createPostWriteReqDto("게시글2", tags2, imgUrls2);
-        PostWriteReqDto writeReqDto3 = createPostWriteReqDto("게시글3", tags3, imgUrls3);
-
-        List<PostWriteReqDto> writeReqDtoList = Arrays.asList(writeReqDto1, writeReqDto2, writeReqDto3);
-
-        List<Post> postList = createPostList(writeReqDtoList);
-
-        PostLike postLike1 = new PostLike(id++, postList.get(0), member);
-        PostLike postLike2 = new PostLike(id++, postList.get(1), member);
-        PostLike postLike3 = new PostLike(id++, postList.get(2), member);
-
-        SliceImpl<Post> postSlice = new SliceImpl<>(postList, pageRequest, false);
-
-        List<Tag> allTagList = addAllTagList(tags1, tags2, tags3, postList);
-        List<PostImage> allPostImageList = addAllPostImageList(imgUrls1, imgUrls2, imgUrls3, postList);
-        List<PostLike> allPostLikeList = Arrays.asList(postLike1, postLike2, postLike3);
-
-        when(postRepository.findAllByMemberIdSlicing(any(), any())).thenReturn(postSlice);
-        when(tagRepository.findTagsByPostIds(any())).thenReturn(allTagList);
-        when(postImageRepository.findPostImagesByPostIds(any())).thenReturn(allPostImageList);
-        when(postLikeRepository.findPostLikesByPostIds(any())).thenReturn(allPostLikeList);
-        when(userDetailsService.loadUserByUsername(any())).thenReturn(member);
-
-        Slice<PostRetrieveRespDto> result = postSlice.map(post -> {
-            List<Tag> tags = getTagsByPost(allTagList, post);
-            List<PostImage> postImages = getPostImagesByPost(allPostImageList, post);
-            List<PostLike> postLikes = getPostsLikeByPost(allPostLikeList, post);
-
-            return new PostRetrieveRespDto(post, tags, postImages, Long.valueOf(postLikes.size()), isMemberLikedPostInPostLikeList(post.getMember(), postLikes));
-        });
-
-        //when
-        Slice<PostRetrieveRespDto> respDtoSlice = postService.retrieveMemberPost(member, pageRequest, member.getUid());
-
-        //then
-        assertThat(respDtoSlice).isEqualTo(result);
+        assertThat(result).isEqualTo(expected);
     }
 
 
@@ -414,206 +555,64 @@ class PostServiceTest {
         return flag;
     }
 
-    @Test
-    @DisplayName("중복 게시글 좋아요")
-    public void duplicateLikePostTest() throws Exception {
-        //given
-        long result = 1L;
 
-        PostLike postLike = new PostLike(id++, post, member);
-
-        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.ofNullable(postLike));
-        doNothing().when(postLikeRepository).deleteByPostIdAndMemberId(any(), any());
-        when(postLikeRepository.countByPostId(any())).thenReturn(--result);
-
-        //when
-        Long likeCnt = postService.like(member, post.getId());
-
-        //then
-        assertThat(likeCnt).isEqualTo(0L);
-        verify(postLikeRepository, times(1)).deleteByPostIdAndMemberId(any(), any());
-    }
-
-    @Test
-    @DisplayName("게시글 좋아요")
-    public void likePostTest() throws Exception {
-        //given
-        Long result = 0L;
-
-        PostLike postLike = new PostLike(id++, post, member);
-
-        when(postLikeRepository.findPostLikeByPostIdAndMemberId(any(), any())).thenReturn(Optional.empty());
-        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
-        when(postLikeRepository.save(any())).thenReturn(postLike);
-        when(postLikeRepository.countByPostId(any())).thenReturn(++result);
-
-        //when
-        Long likeCnt = postService.like(member, post.getId());
-
-        //then
-        assertThat(likeCnt).isEqualTo(1L);
-
-    }
-
-    @Test
-    @DisplayName("없는 게시글 좋아요 테스트")
-    public void deleteNotOwnPostTest() throws Exception {
-        //given
-        when(postRepository.findById(any())).thenReturn(Optional.empty());
-
-        //when
-        //then
-        assertThrows(CustomException.class, () -> postService.like(member, post.getId()));
-    }
-
-    @Test
-    @DisplayName("게시글 삭제 테스트")
-    public void deletePostTest() throws Exception {
-        //given
-        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
-
-        doNothing().when(tagRepository).deleteByPostId(any());
-        doNothing().when(postImageRepository).deleteByPostId(any());
-        doNothing().when(postLikeRepository).deleteByPostId(any());
-        doNothing().when(postRepository).deleteById(any());
-
-        //when
-        postService.delete(member, post.getId());
-
-        //then
-        verify(tagRepository, times(1)).deleteByPostId(any());
-        verify(postImageRepository, times(1)).deleteByPostId(any());
-        verify(postLikeRepository, times(1)).deleteByPostId(any());
-        verify(postRepository, times(1)).deleteById(any());
-    }
-
-    @Test
-    @DisplayName("권한 없는 게시글 삭제 테스트")
-    public void deleteNoAuthorizationPostTest() throws Exception {
-        //given
-        Member postMember = createMember(uid, email, name, nickname, imgUrl, introduce);
-        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
-
-        //when
-        //then
-        assertThrows(CustomException.class, () -> postService.delete(postMember, post.getId()));
-    }
-
-    @Test
-    @DisplayName("북마크하지 않은 게시글 북마크 테스트")
-    public void bookmarkPost() throws Exception {
-        //given
-        PostBookmark postBookMark = createPostBookMark();
-        when(postBookmarkRepository.findByMemberIdAndPostId(any(), any())).thenReturn(Optional.empty());
-        when(postRepository.findById(any())).thenReturn(Optional.ofNullable(post));
-        when(postBookmarkRepository.save(any())).thenReturn(postBookMark);
-
-
-        //when
-        postService.bookmark(member, post.getId());
-        //then
-        verify(postBookmarkRepository, times(1)).save(any());
-    }
-    
-    @Test
-    @DisplayName("북마크한 게시글 북마크 취소 테스트")
-    public void deleteBookmarkPost() throws Exception {
-        //given
-        PostBookmark postBookMark = createPostBookMark();
-        when(postBookmarkRepository.findByMemberIdAndPostId(any(), any())).thenReturn(Optional.ofNullable(postBookMark));
-        doNothing().when(postBookmarkRepository).deleteByMemberIdAndPostId(any(), any());
-
-        //when
-        postService.deleteBookmark(member, post.getId());
-
-        //then
-        verify(postBookmarkRepository, times(1)).deleteByMemberIdAndPostId(any(), any());
-
-    }
-
-    @Test
-    @DisplayName("북마크하지 않은 게시글 북마크 취소 테스트")
-    public void deleteNeverBookmarkPost() throws Exception {
-        //given
-        when(postBookmarkRepository.findByMemberIdAndPostId(any(), any())).thenReturn(Optional.empty());
-        //when
-        assertThrows(CustomException.class, () -> postService.deleteBookmark(member, post.getId()));
-
-    }
-
-    private PostBookmark createPostBookMark() {
-        return PostBookmark.builder()
-                .id(id++)
-                .member(member)
-                .post(post)
-                .build();
-    }
-
-    private List<PostLike> getPostsLikeByPost(List<PostLike> allPostLikeList, Post post) {
-        List<PostLike> postLikes = new ArrayList<>();
-        for (PostLike postLike : allPostLikeList) {
-            if (postLike.getPost() == post) {
-                postLikes.add(postLike);
+    private List<Tag> getTagListByPost(List<Tag> findTagList, Post post) {
+        List<Tag> tagList = new ArrayList<>();
+        for (Tag tag : findTagList) {
+            if (tag.getPost() == post) {
+                tagList.add(tag);
             }
         }
-        return postLikes;
-    }
-
-    private List<PostImage> addAllPostImageList(List<String> imgUrls1, List<String> imgUrls2, List<String> imgUrls3, List<Post> postList) {
-        List<PostImage> postImageList = new ArrayList<>();
-        postImageList.addAll(createPostImageList(imgUrls1, postList.get(0)));
-        postImageList.addAll(createPostImageList(imgUrls2, postList.get(1)));
-        postImageList.addAll(createPostImageList(imgUrls3, postList.get(2)));
-        return postImageList;
-    }
-
-    private List<Tag> addAllTagList(List<String> tags1, List<String> tags2, List<String> tags3, List<Post> postList) {
-        List<Tag> tagList = new ArrayList<>();
-        tagList.addAll(createTagList(tags1, postList.get(0)));
-        tagList.addAll(createTagList(tags2, postList.get(1)));
-        tagList.addAll(createTagList(tags3, postList.get(2)));
         return tagList;
     }
 
-    private List<PostImage> getPostImagesByPost(List<PostImage> postImageList, Post post) {
-        List<PostImage> posts = new ArrayList<>();
-        for (PostImage postImage : postImageList) {
+    private List<PostImage> getPostImageListByPost(List<PostImage> findPostImageList, Post post) {
+        List<PostImage> postImageList = new ArrayList<>();
+        for (PostImage postImage : findPostImageList) {
             if (postImage.getPost() == post) {
-                posts.add(postImage);
+                postImageList.add(postImage);
             }
         }
-        return posts;
+        return postImageList;
     }
 
-    private List<Tag> getTagsByPost(List<Tag> tagList, Post post) {
-        List<Tag> tags = new ArrayList<>();
-        for (Tag tag : tagList) {
-            if (tag.getPost() == post) {
-                tags.add(tag);
+    private List<Comment> getCommentListByPost(List<Comment> findComment, Post post) {
+        List<Comment> commentList = new ArrayList<>();
+        for (Comment comment : findComment) {
+            if (comment.getPost() == post) {
+                commentList.add(comment);
             }
         }
-        return tags;
+        return commentList;
     }
 
-    private List<Post> createPostList(List<PostWriteReqDto> writeReqDtoList) {
-        List<Post> postList = new ArrayList<>();
-        for (PostWriteReqDto writeReqDto : writeReqDtoList) {
-            postList.add(createPost(member, writeReqDto.getContent()));
+    private List<PostLike> getPostLikeListByPost(List<PostLike> findPostLikeList, Post post) {
+        List<PostLike> postLikeList = new ArrayList<>();
+        for (PostLike postLike : findPostLikeList) {
+            if (postLike.getPost() == post) {
+                postLikeList.add(postLike);
+            }
         }
-        return postList;
+        return postLikeList;
     }
 
-    private Post createPost(Member member, String content) {
-        return Post.builder()
-                .id(id++)
-                .member(member)
+    private Comment createComment(Member member, Post post1) {
+        return Comment.builder()
                 .content(content)
+                .member(member)
+                .post(post1)
+                .build();
+    }
+
+    private Tag createTag(Post post, String tagName) {
+        return Tag.builder()
+                .post(post)
+                .tag(tagName)
                 .build();
     }
 
     private Member createMember(String uid, String email, String name, String nickname, String imgUrl, String introduce) {
         return Member.builder()
-                .id(id++)
                 .uid(uid)
                 .email(email)
                 .name(name)
@@ -623,46 +622,33 @@ class PostServiceTest {
                 .build();
     }
 
-    public List<Tag> createTagList(List<String> tags, Post post) {
-        List<Tag> tagList = new ArrayList<>();
-
-        for (String t : tags) {
-            tagList.add((createTag(post, t)));
-        }
-        return tagList;
-    }
-
-    private Tag createTag(Post post, String t) {
-        return Tag.builder()
-                .id(id++)
-                .post(post)
-                .tag(t)
+    private Post createPost(Member member, String content) {
+        return Post.builder()
+                .member(member)
+                .content(content)
                 .build();
     }
 
-    private List<PostLike> createPostLikeList() {
-        return Arrays.asList(new PostLike(id++, post, member), new PostLike(id++, post, member), new PostLike(id++, post, member));
-    }
-
-    private PostWriteReqDto createPostWriteReqDto(String content, List<String> tags, List<String> imgUrls) {
-        return new PostWriteReqDto(content, tags, imgUrls);
-    }
-
-    private PostImage createPostImage(Post post, String url) {
-        return PostImage.builder()
-                .id(id++)
+    private PostLike createPostLike(Member member, Post post) {
+        return PostLike.builder()
+                .member(member)
                 .post(post)
-                .imgUrl(url)
                 .build();
     }
 
-    public List<PostImage> createPostImageList(List<String> urls, Post post) {
-        List<PostImage> postImageList = new ArrayList<>();
-
-        for (String url : urls) {
-            postImageList.add((createPostImage(post, url)));
-        }
-        return postImageList;
+    private PostImage createPostImage(String postImgUrl, Post post) {
+        return PostImage
+                .builder()
+                .post(post)
+                .imgUrl(postImgUrl)
+                .build();
     }
 
+    private PostBookmark createPostBookmark(Post post, Member member) {
+
+        return PostBookmark.builder()
+                .post(post)
+                .member(member)
+                .build();
+    }
 }

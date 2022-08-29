@@ -18,6 +18,7 @@ import javax.persistence.EntityManagerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -90,7 +91,7 @@ class PostRepositoryTest extends BaseControllerTest {
         }
 
         //when
-        Slice<Post> postSlice = postRepository.findAllSlicing(pageRequest);
+        Slice<Post> postSlice = postRepository.findAllSlicing(pageRequest, Optional.empty());
 
         //then
         assertThat(postSlice.getSize()).isEqualTo(size);
