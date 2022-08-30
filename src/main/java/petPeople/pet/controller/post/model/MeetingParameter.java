@@ -1,14 +1,12 @@
 package petPeople.pet.controller.post.model;
 
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @NoArgsConstructor
 @Getter @Setter
+@Builder
 public class MeetingParameter {
 
     @ApiModelProperty(required = true, value = "도시", example = "서울, 경기도 등")
@@ -19,4 +17,11 @@ public class MeetingParameter {
     private String content;
     @ApiModelProperty(required = true, value = "모임장 닉네임", example = "nickname")
     private String meetingHost;
+
+    public MeetingParameter(String dosi, String isOpened, String content, String meetingHost) {
+        this.dosi = dosi;
+        this.isOpened = isOpened;
+        this.content = content;
+        this.meetingHost = meetingHost;
+    }
 }

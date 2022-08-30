@@ -1,22 +1,21 @@
 package petPeople.pet.domain.meeting.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import petPeople.pet.controller.comment.dto.req.CommentWriteReqDto;
 import petPeople.pet.controller.meeting.dto.req.MeetingCommentWriteReqDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCommentRetrieveRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCommentRetrieveWithCountRespDto;
 import petPeople.pet.controller.meeting.dto.resp.MeetingCommentWriteRespDto;
-import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.meeting.entity.*;
-import petPeople.pet.domain.meeting.repository.*;
+import petPeople.pet.domain.meeting.repository.meeting.MeetingRepository;
+import petPeople.pet.domain.meeting.repository.meeting_comment.MeetingCommentRepository;
+import petPeople.pet.domain.meeting.repository.meeting_comment_like.MeetingCommentLikeRepository;
+import petPeople.pet.domain.meeting.repository.meeting_member.MeetingMemberRepository;
+import petPeople.pet.domain.meeting.repository.meeting_post.MeetingPostRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
-import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 

@@ -6,14 +6,14 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import petPeople.pet.controller.member.dto.resp.notificationResp.*;
-import petPeople.pet.domain.meeting.entity.JoinRequestStatus;
+import petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus;
 import petPeople.pet.domain.meeting.entity.MeetingPostImage;
-import petPeople.pet.domain.meeting.repository.MeetingPostImageRepository;
+import petPeople.pet.domain.meeting.repository.meeting_post_Image.MeetingPostImageRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.notification.entity.Notification;
 import petPeople.pet.domain.notification.repository.NotificationRepository;
 import petPeople.pet.domain.post.entity.PostImage;
-import petPeople.pet.domain.post.repository.PostImageRepository;
+import petPeople.pet.domain.post.repository.post_image.PostImageRepository;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 

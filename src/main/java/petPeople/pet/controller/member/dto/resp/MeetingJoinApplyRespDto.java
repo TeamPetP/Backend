@@ -2,15 +2,9 @@ package petPeople.pet.controller.member.dto.resp;
 
 import io.swagger.annotations.ApiModel;
 import lombok.*;
-import petPeople.pet.domain.meeting.entity.Category;
-import petPeople.pet.domain.meeting.entity.MeetingType;
 import petPeople.pet.domain.meeting.entity.MeetingWaitingMember;
-import petPeople.pet.domain.meeting.entity.Sex;
 import petPeople.pet.domain.member.entity.Member;
 
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

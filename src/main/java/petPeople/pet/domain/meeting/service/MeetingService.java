@@ -20,7 +20,13 @@ import petPeople.pet.controller.meeting.dto.resp.MeetingRetrieveRespDto;
 import petPeople.pet.controller.member.dto.resp.MemberMeetingBookMarkRespDto;
 import petPeople.pet.controller.post.model.MeetingParameter;
 import petPeople.pet.domain.meeting.entity.*;
-import petPeople.pet.domain.meeting.repository.*;
+import petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus;
+import petPeople.pet.domain.meeting.repository.meeting.MeetingRepository;
+import petPeople.pet.domain.meeting.repository.meeting_bookmark.MeetingBookmarkRepository;
+import petPeople.pet.domain.meeting.repository.meeting_image.MeetingImageRepository;
+import petPeople.pet.domain.meeting.repository.meeting_member.MeetingMemberRepository;
+import petPeople.pet.domain.meeting.repository.meeting_post_Image.MeetingPostImageRepository;
+import petPeople.pet.domain.meeting.repository.meeting_waiting_member.MeetingWaitingMemberRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.notification.entity.Notification;
@@ -29,7 +35,6 @@ import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
 import petPeople.pet.util.RequestUtil;
 
-import javax.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -40,17 +45,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MeetingService {
+
     private final MeetingRepository meetingRepository;
     private final MeetingPostImageRepository meetingPostImageRepository;
     private final MeetingImageRepository meetingImageRepository;
     private final MeetingMemberRepository meetingMemberRepository;
-    private final MeetingImageFileRepository meetingImageFileRepository;
     private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
     private final MeetingBookmarkRepository meetingBookmarkRepository;
     private final MemberRepository memberRepository;
     private final FirebaseAuth firebaseAuth;
     private final NotificationRepository notificationRepository;
-    private final EntityManager em;
 
     @Transactional
     public MeetingCreateRespDto create(Member member, MeetingCreateReqDto meetingCreateReqDto) {
@@ -379,7 +383,7 @@ public class MeetingService {
     }
 
     private Slice<MeetingBookmark> findPostBookmarkByMemberId(Member member, Pageable pageable) {
-        return meetingBookmarkRepository.findByMemberIdWithFetchJoinMeeting(member.getId(), pageable);
+        return meetingBookmarkRepository.findByMemberIdWithFetchJoinMeetingSlicing(member.getId(), pageable);
     }
 
     @Transactional
@@ -653,21 +657,11 @@ public class MeetingService {
         return meetingImageRepository.save(meetingImage);
     }
 
-    private MeetingImageFile saveMeetingImageFile(MeetingImageFile meetingImageFile) {
-        return meetingImageFileRepository.save(meetingImageFile);
-    }
 
     private MeetingImage createMeetingImage(Meeting meeting, String url) {
         return MeetingImage.builder()
                 .meeting(meeting)
                 .imgUrl(url)
-                .build();
-    }
-
-    private MeetingImageFile createMeetingImageFile(Meeting meeting, String url) {
-        return MeetingImageFile.builder()
-                .meeting(meeting)
-                .imgFileUrl(url)
                 .build();
     }
 

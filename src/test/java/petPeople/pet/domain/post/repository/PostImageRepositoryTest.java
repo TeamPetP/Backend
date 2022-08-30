@@ -1,6 +1,5 @@
 package petPeople.pet.domain.post.repository;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,13 +8,14 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostImage;
+import petPeople.pet.domain.post.repository.post.PostRepository;
+import petPeople.pet.domain.post.repository.post_image.PostImageRepository;
 
 import javax.persistence.EntityManagerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 class PostImageRepositoryTest extends BaseControllerTest {
 
@@ -29,19 +29,19 @@ class PostImageRepositoryTest extends BaseControllerTest {
     @Autowired
     MemberRepository memberRepository;
 
+    final String uid = "abcd";
+    final String email = "issiscv@naver.com";
+    final String name = "김상운";
+    final String nickname = "balladang";
+    final String imgUrl = "www.imgurl.com";
+    final String introduce = "잘지내요 우리";
+
+    final String content = "강아지 좋아해요";
+
     @DisplayName("post id 로 postImage 삭제")
     @Test
     public void deleteByPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
-
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
         Post post = createPost(member, content);
 
@@ -65,15 +65,6 @@ class PostImageRepositoryTest extends BaseControllerTest {
     @Test
     public void findPostImagesByPostIdsTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
-
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
 
         Post post1 = createPost(member, content);
@@ -99,7 +90,7 @@ class PostImageRepositoryTest extends BaseControllerTest {
         }
 
         for (int i = 1; i <= 3; i++) {
-            postImageRepository.save(createPostImage(imgUrl + i, post3));
+            postImageRepository.save(createPostImage(imgUrl + i, savePost3));
         }
 
         //when
@@ -113,16 +104,6 @@ class PostImageRepositoryTest extends BaseControllerTest {
     @Test
     public void findByPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지 좋아해요";
-
-
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
         Post post = createPost(member, content);
 

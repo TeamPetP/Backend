@@ -11,6 +11,8 @@ import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
 import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.entity.PostBookmark;
+import petPeople.pet.domain.post.repository.post.PostRepository;
+import petPeople.pet.domain.post.repository.post_bookmark.PostBookmarkRepository;
 
 import javax.persistence.EntityManagerFactory;
 import java.util.ArrayList;
@@ -30,19 +32,19 @@ class PostBookmarkRepositoryTest extends BaseControllerTest {
     @Autowired
     PostBookmarkRepository postBookmarkRepository;
 
+    final String uid = "abcd";
+    final String email = "issiscv@naver.com";
+    final String name = "김상운";
+    final String nickname = "balladang";
+    final String imgUrl = "www.imgurl.com";
+    final String introduce = "잘지내요 우리";
+
+    final String content = "강아지를 사랑합니다.";
+
     @DisplayName("회원과 게시글의 id 로 북마크 조회")
     @Test
     public void findByMemberIdAndPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지를 사랑합니다.";
-
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
         Post post = createPost(member, content);
         Member otherMember = createMember(uid + 1, email + 1, name + 1, nickname + 1, imgUrl + 1, introduce + 1);
@@ -69,15 +71,6 @@ class PostBookmarkRepositoryTest extends BaseControllerTest {
     @Test
     public void notFoundByMemberIdAndPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지를 사랑합니다.";
-
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
         Post post = createPost(member, content);
 
@@ -97,15 +90,6 @@ class PostBookmarkRepositoryTest extends BaseControllerTest {
     @Test
     public void deleteByMemberIdAndPostIdTest() throws Exception {
         //given
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지를 사랑합니다.";
-
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
         Post post = createPost(member, content);
         Member otherMember = createMember(uid + 1, email + 1, name + 1, nickname + 1, imgUrl + 1, introduce + 1);
@@ -135,15 +119,6 @@ class PostBookmarkRepositoryTest extends BaseControllerTest {
         //given
         int size = 5;
         PageRequest pageRequest = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdDate"));
-
-        String uid = "abcd";
-        String email = "issiscv@naver.com";
-        String name = "김상운";
-        String nickname = "balladang";
-        String imgUrl = "www.imgurl.com";
-        String introduce = "잘지내요 우리";
-
-        String content = "강아지를 사랑합니다.";
 
         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
         Member otherMember = createMember(uid, email, name, nickname, imgUrl, introduce);
