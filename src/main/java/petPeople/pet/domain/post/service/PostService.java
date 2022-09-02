@@ -182,13 +182,24 @@ public class PostService {
         deleteNotificationByMemberIdAndPostId(member, postId);
 
         for (Comment comment : findCommentList) {
-            deleteCommentLikeByCommentId(comment);
-            deleteNotificationByMemberIdAndCommentId(member, comment);
+            deleteCommentLikeByCommentId(comment.getId());
+            deleteNotificationByMemberIdAndCommentId(member.getId(), comment.getId());
             deleteNotification(member, comment);
         }
 
         findCommentList = findByCommentByPostId(postId);
 
+        deleteCommentWithChildComment(postId, getChildCommentIds(findCommentList));
+
+        deletePostByPostId(postId);
+    }
+
+    private void deleteCommentWithChildComment(Long postId, List<Long> childCommentIds) {
+        commentRepository.deleteByCommentIds(childCommentIds);
+        commentRepository.deleteCommentByPostId(postId);
+    }
+
+    private List<Long> getChildCommentIds(List<Comment> findCommentList) {
         List<Long> childCommentIds = new ArrayList<>();
         for (Comment comment : findCommentList) {
             List<Comment> child = comment.getChild();
@@ -196,11 +207,7 @@ public class PostService {
                 childCommentIds.add(childComment.getId());
             }
         }
-
-        commentRepository.deleteByCommentIds(childCommentIds);
-        commentRepository.deleteCommentByPostId(postId);
-
-        deletePostByPostId(postId);
+        return childCommentIds;
     }
 
     public Slice<PostRetrieveRespDto> retrieveMemberLikedPost(Member member, Pageable pageable) {
@@ -225,12 +232,12 @@ public class PostService {
         notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), comment.getId());
     }
 
-    private void deleteNotificationByMemberIdAndCommentId(Member member, Comment comment) {
-        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), comment.getId());
+    private void deleteNotificationByMemberIdAndCommentId(Long memberId, Long commentId) {
+        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(memberId, commentId);
     }
 
-    private void deleteCommentLikeByCommentId(Comment comment) {
-        commentLikeRepository.deleteByCommentId(comment.getId());
+    private void deleteCommentLikeByCommentId(Long id) {
+        commentLikeRepository.deleteByCommentId(id);
     }
 
     private List<Comment> findByCommentByPostId(Long postId) {
