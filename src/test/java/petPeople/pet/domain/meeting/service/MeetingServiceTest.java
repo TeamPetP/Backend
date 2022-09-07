@@ -1,6 +1,6 @@
 package petPeople.pet.domain.meeting.service;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +20,7 @@ import petPeople.pet.domain.meeting.entity.*;
 import petPeople.pet.domain.meeting.entity.vo.Category;
 import petPeople.pet.domain.meeting.entity.vo.MeetingType;
 import petPeople.pet.domain.meeting.entity.vo.Sex;
+import petPeople.pet.domain.meeting.repository.meeting_bookmark.MeetingBookmarkRepository;
 import petPeople.pet.domain.meeting.repository.meeting_image.MeetingImageRepository;
 import petPeople.pet.domain.meeting.repository.meeting_member.MeetingMemberRepository;
 import petPeople.pet.domain.meeting.repository.meeting.MeetingRepository;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -54,23 +54,10 @@ class MeetingServiceTest {
     final Category category = Category.WALK;
     final String conditions = "탈모아닌사람만";
     final Integer maxPeople = 5;
-    final List<String> imgUrlList = Arrays.asList("www.abc.com", "www.abc.com", "www.abc.com", "www.abc.com");
     final String period = "주 2회";
-    final String 올림픽_공원 = "올림픽 공원";
-    final MeetingType meetingType =MeetingType.REGULAR;
+    final String location = "올림픽 공원";
+    final MeetingType meetingType = MeetingType.REGULAR;
 
-
-    Long id;
-    Member member;
-    Meeting meeting;
-
-
-    @BeforeEach
-    void beforeEach() {
-        id = 1L;
-        member = createMember(uid, email, name, nickname, imgUrl, introduce);
-        meeting = createMeeting();
-    }
 
     @Mock
     MeetingRepository meetingRepository;
@@ -79,6 +66,8 @@ class MeetingServiceTest {
     MeetingImageRepository meetingImageRepository;
     @Mock
     MeetingMemberRepository meetingMemberRepository;
+    @Mock
+    MeetingBookmarkRepository meetingBookmarkRepository;
     @InjectMocks
     MeetingService meetingService;
 
@@ -86,12 +75,19 @@ class MeetingServiceTest {
     @DisplayName("미팅 생성 테스트")
     public void createMeetingTest() throws Exception {
 //        given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Meeting meeting = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+
         when(meetingRepository.save(any())).thenReturn(meeting);
-        when(meetingMemberRepository.save(any())).thenReturn(createMeetingMember());
-        MeetingImage meetingImage1 = new MeetingImage(++id, meeting, imgUrlList.get(0));
-        MeetingImage meetingImage2 = new MeetingImage(++id, meeting, imgUrlList.get(1));
-        MeetingImage meetingImage3 = new MeetingImage(++id, meeting, imgUrlList.get(2));
-        MeetingImage meetingImage4 = new MeetingImage(++id, meeting, imgUrlList.get(3));
+        when(meetingMemberRepository.save(any())).thenReturn(createMeetingMember(member, meeting));
+
+        List<String> imgUrlList = List.of("meetingImage1", "meetingImage2", "meetingImage3", "meetingImage4");
+
+        MeetingImage meetingImage1 = createMeetingImage(meeting, imgUrlList.get(0));
+        MeetingImage meetingImage2 = createMeetingImage(meeting, imgUrlList.get(1));
+        MeetingImage meetingImage3 = createMeetingImage(meeting, imgUrlList.get(2));
+        MeetingImage meetingImage4 = createMeetingImage(meeting, imgUrlList.get(3));
+
         when(meetingImageRepository.save(any()))
                 .thenReturn(meetingImage1)
                 .thenReturn(meetingImage2)
@@ -101,28 +97,32 @@ class MeetingServiceTest {
         List<MeetingImage> meetingImageList = Arrays.asList(meetingImage1, meetingImage2, meetingImage3, meetingImage4);
 
         MeetingCreateRespDto result = new MeetingCreateRespDto(meeting, meetingImageList);
+        MeetingCreateReqDto meetingCreateReqDto = createMeetingCreateReqDto(title, content, doName, sigungu, sex, category, conditions, maxPeople, imgUrlList);
 
         //when
-        MeetingCreateRespDto respDto = meetingService.create(member, createMeetingCreateReqDto());
+        MeetingCreateRespDto expected = meetingService.create(member, meetingCreateReqDto);
 
         //then
-        assertThat(respDto).isEqualTo(result);
+        assertThat(expected).isEqualTo(result);
     }
 
     @Test
     @DisplayName("미팅 단건 조회")
     public void retrieveMeetingTest() throws Exception {
         //given
-        MeetingImage meetingImage1 = new MeetingImage(++id, meeting, imgUrlList.get(0));
-        MeetingImage meetingImage2 = new MeetingImage(++id, meeting, imgUrlList.get(1));
-        MeetingImage meetingImage3 = new MeetingImage(++id, meeting, imgUrlList.get(2));
-        MeetingImage meetingImage4 = new MeetingImage(++id, meeting, imgUrlList.get(3));
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Meeting meeting = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+
+        MeetingImage meetingImage1 = createMeetingImage(meeting, "meetingImage1");
+        MeetingImage meetingImage2 = createMeetingImage(meeting, "meetingImage2");
+        MeetingImage meetingImage3 = createMeetingImage(meeting, "meetingImage3");
+        MeetingImage meetingImage4 = createMeetingImage(meeting, "meetingImage4");
 
         List<MeetingImage> meetingImageList = Arrays.asList(meetingImage1, meetingImage2, meetingImage3, meetingImage4);
 
-        MeetingMember meetingMember1 = new MeetingMember(++id, meeting, member);
-        MeetingMember meetingMember2 = new MeetingMember(++id, meeting, new Member());
-        MeetingMember meetingMember3 = new MeetingMember(++id, meeting, new Member());
+        MeetingMember meetingMember1 = createMeetingMember(member, meeting);
+        MeetingMember meetingMember2 = createMeetingMember(member, meeting);
+        MeetingMember meetingMember3 = createMeetingMember(member, meeting);
 
         List<MeetingMember> meetingMemberList = Arrays.asList(meetingMember1, meetingMember2, meetingMember3);
 
@@ -147,7 +147,7 @@ class MeetingServiceTest {
 
         //when
         //then
-        assertThrows(CustomException.class, () -> meetingService.localRetrieveOne(meeting.getId(), Optional.empty()));
+        Assertions.assertThrows(CustomException.class, () -> meetingService.localRetrieveOne(any(), Optional.empty()));
     }
 
     @Test
@@ -156,35 +156,19 @@ class MeetingServiceTest {
         //given
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Meeting meeting1 = Meeting.builder()
-                .id(++id)
-                .member(member)
-                .category(Category.AMITY)
-                .meetingType(MeetingType.ONCE)
-                .sex(Sex.ALL)
-                .build();
-        List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
-        List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
 
-        Meeting meeting2 = Meeting.builder()
-                .id(++id)
-                .member(member)
-                .category(Category.AMITY)
-                .meetingType(MeetingType.ONCE)
-                .sex(Sex.ALL)
-                .build();
-        List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
-        List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
+        Meeting meeting1 = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+        List<MeetingImage> meetingImageList1 = Arrays.asList(createMeetingImage(meeting1, "meetingImage1"));
+        List<MeetingMember> meetingMemberList1 = Arrays.asList(createMeetingMember(member, meeting1));
 
-        Meeting meeting3 = Meeting.builder()
-                .id(++id)
-                .member(member)
-                .category(Category.AMITY)
-                .meetingType(MeetingType.ONCE)
-                .sex(Sex.ALL)
-                .build();
-        List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
-        List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
+        Meeting meeting2 = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+        List<MeetingImage> meetingImageList2 = Arrays.asList(createMeetingImage(meeting2, "meetingImage1"));
+        List<MeetingMember> meetingMemberList2 = Arrays.asList(createMeetingMember(member, meeting2));
+
+        Meeting meeting3 = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+        List<MeetingImage> meetingImageList3 = Arrays.asList(createMeetingImage(meeting3, "meetingImage1"));
+        List<MeetingMember> meetingMemberList3 = Arrays.asList(createMeetingMember(member, meeting3));
 
         MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1, null, null);
         MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2, null, null);
@@ -221,42 +205,42 @@ class MeetingServiceTest {
     @DisplayName("미팅 수정 테스트")
     public void meetingEditTest() throws Exception {
         //given
-        String title = "수정 제목";
-        String content = "수정 내용";
-        boolean isOpened = false;
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+        Meeting editMeeting = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
 
-        Meeting editMeeting = createMeeting();
-        editMeeting.setTitle(title);
-        editMeeting.setContent(content);
-        editMeeting.setIsOpened(isOpened);
+        List<String> meetingImageStrList = List.of("meetingImage1", "meetingImage2", "meetingImage3", "meetingImage4");
 
-        MeetingImage meetingImage1 = new MeetingImage(++id, editMeeting, imgUrlList.get(0));
-        MeetingImage meetingImage2 = new MeetingImage(++id, editMeeting, imgUrlList.get(1));
-        MeetingImage meetingImage3 = new MeetingImage(++id, editMeeting, imgUrlList.get(2));
-        MeetingImage meetingImage4 = new MeetingImage(++id, editMeeting, imgUrlList.get(3));
+        MeetingImage meetingImage1 = createMeetingImage(editMeeting, meetingImageStrList.get(0));
+        MeetingImage meetingImage2 = createMeetingImage(editMeeting, meetingImageStrList.get(1));
+        MeetingImage meetingImage3 = createMeetingImage(editMeeting, meetingImageStrList.get(2));
+        MeetingImage meetingImage4 = createMeetingImage(editMeeting, meetingImageStrList.get(3));
 
         List<MeetingImage> meetingImageList = Arrays.asList(meetingImage1, meetingImage2, meetingImage3, meetingImage4);
 
         when(meetingRepository.findById(any())).thenReturn(Optional.ofNullable(editMeeting));
-        doNothing().when(meetingImageRepository).deleteByMeetingId(any());
+        when(meetingImageRepository.deleteByMeetingId(any())).thenReturn(0L);
         when(meetingImageRepository.save(any()))
                 .thenReturn(meetingImage1)
                 .thenReturn(meetingImage2)
                 .thenReturn(meetingImage3)
                 .thenReturn(meetingImage4);
 
-        MeetingEditRespDto result = new MeetingEditRespDto(editMeeting, meetingImageList);
+        String editTitle = "수정";
+        String editContent = "수정 컨텐트";
 
-        MeetingEditReqDto meetingEditReqDto = createMeetingEditReqDto();
-        meetingEditReqDto.setTitle(title);
-        meetingEditReqDto.setContent(content);
-        meetingEditReqDto.setIsOpened(false);
+        MeetingEditReqDto meetingEditReqDto = new MeetingEditReqDto(title, content, doName, sigungu, location, sex, conditions, category, meetingType, period, maxPeople, true, meetingImageStrList);
+        meetingEditReqDto.setTitle(editTitle);
+        meetingEditReqDto.setContent(editContent);
+
+        MeetingEditRespDto result = new MeetingEditRespDto(editMeeting, meetingImageList);
+        result.setTitle(editTitle);
+        result.setContent(editContent);
 
         //when
-        MeetingEditRespDto meetingEditRespDto = meetingService.edit(member, editMeeting.getId(), meetingEditReqDto);
+        MeetingEditRespDto expected = meetingService.edit(member, editMeeting.getId(), meetingEditReqDto);
 
         //then
-        assertThat(meetingEditRespDto).isEqualTo(result);
+        assertThat(expected).isEqualTo(result);
     }
 
     @Test
@@ -265,35 +249,23 @@ class MeetingServiceTest {
         //given
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Meeting meeting1 = Meeting.builder()
-                .id(++id)
-                .member(member)
-                .category(Category.AMITY)
-                .meetingType(MeetingType.ONCE)
-                .sex(Sex.ALL)
-                .build();
-        List<MeetingImage> meetingImageList1 = Arrays.asList(new MeetingImage(++id, meeting1, imgUrlList.get(0)));
-        List<MeetingMember> meetingMemberList1 = Arrays.asList(new MeetingMember(++id, meeting1, member));
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
 
-        Meeting meeting2 = Meeting.builder()
-                .id(++id)
-                .member(member)
-                .category(Category.AMITY)
-                .meetingType(MeetingType.ONCE)
-                .sex(Sex.ALL)
-                .build();
-        List<MeetingImage> meetingImageList2 = Arrays.asList(new MeetingImage(++id, meeting2, imgUrlList.get(0)));
-        List<MeetingMember> meetingMemberList2 = Arrays.asList(new MeetingMember(++id, meeting2, member));
+        Meeting meeting1 = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+        List<MeetingImage> meetingImageList1 = Arrays.asList(createMeetingImage(meeting1, "meetingImage1"));
+        List<MeetingMember> meetingMemberList1 = Arrays.asList(createMeetingMember(member, meeting1));
 
-        Meeting meeting3 = Meeting.builder()
-                .id(++id)
-                .member(member)
-                .category(Category.AMITY)
-                .meetingType(MeetingType.ONCE)
-                .sex(Sex.ALL)
-                .build();
-        List<MeetingImage> meetingImageList3 = Arrays.asList(new MeetingImage(++id, meeting3, imgUrlList.get(0)));
-        List<MeetingMember> meetingMemberList3 = Arrays.asList(new MeetingMember(++id, meeting3, member));
+        Meeting meeting2 = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+        List<MeetingImage> meetingImageList2 = Arrays.asList(createMeetingImage(meeting2, "meetingImage1"));
+        List<MeetingMember> meetingMemberList2 = Arrays.asList(createMeetingMember(member, meeting2));
+
+        Meeting meeting3 = createMeeting(member, title, content, doName, sigungu, location, sex, category, meetingType, period, conditions, maxPeople);
+        List<MeetingImage> meetingImageList3 = Arrays.asList(createMeetingImage(meeting3, "meetingImage1"));
+        List<MeetingMember> meetingMemberList3 = Arrays.asList(createMeetingMember(member, meeting3));
+
+        MeetingBookmark meetingBookmark1 = createMeetingBookmark(member, meeting1);
+        MeetingBookmark meetingBookmark2 = createMeetingBookmark(member, meeting2);
+        MeetingBookmark meetingBookmark3 = createMeetingBookmark(member, meeting3);
 
         MeetingRetrieveRespDto result1 = new MeetingRetrieveRespDto(meeting1, meetingImageList1, meetingMemberList1, true, true);
         MeetingRetrieveRespDto result2 = new MeetingRetrieveRespDto(meeting2, meetingImageList2, meetingMemberList2, true, true);
@@ -318,6 +290,10 @@ class MeetingServiceTest {
         when(meetingRepository.findAllSlicingByMemberId(any(), any())).thenReturn(meetingSlice);
         when(meetingImageRepository.findByMeetingIds(any())).thenReturn(meetingImageList);
         when(meetingMemberRepository.findByMeetingIds(any())).thenReturn(meetingMemberList);
+        when(meetingBookmarkRepository.findByMemberIdAndMeetingId(any(), any()))
+                .thenReturn(Optional.ofNullable(meetingBookmark1))
+                .thenReturn(Optional.ofNullable(meetingBookmark2))
+                .thenReturn(Optional.ofNullable(meetingBookmark3));
 
         //when
         Slice<MeetingRetrieveRespDto> respDtoSlice = meetingService.retrieveMemberMeeting(member, pageRequest);
@@ -326,30 +302,23 @@ class MeetingServiceTest {
         assertThat(respDtoSlice).isEqualTo(result);
     }
 
-    private MeetingMember createMeetingMember() {
-        return MeetingMember.builder()
-                .id(++id)
+    private MeetingBookmark createMeetingBookmark(Member member, Meeting meeting) {
+        return MeetingBookmark
+                .builder()
                 .meeting(meeting)
                 .member(member)
                 .build();
     }
 
-    private MeetingCreateReqDto createMeetingCreateReqDto() {
-        return MeetingCreateReqDto.builder()
-                .title(title)
-                .content(content)
-                .doName(doName)
-                .sigungu(sigungu)
-                .sex(sex)
-                .category(category)
-                .conditions(conditions)
-                .maxPeople(maxPeople)
-//                .image(imgUrlList)
+    private MeetingMember createMeetingMember(Member member, Meeting meeting) {
+        return MeetingMember.builder()
+                .member(member)
+                .meeting(meeting)
                 .build();
     }
 
-    private MeetingEditReqDto createMeetingEditReqDto() {
-        return MeetingEditReqDto.builder()
+    private MeetingCreateReqDto createMeetingCreateReqDto(String title, String content, String doName, String sigungu, Sex sex, Category category, String conditions, Integer maxPeople, List<String> imgUrlList) {
+        return MeetingCreateReqDto.builder()
                 .title(title)
                 .content(content)
                 .doName(doName)
@@ -362,9 +331,22 @@ class MeetingServiceTest {
                 .build();
     }
 
+//    private MeetingEditReqDto createMeetingEditReqDto() {
+//        return MeetingEditReqDto.builder()
+//                .title(title)
+//                .content(content)
+//                .doName(doName)
+//                .sigungu(sigungu)
+//                .sex(sex)
+//                .category(category)
+//                .conditions(conditions)
+//                .maxPeople(maxPeople)
+//                .imgUrlList(imgUrlList)
+//                .build();
+//    }
+
     private Member createMember(String uid, String email, String name, String nickname, String imgUrl, String introduce) {
         return Member.builder()
-                .id(id++)
                 .uid(uid)
                 .email(email)
                 .name(name)
@@ -373,16 +355,14 @@ class MeetingServiceTest {
                 .introduce(introduce)
                 .build();
     }
-
-    private Meeting createMeeting() {
+    private Meeting createMeeting(Member member, String title, String content, String doName, String sigungu, String location, Sex sex, Category category, MeetingType meetingType, String period, String conditions, Integer maxPeople) {
         return Meeting.builder()
-                .id(++id)
                 .member(member)
                 .title(title)
                 .content(content)
                 .doName(doName)
                 .sigungu(sigungu)
-                .location(올림픽_공원)
+                .location(location)
                 .sex(sex)
                 .category(category)
                 .meetingType(meetingType)
@@ -392,5 +372,13 @@ class MeetingServiceTest {
                 .isOpened(true)
                 .build();
     }
+
+    private MeetingImage createMeetingImage(Meeting meeting, String meetingImgUrl) {
+        return MeetingImage.builder()
+                .meeting(meeting)
+                .imgUrl(meetingImgUrl)
+                .build();
+    }
+
 
 }
