@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="petPeople.pet.domain.post.service.PostServiceTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2022-09-07T03:01:28" hostname="DESKTOP-F55RK1N" time="0.09">
+  <properties/>
+  <testcase name="로그인 하고 게시글 전체 조회" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.034"/>
+  <testcase name="로그인 후 좋아요 한 게시글 단건 조회 성공" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.009"/>
+  <testcase name="좋아요 하지 않은 게시글 좋아요" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.007"/>
+  <testcase name="로그인 하지 않고 게시글 단건 조회 성공" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.004"/>
+  <testcase name="로그인하지 않고 게시글 전체 조회" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.005"/>
+  <testcase name="로그인 후 게시글 단건 조회 성공" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.005"/>
+  <testcase name="로그인 하고 태그로 게시글 전체 조회" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.004"/>
+  <testcase name="로그인 하지 않고 게시글 단건 조회 실패" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.003"/>
+  <testcase name="이미 좋아요 한 게시글 좋아요" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.002"/>
+  <testcase name="게시글 수정" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.006"/>
+  <testcase name="게시글 정상 작성 테스트" classname="petPeople.pet.domain.post.service.PostServiceTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

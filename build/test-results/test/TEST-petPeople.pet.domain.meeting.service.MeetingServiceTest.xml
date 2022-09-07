@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="petPeople.pet.domain.meeting.service.MeetingServiceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2022-09-07T03:00:46" hostname="DESKTOP-F55RK1N" time="0.117">
+  <properties/>
+  <testcase name="미팅 전체 조회" classname="petPeople.pet.domain.meeting.service.MeetingServiceTest" time="0.093"/>
+  <testcase name="미팅 생성 테스트" classname="petPeople.pet.domain.meeting.service.MeetingServiceTest" time="0.002"/>
+  <testcase name="미팅 수정 테스트" classname="petPeople.pet.domain.meeting.service.MeetingServiceTest" time="0.004"/>
+  <testcase name="존재 하지 않는 미팅 단건 조회" classname="petPeople.pet.domain.meeting.service.MeetingServiceTest" time="0.001"/>
+  <testcase name="미팅 단건 조회" classname="petPeople.pet.domain.meeting.service.MeetingServiceTest" time="0.001"/>
+  <testcase name="회원 미팅 전체 조회 테스트" classname="petPeople.pet.domain.meeting.service.MeetingServiceTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
