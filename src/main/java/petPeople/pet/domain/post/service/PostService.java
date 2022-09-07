@@ -51,7 +51,6 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserDetailsService userDetailsService;
-    private final PostBookmarkRepository postBookmarkRepository;
     private final FirebaseAuth firebaseAuth;
     private final MemberRepository memberRepository;
     private final AuthFilterContainer authFilterContainer;
@@ -70,6 +69,7 @@ public class PostService {
         return new PostWriteRespDto(savePost, tags, imgUrls);
     }
 
+    //로컬환경에서
     public PostRetrieveRespDto localRetrieveOne(Long postId, Optional<String> optionalHeader) {
 
         Post post = validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId));

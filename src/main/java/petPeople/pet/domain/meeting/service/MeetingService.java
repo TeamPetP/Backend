@@ -90,6 +90,120 @@ public class MeetingService {
         return new MeetingEditRespDto(findMeeting, meetingImageList);
     }
 
+    public MeetingRetrieveRespDto localRetrieveOne(Long meetingId, Optional<String> optionalHeader) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+
+        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+        if (isLogined(optionalHeader)) {
+            Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
+            List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+
+            Optional<MeetingWaitingMember> meetingWaitingMember =
+                    meetingWaitingMembers.isEmpty()
+                            ? Optional.empty()
+                            : Optional.ofNullable(meetingWaitingMembers.get(meetingWaitingMembers.size() - 1));
+
+            return new MeetingRetrieveRespDto(
+                    meeting,
+                    meetingImageList,
+                    meetingMemberList,
+                    isJoined(member, meetingMemberList),
+                    isBookmarked(member, meetingId),
+                    meetingWaitingMember
+            );
+        }
+
+        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
+
+    }
+
+    public MeetingRetrieveRespDto retrieveOne(Long meetingId, Optional<String> optionalHeader) {
+        Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
+        List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+        if (isLogined(optionalHeader)) {
+            FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
+            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+            List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
+
+            Optional<MeetingWaitingMember> meetingWaitingMember =
+                    meetingWaitingMembers.isEmpty()
+                            ? Optional.empty()
+                            : Optional.ofNullable(meetingWaitingMembers.get(0));
+
+            return new MeetingRetrieveRespDto(
+                    meeting,
+                    meetingImageList,
+                    meetingMemberList,
+                    isJoined(member, meetingMemberList),
+                    isBookmarked(member, meetingId), meetingWaitingMember);
+        }
+        return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
+    }
+
+    public Slice<MeetingRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalHeader, MeetingParameter meetingParameter) {
+
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
+        List<Long> meetingIds = getMeetingIdList(meetingSlice.getContent());
+
+        if (isLogined(optionalHeader)) {
+            Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
+            return meetingSliceMapToRetrieveRespDto(
+                    member,
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+        }
+
+        return meetingSliceMapToRetrieveNoLoginRespDto(
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalHeader, MeetingParameter meetingParameter) {
+
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
+        List<Long> meetingIds = getMeetingIdList(meetingSlice.getContent());
+
+        if (isLogined(optionalHeader)) {
+            FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
+            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+
+            return meetingSliceMapToRetrieveRespDto(
+                    member,
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+        } else {
+            return meetingSliceMapToRetrieveNoLoginRespDto(
+                    meetingSlice,
+                    findMeetingImageByMeetingIds(meetingIds),
+                    findMeetingMemberByMeetingIds(meetingIds)
+            );
+        }
+    }
+
+    public Slice<MeetingRetrieveRespDto> retrieveMemberMeeting(Member member, Pageable pageable) {
+        Slice<Meeting> meetingSlice = findAllMeetingSlicingByMemberId(member, pageable);
+        List<Long> meetingIds = getMeetingIdList(meetingSlice.getContent());
+        List<MeetingImage> meetingImageByMeetingIdList = findMeetingImageByMeetingIds(meetingIds);
+        List<MeetingMember> meetingMemberByMeetingIdList = findMeetingMemberByMeetingIds(meetingIds);
+
+        return meetingSliceMapToRetrieveRespDto(
+                member,
+                meetingSlice,
+                meetingImageByMeetingIdList,
+                meetingMemberByMeetingIdList
+        );
+    }
+
     @Transactional
     public void joinRequest(Member member, Long meetingId) {
         Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
@@ -107,28 +221,6 @@ public class MeetingService {
     }
 
 
-    private void saveNotification(Notification notification) {
-        notificationRepository.save(notification);
-    }
-
-    private Notification createNotification(Member member, Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
-        return Notification.builder()
-                .member(joinRequestMember)
-                .meetingJoinRequestFlag(requestStatus)
-                .ownerMember(member)
-                .meeting(meeting)
-                .build();
-    }
-
-    private Notification createNotification(Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
-        return Notification.builder()
-                .member(joinRequestMember)
-                .meetingJoinRequestFlag(requestStatus)
-                .ownerMember(joinRequestMember)
-                .meeting(meeting)
-                .build();
-    }
-
     @Transactional
     public void resign(Long meetingId, Member member) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
@@ -142,125 +234,6 @@ public class MeetingService {
 
         deleteMeetingMemberByMeetingIdAndMemberId(meetingId, member);
         deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, member.getId());
-    }
-
-    public MeetingRetrieveRespDto localRetrieveOne(Long meetingId, Optional<String> optionalHeader) {
-
-        if (isLogined(optionalHeader)) {
-            Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
-
-            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
-            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
-
-            List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
-            Optional<MeetingWaitingMember> meetingWaitingMember = null;
-            if (meetingWaitingMembers.isEmpty()) {
-                meetingWaitingMember = Optional.empty();
-            } else {
-                meetingWaitingMember = Optional.ofNullable(meetingWaitingMembers.get(meetingWaitingMembers.size()-1));
-            }
-
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), meetingWaitingMember);
-        } else {
-            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
-            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
-
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
-        }
-    }
-
-    private List<MeetingWaitingMember> findMeetingWaitingMemberByMemberIdAndMeetingId(Long meetingId, Member member) {
-        return meetingWaitingMemberRepository.findByMemberIdAndMeetingId(member.getId(), meetingId);
-    }
-
-    public MeetingRetrieveRespDto retrieveOne(Long meetingId, Optional<String> optionalHeader) {
-
-        if (isLogined(optionalHeader)) {
-            FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
-            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
-
-            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
-            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
-
-            List<MeetingWaitingMember> meetingWaitingMembers = findMeetingWaitingMemberByMemberIdAndMeetingId(meetingId, member);
-            Optional<MeetingWaitingMember> meetingWaitingMember = null;
-            if (meetingWaitingMembers.isEmpty()) {
-                meetingWaitingMember = Optional.empty();
-            } else {
-                meetingWaitingMember = Optional.ofNullable(meetingWaitingMembers.get(0));
-            }
-
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, isJoined(member, meetingMemberList), isBookmarked(member, meetingId), meetingWaitingMember);
-        } else {
-            Meeting meeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-            List<MeetingImage> meetingImageList = findMeetingImageListByMeetingId(meetingId);
-            List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
-
-            return new MeetingRetrieveRespDto(meeting, meetingImageList, meetingMemberList, null, null);
-        }
-    }
-
-    public Slice<MeetingRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalHeader, MeetingParameter meetingParameter) {
-
-        if (isLogined(optionalHeader)) {
-            Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
-
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
-            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-            return meetingSliceMapToRetrieveRespDto(
-                    member,
-                    meetingSlice,
-                    findMeetingImageByMeetingIds(meetingIds),
-                    findMeetingMemberByMeetingIds(meetingIds)
-            );
-        } else {
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
-            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-            return meetingSliceMapToRetrieveNoLoginRespDto(
-                    meetingSlice,
-                    findMeetingImageByMeetingIds(meetingIds),
-                    findMeetingMemberByMeetingIds(meetingIds)
-            );
-        }
-    }
-
-    public Slice<MeetingRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalHeader, MeetingParameter meetingParameter) {
-
-        if (isLogined(optionalHeader)) {
-            FirebaseToken firebaseToken = decodeToken(optionalHeader.get());
-            Member member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
-
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
-            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-            return meetingSliceMapToRetrieveRespDto(
-                    member,
-                    meetingSlice,
-                    findMeetingImageByMeetingIds(meetingIds),
-                    findMeetingMemberByMeetingIds(meetingIds)
-            );
-        } else {
-            Slice<Meeting> meetingSlice = findAllMeetingSlicingWithFetchJoinMember(pageable, meetingParameter);
-            List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-            return meetingSliceMapToRetrieveNoLoginRespDto(
-                    meetingSlice,
-                    findMeetingImageByMeetingIds(meetingIds),
-                    findMeetingMemberByMeetingIds(meetingIds)
-            );
-        }
-    }
-
-    public Slice<MeetingRetrieveRespDto> retrieveMemberMeeting(Member member, Pageable pageable) {
-        Slice<Meeting> meetingSlice = findAllMeetingSlicingByMemberId(member, pageable);
-        List<Long> meetingIds = getMeetingId(meetingSlice.getContent());
-        return meetingSliceMapToRetrieveRespDto(
-                member,
-                meetingSlice,
-                findMeetingImageByMeetingIds(meetingIds),
-                findMeetingMemberByMeetingIds(meetingIds)
-        );
     }
 
     @Transactional
@@ -284,13 +257,14 @@ public class MeetingService {
 
         deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, memberId);
     }
+
     @Transactional
     public void approve(Member member, Long meetingId, Long memberId) {
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         Long joinMemberCount = countMeetingMember(meetingId);
         Member joinRequestMember = findOptionalMemberById(memberId).orElseThrow(() -> {
             throw new CustomException(ErrorCode.NOT_FOUND_MEMBER, "회원을 찾을 수 없습니다.");
-                });
+        });
 
         validateMemberAuthorization(member, findMeeting.getMember());//권한 검증
         validateFullMeeting(findMeeting.getMaxPeople(), joinMemberCount);//인원 검즘
@@ -307,14 +281,8 @@ public class MeetingService {
         if (isFull(findMeeting.getMaxPeople(), afterJoinMemberCount)) {
             findMeeting.setIsOpened(false);
         }
-
-        log.info("joinMemberCount = {}, afterJoinMemberCount = {}", joinMemberCount, afterJoinMemberCount);
-
     }
 
-    private Optional<Member> findOptionalMemberById(Long memberId) {
-        return memberRepository.findById(memberId);
-    }
 
     @Transactional
     public void decline(Member member, Long meetingId, Long joinRequestMemberId) {
@@ -363,10 +331,6 @@ public class MeetingService {
                 .build();
     }
 
-    private boolean isOptionalPostBookmarkPresent(Optional<MeetingBookmark> optionalMeetingBookmark) {
-        return optionalMeetingBookmark.isPresent();
-    }
-
     private Optional<MeetingBookmark> findMeetingBookmarkByMemberIdAndPostId(Long memberId, Long meetingId) {
         return meetingBookmarkRepository.findByMemberIdAndMeetingId(memberId, meetingId);
     }
@@ -393,6 +357,10 @@ public class MeetingService {
         deleteMeetingWaitingMemberByMeetingIdAndMemberId(meetingId, member.getId());
     }
 
+    private Optional<Member> findOptionalMemberById(Long memberId) {
+        return memberRepository.findById(memberId);
+    }
+
     private void deleteMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
         meetingWaitingMemberRepository.deleteByMeetingIdAndMemberId(meetingId, memberId);
     }
@@ -413,9 +381,6 @@ public class MeetingService {
         return meetingRepository.countByMemberId(member.getId());
     }
 
-    public Long countMemberMeetingBookmark(Member member) {
-        return meetingBookmarkRepository.countByMemberId(member.getId());
-    }
 
     private Optional<Member> findOptionalMemberByUid(String uid) {
         return memberRepository.findByUid(uid);
@@ -428,10 +393,10 @@ public class MeetingService {
     }
 
     private void validateOwnMeetingJoinRequest(Member member, Member targetMember) {
-    if (member == targetMember) {
-        throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+        if (member == targetMember) {
+            throwException(ErrorCode.DUPLICATED_JOIN_MEETING, "이미 가입한 모임입니다.");
+        }
     }
-}
 
     public FirebaseToken decodeToken(String header) {
         try {
@@ -461,10 +426,6 @@ public class MeetingService {
 
     private void changeMeetingWaitingMemberStatus(MeetingWaitingMember meetingWaitingMember, JoinRequestStatus joinRequestStatus) {
         meetingWaitingMember.setJoinRequestStatus(joinRequestStatus);
-    }
-
-    private boolean isOccupiedMeeting(Integer maxPeople, Long joinMemberCount) {
-        return joinMemberCount + 1 >= maxPeople;
     }
 
     private Optional<MeetingWaitingMember> findOptionalMeetingWaitingMemberByMeetingIdAndMemberId(Long meetingId, Long memberId) {
@@ -564,18 +525,15 @@ public class MeetingService {
     }
 
     private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveRespDto(Member member, Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
-        return meetingSlice.map(meeting ->
-            new MeetingRetrieveRespDto(
-                    meeting,
-                    getMeetingImagesByMeeting(meetingImageList, meeting),
-                    getMeetingMembersByMeeting(meetingMemberList, meeting),
-                    isJoined(member, getMeetingMembersByMeeting(meetingMemberList, meeting)),
-                    isBookmarked(member, meeting.getId()))
-        );
-    }
 
-    private boolean isBookmarked(Member member, Long meetingId) {
-        return isOptionalPostBookmarkPresent(findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId));
+        return meetingSlice.map(meeting ->
+                new MeetingRetrieveRespDto(
+                        meeting,
+                        getMeetingImagesByMeeting(meetingImageList, meeting),
+                        getMeetingMembersByMeeting(meetingMemberList, meeting),
+                        isJoined(member, getMeetingMembersByMeeting(meetingMemberList, meeting)),
+                        isBookmarked(member, meeting.getId()))
+        );
     }
 
     private Slice<MeetingRetrieveRespDto> meetingSliceMapToRetrieveNoLoginRespDto(Slice<Meeting> meetingSlice, List<MeetingImage> meetingImageList, List<MeetingMember> meetingMemberList) {
@@ -587,6 +545,10 @@ public class MeetingService {
                         null,
                         null)
         );
+    }
+
+    private boolean isBookmarked(Member member, Long meetingId) {
+        return findMeetingBookmarkByMemberIdAndPostId(member.getId(), meetingId).isPresent();
     }
 
     private List<MeetingMember> getMeetingMembersByMeeting(List<MeetingMember> meetingMemberList, Meeting meeting) {
@@ -621,12 +583,16 @@ public class MeetingService {
         return meetingRepository.findAllSlicingWithFetchJoinMember(pageable, meetingParameter);
     }
 
-    private List<Long> getMeetingId(List<Meeting> content) {
+    private List<Long> getMeetingIdList(List<Meeting> content) {
         List<Long> ids = new ArrayList<>();
         for (Meeting meeting : content) {
             ids.add(meeting.getId());
         }
         return ids;
+    }
+
+    private List<MeetingWaitingMember> findMeetingWaitingMemberByMemberIdAndMeetingId(Long meetingId, Member member) {
+        return meetingWaitingMemberRepository.findByMemberIdAndMeetingId(member.getId(), meetingId);
     }
 
     private List<MeetingImage> findMeetingImageListByMeetingId(Long meetingId) {
@@ -707,6 +673,28 @@ public class MeetingService {
                 .title(meetingCreateReqDto.getTitle())
                 .content(meetingCreateReqDto.getContent())
                 .isOpened(true)
+                .build();
+    }
+
+    private void saveNotification(Notification notification) {
+        notificationRepository.save(notification);
+    }
+
+    private Notification createNotification(Member member, Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
+        return Notification.builder()
+                .member(joinRequestMember)
+                .meetingJoinRequestFlag(requestStatus)
+                .ownerMember(member)
+                .meeting(meeting)
+                .build();
+    }
+
+    private Notification createNotification(Member joinRequestMember, Meeting meeting, JoinRequestStatus requestStatus) {
+        return Notification.builder()
+                .member(joinRequestMember)
+                .meetingJoinRequestFlag(requestStatus)
+                .ownerMember(joinRequestMember)
+                .meeting(meeting)
                 .build();
     }
 }
