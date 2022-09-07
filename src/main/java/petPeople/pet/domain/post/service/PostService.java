@@ -85,9 +85,8 @@ public class PostService {
             //좋아요를 눌렀는지
             boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(memberId, postId));
             return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
-        } else {//로그인하지 않을 경우
-            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
         }
+        return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
     }
 
     public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
@@ -99,9 +98,8 @@ public class PostService {
         if (isLogined(optionalHeader)) {
             Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
             return getPostRetrieveRespDtos(postSlice, postRelatedEntity, member);
-        } else {
-            return getPostNoLoginRetrieveRespDtos(postSlice, postRelatedEntity);
         }
+        return getPostNoLoginRetrieveRespDtos(postSlice, postRelatedEntity);
     }
 
     public PostRetrieveRespDto retrieveOne(Long postId, Optional<String> optionalHeader) {
@@ -118,9 +116,9 @@ public class PostService {
 
             boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId));
             return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
-        } else {
-            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
         }
+
+        return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
     }
 
     public Slice<PostRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {

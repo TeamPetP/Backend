@@ -56,6 +56,4 @@ public class MeetingCreateReqDto {
     @ApiModelProperty(required = true, value = "모임 이미지", example = "www.img.com")
     private List<String> imgUrlList = new ArrayList<>();
 
-    @ApiModelProperty(required = true, value = "모임 이미지 파일", example = "www.img.com")
-    private List<String> imageFile = new ArrayList<>();
 }

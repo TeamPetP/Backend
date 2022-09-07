@@ -9,7 +9,6 @@ import lombok.Setter;
 import petPeople.pet.domain.meeting.entity.MeetingBookmark;
 import petPeople.pet.domain.meeting.entity.MeetingImage;
 import petPeople.pet.domain.meeting.entity.MeetingMember;
-import petPeople.pet.domain.meeting.service.MeetingRetrieveOneMemberDto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
