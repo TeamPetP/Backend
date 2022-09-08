@@ -31,20 +31,18 @@ public class MeetingWaitingMemberService {
     private final MeetingWaitingMemberRepository meetingWaitingMemberRepository;
     private final MeetingRepository meetingRepository;
 
+    //모임 신청 대기자 조회
     public List<MeetingWaitingMemberRespDto> retrieveMeetingWaitingMember(Member member, Long meetingId) {
 
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
-        validateAuthorization(member.getId(), findMeeting.getMember().getId());
+        validateAuthorization(member, findMeeting.getMember());
 
         return finMeetingWaitingMemberByMeetingIdFetchJoinMember(meetingId).stream()
                 .map(mwm -> createMeetingWaitingMemberRespDto(mwm))
                 .collect(Collectors.toList());
     }
 
-    private List<MeetingMember> findMeetingMemberListByMeetingIds(List<Long> meetingIds) {
-        return meetingMemberRepository.findByMeetingIds(meetingIds);
-    }
-
+    //내가 가입 신청한 모임 현황 및 모임에 가입된 회원 조회
     public Slice<MeetingJoinApplyRespDto> retrieveMeetingWaitingMemberApply(Pageable pageable, Member member) {
         Slice<MeetingWaitingMember> MeetingWaitingMemberSlicing = findMeetingWaitingMemberByMemberIdFetchJoinMemberAndMeeting(pageable, member);
         List<MeetingWaitingMember> content = MeetingWaitingMemberSlicing.getContent();
@@ -63,12 +61,16 @@ public class MeetingWaitingMemberService {
         return meetingWaitingMemberSlice.map(mwm -> {
             List<Member> joinMembers = new ArrayList<>();
             for (MeetingMember meetingMember : meetingMemberList) {
-                if (meetingMember.getMeeting().getId() == mwm.getMeeting().getId()) {
+                if (meetingMember.getMeeting() == mwm.getMeeting()) {
                     joinMembers.add(meetingMember.getMember());
                 }
             }
             return new MeetingJoinApplyRespDto(mwm, joinMembers);
         });
+    }
+
+    private List<MeetingMember> findMeetingMemberListByMeetingIds(List<Long> meetingIds) {
+        return meetingMemberRepository.findByMeetingIds(meetingIds);
     }
 
     private MeetingWaitingMemberRespDto createMeetingWaitingMemberRespDto(MeetingWaitingMember meetingWaitingMember) {
@@ -91,8 +93,8 @@ public class MeetingWaitingMemberService {
         return meetingWaitingMemberRepository.findAllByMeetingIdFetchJoinMember(meetingId);
     }
 
-    private void validateAuthorization(Long id, Long targetId) {
-        if (id != targetId) {
+    private void validateAuthorization(Member loginMember, Member targetMember) {
+        if (loginMember != targetMember) {
             throwException(ErrorCode.FORBIDDEN_MEMBER, "해당 모임에 권한이 없습니다.");
         }
     }

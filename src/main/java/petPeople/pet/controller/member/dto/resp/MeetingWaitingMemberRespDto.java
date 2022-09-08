@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @Getter @Setter
 @ApiModel(description = "모임 신청자 조회 응답 DTO")
+@EqualsAndHashCode
 public class MeetingWaitingMemberRespDto {
 
     @ApiModelProperty(required = true, value = "회원 ID", example = "1")
