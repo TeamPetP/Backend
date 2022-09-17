@@ -16,7 +16,7 @@ spring:
         default_batch_fetch_size : 100
   config:
     activate:
-      on-profile: local
+      on-profile: test
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher

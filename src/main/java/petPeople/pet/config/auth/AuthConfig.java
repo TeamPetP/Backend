@@ -30,6 +30,15 @@ public class AuthConfig {
     }
 
     @Bean
+    @Profile("test")
+    public AuthFilterContainer mockTestAuthFilter() {
+        log.info("Initializing local AuthFilter");
+        AuthFilterContainer authFilterContainer = new AuthFilterContainer();
+        authFilterContainer.setAuthFilter(new MockJwtFilter(userService));
+        return authFilterContainer;
+    }
+
+    @Bean
     @Profile("prod")
     public AuthFilterContainer firebaseAuthFilter() {
         log.info("Initializing Firebase AuthFilter");
@@ -37,4 +46,5 @@ public class AuthConfig {
         authFilterContainer.setAuthFilter(new JwtFilter(userService, firebaseAuth));
         return authFilterContainer;
     }
+
 }

@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 @TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"})
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 @Disabled
 @Transactional
 @SpringBootTest
