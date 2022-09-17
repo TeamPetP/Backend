@@ -47,7 +47,7 @@ dependencies {
 
 	implementation group: 'com.google.firebase', name: 'firebase-admin', version: '8.0.1'
 	implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.4.2'
-
+	implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.3'
 	// querydsl 추가
 	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
 	implementation "com.querydsl:querydsl-apt:${queryDslVersion}"
