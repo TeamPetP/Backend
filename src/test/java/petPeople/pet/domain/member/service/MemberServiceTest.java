@@ -111,8 +111,7 @@ class MemberServiceTest {
          assertThat(member.getIntroduce()).isEqualTo(introduce);
      }
 
-
-    private Member createMember(String uid, String email, String name, String nickname, String imgUrl, String introduce) {
+     private Member createMember(String uid, String email, String name, String nickname, String imgUrl, String introduce) {
         return Member.builder()
                 .uid(uid)
                 .email(email)

@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -16,19 +17,16 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseAuth firebaseAuth() throws IOException {
+        String getenv = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+
+        FileInputStream serviceAccount = new FileInputStream(getenv);
+
         FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredentials(GoogleCredentials.fromStream(getFirebaseIs()))
+                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .build();
 
         FirebaseApp.initializeApp(options);
         return FirebaseAuth.getInstance(FirebaseApp.getInstance());
     }
 
-    private InputStream getFirebaseIs() throws IOException {
-
-        ClassPathResource resource = new ClassPathResource("serviceAccountKey.json");
-        if(resource.exists()) {
-            return resource.getInputStream();
-        } throw new RuntimeException("firebase 키가 존재하지 않습니다");
-    }
 }
