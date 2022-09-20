@@ -8,9 +8,6 @@ import com.querydsl.core.types.PathMetadata;
 import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathInits;
-import petPeople.pet.domain.meeting.entity.vo.Category;
-import petPeople.pet.domain.meeting.entity.vo.MeetingType;
-import petPeople.pet.domain.meeting.entity.vo.Sex;
 
 
 /**
@@ -27,7 +24,7 @@ public class QMeeting extends EntityPathBase<Meeting> {
 
     public final petPeople.pet.domain.base.QBaseTimeEntity _super = new petPeople.pet.domain.base.QBaseTimeEntity(this);
 
-    public final EnumPath<Category> category = createEnum("category", Category.class);
+    public final EnumPath<petPeople.pet.domain.meeting.entity.vo.Category> category = createEnum("category", petPeople.pet.domain.meeting.entity.vo.Category.class);
 
     public final StringPath conditions = createString("conditions");
 
@@ -49,13 +46,13 @@ public class QMeeting extends EntityPathBase<Meeting> {
 
     public final NumberPath<Integer> maxPeople = createNumber("maxPeople", Integer.class);
 
-    public final EnumPath<MeetingType> meetingType = createEnum("meetingType", MeetingType.class);
+    public final EnumPath<petPeople.pet.domain.meeting.entity.vo.MeetingType> meetingType = createEnum("meetingType", petPeople.pet.domain.meeting.entity.vo.MeetingType.class);
 
     public final petPeople.pet.domain.member.entity.QMember member;
 
     public final StringPath period = createString("period");
 
-    public final EnumPath<Sex> sex = createEnum("sex", Sex.class);
+    public final EnumPath<petPeople.pet.domain.meeting.entity.vo.Sex> sex = createEnum("sex", petPeople.pet.domain.meeting.entity.vo.Sex.class);
 
     public final StringPath sigungu = createString("sigungu");
 

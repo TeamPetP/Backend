@@ -1,6 +1,5 @@
 package petPeople.pet.domain.member.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,53 +29,37 @@ class MemberServiceTest {
     @InjectMocks
     MemberService memberService;
 
-    Member member;
+    final String uid = "abcd";
+    final String email = "abcd@daum.com";
+    final String name = "성이름";
+    final String nickname = "abcd";
+    final String imgUrl = "https://www.balladang.com";
+    final String introduce = "잘지내요 우리";
+    final Integer age = 23;
 
-    private static final Long ID = 1L;
-    private static final String UID = "abcd";
-    private static final String EMAIL = "abcd@daum.com";
-    private static final String NAME = "성이름";
-    private static final String NICKNAME = "abcd";
-    private static final String IMG_URL = "https://www.balladang.com";
-    private static final String INTRODUCE = "잘지내요 우리";
-    private static final Integer AGE = 23;
-
-    @BeforeEach
-    void before() {
-        member = createMember();
-    }
-
-    private Member createMember() {
-        return Member.builder()
-                .id(ID)
-                .uid(UID)
-                .email(EMAIL)
-                .name(NAME)
-                .nickname(NICKNAME)
-                .imgUrl(IMG_URL)
-                .introduce(INTRODUCE)
-                .build();
-    }
 
     @Test
     @DisplayName("회원 조회 테스트")
     void loadByUserNameTest() throws Exception {
         //given
-        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(member));
+        Member expectedMember = createMember(uid, email, name, nickname, imgUrl, introduce);
+        when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(expectedMember));
 
         //when
-        Member member = (Member)memberService.loadUserByUsername(UID);
+        Member member = (Member)memberService.loadUserByUsername(uid);
 
         //then
-        assertThat(member).isEqualTo(this.member);
+        assertThat(member).isEqualTo(expectedMember);
     }
 
     @Test
     @DisplayName("로컬 회원 가입 테스트")
     public void memberRegisterTest() throws Exception {
         //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+
         MemberRegisterRespDto result = new MemberRegisterRespDto(member);
-        MemberLocalRegisterReqDto memberLocalRegisterReqDto = new MemberLocalRegisterReqDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE);
+        MemberLocalRegisterReqDto memberLocalRegisterReqDto = new MemberLocalRegisterReqDto(uid, name, email, nickname, imgUrl, introduce);
 
         when(memberRepository.save(any())).thenReturn(member);
         when(memberRepository.findByUid(any())).thenReturn(Optional.empty());
@@ -92,21 +75,25 @@ class MemberServiceTest {
     @DisplayName("중복 회원 가입 테스트")
     public void duplicatedMemberRegisterTest() throws Exception {
         //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+
         when(memberRepository.findByUid(any())).thenReturn(Optional.ofNullable(member));
 
         //when
         //then
         assertThrows(CustomException.class,
-                () -> memberService.register(new MemberRegisterDto(UID, NAME, EMAIL, NICKNAME, IMG_URL, INTRODUCE, AGE)));
+                () -> memberService.register(new MemberRegisterDto(uid, name, email, nickname, imgUrl, introduce, age)));
     }
-    
+
     @Test
     @DisplayName("닉네임 변경 테스트")
     public void editNicknameTest() throws Exception {
         //given
+        Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+
         //when
         memberService.editNickname(member, "가나다라");
-        
+
         //then
         assertThat(member.getNickname()).isEqualTo("가나다라");
     }
@@ -114,6 +101,8 @@ class MemberServiceTest {
      @Test
      public void editIntroduceTest() throws Exception {
          //given
+         Member member = createMember(uid, email, name, nickname, imgUrl, introduce);
+
          //when
          String introduce = "강아지죠아";
          memberService.editIntroduce(member, introduce);
@@ -122,4 +111,15 @@ class MemberServiceTest {
          assertThat(member.getIntroduce()).isEqualTo(introduce);
      }
 
+
+    private Member createMember(String uid, String email, String name, String nickname, String imgUrl, String introduce) {
+        return Member.builder()
+                .uid(uid)
+                .email(email)
+                .name(name)
+                .nickname(nickname)
+                .imgUrl(imgUrl)
+                .introduce(introduce)
+                .build();
+    }
 }

@@ -40,12 +40,13 @@ public class MeetingPostService {
 
     @Transactional
     public MeetingPostWriteRespDto write(Member member, MeetingPostWriteReqDto meetingPostWriteReqDto, Long meetingId) {
-        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
+        List<MeetingMember> meetingMemberList = findMeetingMemberListByMeetingId(meetingId);
+
+        validateJoinedMember(isJoined(member, meetingMemberList));
 
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         MeetingPost saveMeetingPost = saveMeetingPost(createMeetingPost(member, meetingPostWriteReqDto, findMeeting));
         List<MeetingPostImage> saveMeetingPostImageList = saveMeetingPostImageList(member, saveMeetingPost, meetingPostWriteReqDto.getImgUrlList());
-        List<MeetingMember> meetingMemberList = meetingMemberRepository.findByMeetingId(meetingId);
 
         for (MeetingMember meetingMember : meetingMemberList) {
             if (meetingMember.getMember().getId() != member.getId()) {
@@ -65,7 +66,6 @@ public class MeetingPostService {
         List<MeetingPostImage> findMeetingPostImageList = findAllMeetingPostImageByMeetingPostId(meetingPostId);
 
         long likeCnt = countMeetingPostLikeByMeetingPostsId(meetingPostId);
-
 
         Optional<MeetingPostLike> optionalMeetingPostLike = findOptionalMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);
 
@@ -88,11 +88,7 @@ public class MeetingPostService {
             List<MeetingPostLike> meetingPostLikesByMeetingPost = getMeetingPostLikesByMeetingPost(findMeetingPostLikeList, meetingPost);
 
             boolean isLiked = isMemberLikedMeetingPost(member, meetingPostLikesByMeetingPost);
-            boolean isOwner = false;
-
-            if (meetingPost.getMember() == member) {
-                isOwner = true;
-            }
+            boolean isOwner = meetingPost.getMember() == member;
 
             return new MeetingPostRetrieveRespDto(meetingPost, meetingPostImageList, Long.valueOf(meetingPostLikesByMeetingPost.size()), isLiked, isOwner);
         });
@@ -135,6 +131,7 @@ public class MeetingPostService {
 
     @Transactional
     public long like(Long meetingId, Long meetingPostId, Member member) {
+        validateJoinedMember(isJoined(member, findMeetingMemberListByMeetingId(meetingId)));
         Meeting findMeeting = validateOptionalMeeting(findOptionalMeetingByMeetingId(meetingId));
         MeetingPost findMeetingPost = validateOptionalMeetingPost(findOptionalMeetingPostByMeetingPostId(meetingPostId));
         Optional<MeetingPostLike> optionalMeetingPostLike = findOptionalMeetingPostLikeByMemberIdAndMeetingPostId(member.getId(), meetingPostId);

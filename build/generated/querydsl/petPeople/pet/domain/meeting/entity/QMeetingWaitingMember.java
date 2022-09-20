@@ -8,7 +8,6 @@ import com.querydsl.core.types.PathMetadata;
 import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathInits;
-import petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus;
 
 
 /**
@@ -30,7 +29,7 @@ public class QMeetingWaitingMember extends EntityPathBase<MeetingWaitingMember> 
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final EnumPath<JoinRequestStatus> joinRequestStatus = createEnum("joinRequestStatus", JoinRequestStatus.class);
+    public final EnumPath<petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus> joinRequestStatus = createEnum("joinRequestStatus", petPeople.pet.domain.meeting.entity.vo.JoinRequestStatus.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> lastModifiedDate = _super.lastModifiedDate;

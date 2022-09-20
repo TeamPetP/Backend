@@ -51,7 +51,6 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserDetailsService userDetailsService;
-    private final PostBookmarkRepository postBookmarkRepository;
     private final FirebaseAuth firebaseAuth;
     private final MemberRepository memberRepository;
     private final AuthFilterContainer authFilterContainer;
@@ -70,6 +69,7 @@ public class PostService {
         return new PostWriteRespDto(savePost, tags, imgUrls);
     }
 
+    //로컬환경에서
     public PostRetrieveRespDto localRetrieveOne(Long postId, Optional<String> optionalHeader) {
 
         Post post = validateOptionalPost(findOptionalPostFetchJoinedWithMember(postId));
@@ -85,9 +85,8 @@ public class PostService {
             //좋아요를 눌렀는지
             boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(memberId, postId));
             return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
-        } else {//로그인하지 않을 경우
-            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
         }
+        return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
     }
 
     public Slice<PostRetrieveRespDto> localRetrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
@@ -99,9 +98,8 @@ public class PostService {
         if (isLogined(optionalHeader)) {
             Member member = validateOptionalMember(findOptionalMemberByUid(optionalHeader.get()));
             return getPostRetrieveRespDtos(postSlice, postRelatedEntity, member);
-        } else {
-            return getPostNoLoginRetrieveRespDtos(postSlice, postRelatedEntity);
         }
+        return getPostNoLoginRetrieveRespDtos(postSlice, postRelatedEntity);
     }
 
     public PostRetrieveRespDto retrieveOne(Long postId, Optional<String> optionalHeader) {
@@ -118,9 +116,9 @@ public class PostService {
 
             boolean optionalPostLikePresent = isOptionalPostLikePresent(findOptionalPostLikeByMemberIdAndPostId(member.getId(), postId));
             return createLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, optionalPostLikePresent, commentCnt, member);
-        } else {
-            return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
         }
+
+        return createNoLoginPostRetrieveRespDto(post, tagList, postImageList, likeCnt, commentCnt);
     }
 
     public Slice<PostRetrieveRespDto> retrieveAll(Pageable pageable, Optional<String> optionalTag, Optional<String> optionalHeader) {
@@ -182,13 +180,24 @@ public class PostService {
         deleteNotificationByMemberIdAndPostId(member, postId);
 
         for (Comment comment : findCommentList) {
-            deleteCommentLikeByCommentId(comment);
-            deleteNotificationByMemberIdAndCommentId(member, comment);
+            deleteCommentLikeByCommentId(comment.getId());
+            deleteNotificationByMemberIdAndCommentId(member.getId(), comment.getId());
             deleteNotification(member, comment);
         }
 
         findCommentList = findByCommentByPostId(postId);
 
+        deleteCommentWithChildComment(postId, getChildCommentIds(findCommentList));
+
+        deletePostByPostId(postId);
+    }
+
+    private void deleteCommentWithChildComment(Long postId, List<Long> childCommentIds) {
+        commentRepository.deleteByCommentIds(childCommentIds);
+        commentRepository.deleteCommentByPostId(postId);
+    }
+
+    private List<Long> getChildCommentIds(List<Comment> findCommentList) {
         List<Long> childCommentIds = new ArrayList<>();
         for (Comment comment : findCommentList) {
             List<Comment> child = comment.getChild();
@@ -196,11 +205,7 @@ public class PostService {
                 childCommentIds.add(childComment.getId());
             }
         }
-
-        commentRepository.deleteByCommentIds(childCommentIds);
-        commentRepository.deleteCommentByPostId(postId);
-
-        deletePostByPostId(postId);
+        return childCommentIds;
     }
 
     public Slice<PostRetrieveRespDto> retrieveMemberLikedPost(Member member, Pageable pageable) {
@@ -225,12 +230,12 @@ public class PostService {
         notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), comment.getId());
     }
 
-    private void deleteNotificationByMemberIdAndCommentId(Member member, Comment comment) {
-        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), comment.getId());
+    private void deleteNotificationByMemberIdAndCommentId(Long memberId, Long commentId) {
+        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(memberId, commentId);
     }
 
-    private void deleteCommentLikeByCommentId(Comment comment) {
-        commentLikeRepository.deleteByCommentId(comment.getId());
+    private void deleteCommentLikeByCommentId(Long id) {
+        commentLikeRepository.deleteByCommentId(id);
     }
 
     private List<Comment> findByCommentByPostId(Long postId) {

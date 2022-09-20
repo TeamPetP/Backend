@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Getter @Setter
+@EqualsAndHashCode
 @ApiModel(description = "내가 가입한 모임 신청 현황 조회 응답 DTO")
 public class MeetingJoinApplyRespDto {
 

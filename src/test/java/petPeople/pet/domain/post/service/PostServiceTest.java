@@ -22,8 +22,10 @@ import petPeople.pet.controller.post.dto.resp.PostRetrieveRespDto;
 import petPeople.pet.controller.post.dto.resp.PostWriteRespDto;
 import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.comment.repository.comment.CommentRepository;
+import petPeople.pet.domain.comment.repository.commentLike.CommentLikeRepository;
 import petPeople.pet.domain.member.entity.Member;
 import petPeople.pet.domain.member.repository.MemberRepository;
+import petPeople.pet.domain.notification.repository.NotificationRepository;
 import petPeople.pet.domain.post.entity.*;
 import petPeople.pet.domain.post.repository.post.PostRepository;
 import petPeople.pet.domain.post.repository.post_bookmark.PostBookmarkRepository;
@@ -57,8 +59,6 @@ class PostServiceTest {
     PostImageRepository postImageRepository;
     @Mock
     UserDetailsService userDetailsService;
-    @Mock
-    PostBookmarkRepository postBookmarkRepository;
     @Mock
     CommentRepository commentRepository;
     @Mock
@@ -496,7 +496,7 @@ class PostServiceTest {
         //then
         assertThat(result).isEqualTo(expected);
     }
-    
+
     @DisplayName("좋아요 하지 않은 게시글 좋아요")
     @Test
     public void 게시글_좋아요() throws Exception {
@@ -541,7 +541,6 @@ class PostServiceTest {
         //then
         assertThat(result).isEqualTo(expected);
     }
-
 
     private boolean isMemberLikedPostInPostLikeList(Member member, List<PostLike> postLikeList) {
         boolean flag = false;

@@ -1,9 +1,9 @@
 
 spring:
   datasource:
-    url: jdbc:mysql://petpdb.citsvvicombz.ap-northeast-2.rds.amazonaws.com:3306/petpdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: petP
-    password: password
+    url: ENC(bBP4osKNF0rVmaVHuoZixS9IF1cb+AQd)
+    username: ENC(lBIb7bD2L2o2hWGdcwAsog==)
+    password: ENC(l4rfQqaul7o0e1w16Zgx1prRl0pz0PIo)
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
