@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 import petPeople.pet.domain.comment.entity.Comment;
 import petPeople.pet.domain.comment.entity.CommentLike;
+import petPeople.pet.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class CommentRetrieveRespDto {
     private String content;
 
     @ApiModelProperty(required = true, value = "좋아요 수", example = "3")
-    private Long likeCnt;
+    private Integer likeCnt;
 
     @ApiModelProperty(required = true, value = "작성 시간", example = "2022-06-28T07:38:14.152321")
     private LocalDateTime createdDate;
@@ -61,7 +62,7 @@ public class CommentRetrieveRespDto {
             "            ]")
     private List<CommentRetrieveRespDto> childComment = new ArrayList<>();
 
-    public CommentRetrieveRespDto(Comment comment, Long likeCnt, Boolean isLiked, List<CommentLike> findCommentLikeList, Long memberId) {
+    public CommentRetrieveRespDto(Comment comment, Integer parentCommentLikeCnt, Boolean isLiked, List<CommentLike> findCommentLikeList, Member member) {
         this.content = comment.getContent();
         this.commentId = comment.getId();
         this.postId = comment.getPost().getId();
@@ -69,30 +70,31 @@ public class CommentRetrieveRespDto {
         this.createdDate = comment.getCreatedDate();
         this.nickName = comment.getMember().getNickname();
         this.memberImageUrl = comment.getMember().getImgUrl();
-        this.likeCnt = likeCnt;
+        this.likeCnt = parentCommentLikeCnt;
         this.isLiked = isLiked;
         if (comment.getChild() != null) {
             for (Comment c : comment.getChild()) {
-                Long likeCount = 0L;
                 boolean flag = false;
+                Integer childCommentLikeCnt = 0;
                 for (CommentLike commentLike : findCommentLikeList) {
-                    likeCount = countCommentLike(c, likeCount, commentLike);
-                    flag = checkLike(memberId, flag, commentLike);
+                    countCommentLike(c, commentLike);
+                    flag = checkLike(member, flag, commentLike);
                 }
-                this.childComment.add(new CommentRetrieveRespDto(c, likeCount, flag, findCommentLikeList, memberId));
+                this.childComment.add(new CommentRetrieveRespDto(c, childCommentLikeCnt, flag, findCommentLikeList, member));
             }
         }
     }
 
-    private Long countCommentLike(Comment c, Long likeCount, CommentLike commentLike) {
-        if (c.getId().equals(commentLike.getComment().getId())) {
+    private Integer countCommentLike(Comment c, CommentLike commentLike) {
+        Integer likeCount = 0;
+        if (c == commentLike.getComment()) {
             likeCount++;
         }
         return likeCount;
     }
 
-    private boolean checkLike(Long memberId, boolean flag, CommentLike commentLike) {
-        if (commentLike.getMember().getId().equals(memberId)) {
+    private boolean checkLike(Member member, boolean flag, CommentLike commentLike) {
+        if (commentLike.getMember() == member) {
             flag = true;
         }
         return flag;

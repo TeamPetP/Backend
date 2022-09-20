@@ -2,10 +2,7 @@ package petPeople.pet.controller.comment.dto.resp;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import petPeople.pet.domain.comment.entity.Comment;
 
 import java.time.LocalDateTime;
@@ -13,6 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 @ApiModel(description = "댓글 수정 응답 DTO")
+@EqualsAndHashCode
 public class CommentEditRespDto {
 
     @ApiModelProperty(required = true, value = "댓글 ID", example = "1")
