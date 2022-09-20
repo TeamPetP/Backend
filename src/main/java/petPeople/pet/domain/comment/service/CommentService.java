@@ -28,6 +28,7 @@ import petPeople.pet.domain.post.entity.Post;
 import petPeople.pet.domain.post.repository.post.PostRepository;
 import petPeople.pet.exception.CustomException;
 import petPeople.pet.exception.ErrorCode;
+import petPeople.pet.filter.JwtFilter;
 import petPeople.pet.filter.MockJwtFilter;
 import petPeople.pet.util.RequestUtil;
 
@@ -51,7 +52,7 @@ public class CommentService {
     private final AuthFilterContainer authFilterContainer;
 
     @Transactional
-    public CommentWriteRespDto writeComment(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId, Long parentCommentId) {
+    public CommentWriteRespDto writeComment(Member member, CommentWriteReqDto commentWriteRequestDto, Long postId) {
 
         Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
 
@@ -65,8 +66,7 @@ public class CommentService {
 
         Post findPost = validateOptionalPost(findOptionalPostWithId(postId));
 
-        Comment parent = commentRepository.findById(parentCommentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
+        Comment parent = validateOptionalComment(findOptionalComment(parentCommentId));
 
         if (parent.getParent() != null) {
             throwException(ErrorCode.BAD_REQUEST, "자식 댓글에 댓글을 달 수 없습니다.");
@@ -77,43 +77,95 @@ public class CommentService {
         return new CommentWriteRespDto(saveComment);
     }
 
-    private void throwException(ErrorCode errorCode, String message) {
-        throw new CustomException(errorCode, message);
-    }
-
-    public CommentRetrieveWithCountRespDto retrieveAll(Long postId, String header) {
+    public CommentRetrieveWithCountRespDto prodRetrieveAll(Long postId, String header) {
         List<Comment> commentList = findAllCommentByPostIdWithFetchJoinMember(postId);
         List<CommentLike> findCommentLikeList = getCommentLikesByPostId(postId);
-        Long commentCnt = commentRepository.countByPostId(postId);
+        Long commentCnt = countCommentByPostId(postId);
 
-        //@OneToMany를 쓰지 않기 위해 이런 방법으로?
-            if (header == null) {
-                List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
-                ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
-                new CommentRetrieveWithCountRespDto();
-
-                return createNoLoginCommentRetrieveRespDto(comment, commentLikeList, findCommentLikeList);
-            }).collect(Collectors.toList());
-
-            return new CommentRetrieveWithCountRespDto(commentCnt, map);
+        if (header == null) {
+            return new CommentRetrieveWithCountRespDto(commentCnt, commentListMapToRespDtoWithNoLogin(commentList, findCommentLikeList));
         } else{
-            Member member;
-
-            if (authFilterContainer.getFilter() instanceof MockJwtFilter) {
-                member = validateOptionalMember(findOptionalMemberByUid(header));
-            } else {
-                FirebaseToken firebaseToken = decodeToken(header);
-                member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
-            }
-
-            List<CommentRetrieveRespDto> map = commentList.stream().map(comment -> {
-                ArrayList<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
-
-                boolean flag = commentLikeFlag(member, commentLikeList);
-                return new CommentRetrieveRespDto(comment, (long) commentLikeList.size(), flag, findCommentLikeList, member.getId());
-            }).collect(Collectors.toList());
-            return new CommentRetrieveWithCountRespDto(commentCnt, map);
+            Member member = getProdMemberByHeader(header);
+            return new CommentRetrieveWithCountRespDto(commentCnt, commentListMapToRespDtoWithLogin(commentList, findCommentLikeList, member));
         }
+    }
+
+    public CommentRetrieveWithCountRespDto localRetrieveAll(Long postId, String header) {
+        List<Comment> commentList = findAllCommentByPostIdWithFetchJoinMember(postId);
+        List<CommentLike> findCommentLikeList = getCommentLikesByPostId(postId);
+        Long commentCnt = countCommentByPostId(postId);
+
+        if (header == null) {
+            return new CommentRetrieveWithCountRespDto(commentCnt, commentListMapToRespDtoWithNoLogin(commentList, findCommentLikeList));
+        } else{
+            Member member = getLocalMemberByHeader(header);
+            return new CommentRetrieveWithCountRespDto(commentCnt, commentListMapToRespDtoWithLogin(commentList, findCommentLikeList, member));
+        }
+    }
+
+    private Long countCommentByPostId(Long postId) {
+        return commentRepository.countByPostId(postId);
+    }
+
+    private List<CommentRetrieveRespDto> commentListMapToRespDtoWithNoLogin(List<Comment> commentList, List<CommentLike> findCommentLikeList) {
+        return commentList.stream().map(comment -> {
+            List<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
+
+            return new CommentRetrieveRespDto(comment, commentLikeList.size(), null, findCommentLikeList, null);
+        }).collect(Collectors.toList());
+    }
+
+    private List<CommentRetrieveRespDto> commentListMapToRespDtoWithLogin(List<Comment> commentList, List<CommentLike> findCommentLikeList, Member member) {
+        return commentList.stream().map(comment -> {
+            List<CommentLike> commentLikeList = getCommentLikeListByComment(findCommentLikeList, comment);
+
+            return new CommentRetrieveRespDto(comment, commentLikeList.size(), isMemberLikedComment(member, commentLikeList), findCommentLikeList, member);
+        }).collect(Collectors.toList());
+    }
+
+    private Member getProdMemberByHeader(String header) {
+        Member member;
+        if (authFilterContainer.getFilter() instanceof JwtFilter) {
+            FirebaseToken firebaseToken = decodeToken(header);
+            member = validateOptionalMember(findOptionalMemberByUid(firebaseToken.getUid()));
+        } else {
+            member = validateOptionalMember(findOptionalMemberByUid(header));
+        }
+        return member;
+    }
+
+    private Member getLocalMemberByHeader(String header) {
+        return validateOptionalMember(findOptionalMemberByUid(header));
+    }
+
+    @Transactional
+    public CommentEditRespDto editComment(Member member, Long commentId, CommentEditReqDto commentEditReqDto) {
+        Comment findComment = validateOptionalComment(findOptionalComment(commentId));
+        validateAuthorization(member, findComment);
+
+        editCommentContent(commentEditReqDto.getContent(), findComment);
+
+        return new CommentEditRespDto(findComment, getCommentLikeCount(commentId));
+    }
+
+
+    @Transactional
+    public void deleteComment(Member member, Long commentId) {
+        Comment comment = validateOptionalComment(findOptionalComment(commentId));
+        validateAuthorization(member, comment);
+
+        if (comment.getParent() == null) {
+            deleteChildComment(comment);
+        }
+
+        deleteCommentLikeByCommentId(commentId);
+        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), commentId);
+        notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), commentId);
+        deleteCommentByCommentId(commentId);
+    }
+
+    private void throwException(ErrorCode errorCode, String message) {
+        throw new CustomException(errorCode, message);
     }
 
     private Member validateOptionalMember(Optional<Member> optionalMember) {
@@ -133,48 +185,6 @@ public class CommentService {
         }
     }
 
-    private List<CommentLike> getCommentLikesByPostId(Long postId) {
-        return commentLikeRepository.findCommentLikesByPostId(postId);
-    }
-
-    @Transactional
-    public CommentEditRespDto editComment(Member member, Long commentId, CommentEditReqDto commentEditReqDto) {
-        Comment findComment = validateOptionalComment(findOptionalComment(commentId));
-        validateAuthorization(member, findComment);
-
-        editCommentContent(commentEditReqDto.getContent(), findComment);
-
-        return new CommentEditRespDto(findComment, getCommentLikeCount(commentId));
-    }
-
-    private Long getCommentLikeCount(Long commentId) {
-        Long commentLikeCount = commentLikeRepository.countByCommentId(commentId);
-        return commentLikeCount;
-    }
-
-
-    @Transactional
-    public void deleteComment(Member member, Long commentId) {
-        Comment comment = validateOptionalComment(findOptionalComment(commentId));
-        validateAuthorization(member, comment);
-
-        if (comment.getParent() == null) {
-            deleteChildComment(comment);
-        }
-        deleteCommentLikeByCommentId(commentId);
-        notificationRepository.deleteNotificationByOwnerMemberIdAndCommentId(member.getId(), commentId);
-        notificationRepository.deleteNotificationByMemberIdAndWriteCommentId(member.getId(), commentId);
-        deleteCommentByCommentId(commentId);
-    }
-
-    private void deleteChildComment(Comment comment) {
-        List<Comment> childComment = comment.getChild();
-        for (Comment c : childComment) {
-            Member childMember = c.getMember();
-            deleteComment(childMember, c.getId());
-        }
-    }
-
     @Transactional
     public Long likeComment(Member member, Long commentId) {
         Comment findComment = validateOptionalComment(findOptionalComment(commentId));
@@ -191,8 +201,21 @@ public class CommentService {
         return commentLikeRepository.countByCommentId(commentId);
     }
 
-    private boolean isLogined(Optional<String> header) {
-        return header.isPresent();
+    private List<CommentLike> getCommentLikesByPostId(Long postId) {
+        return commentLikeRepository.findCommentLikesByPostId(postId);
+    }
+
+    private Long getCommentLikeCount(Long commentId) {
+        Long commentLikeCount = commentLikeRepository.countByCommentId(commentId);
+        return commentLikeCount;
+    }
+
+    private void deleteChildComment(Comment comment) {
+        List<Comment> childComment = comment.getChild();
+        for (Comment c : childComment) {
+            Member childMember = c.getMember();
+            deleteComment(childMember, c.getId());
+        }
     }
 
     private void saveNotification(Member member, Long commentId, Comment findComment, Post findPost) {
@@ -271,10 +294,6 @@ public class CommentService {
         return memberRepository.findByUid(uid);
     }
 
-    private CommentRetrieveRespDto createNoLoginCommentRetrieveRespDto(Comment comment, ArrayList<CommentLike> commentLikeList, List<CommentLike> findCommentLikeList) {
-        return new CommentRetrieveRespDto(comment, (long) commentLikeList.size(), null, findCommentLikeList, null);
-    }
-
     private ArrayList<CommentLike> getCommentLikeListByComment(List<CommentLike> findCommentLikeList, Comment comment) {
         ArrayList<CommentLike> commentLikeList = new ArrayList<>();
 
@@ -286,7 +305,7 @@ public class CommentService {
         return commentLikeList;
     }
 
-    private boolean commentLikeFlag(Member member, ArrayList<CommentLike> commentLikeList) {
+    private boolean isMemberLikedComment(Member member, List<CommentLike> commentLikeList) {
         boolean flag = false;
         for (CommentLike commentLike : commentLikeList) {
             if (commentLike.getMember() == member) {
