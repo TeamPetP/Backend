@@ -71,9 +71,6 @@
 <img src="https://img.shields.io/badge/Oauth-4285F4?style=flat-square&logo=Google&logoColor=white"/>
 </p>
 
-
-<iframe width="640" height="360" src="https://www.youtube.com/embed/oy_HDBPU1CI" frameborder="0" gesture="media" allowfullscreen=""></iframe>
-
 ### **Infra**
 
 <p>
