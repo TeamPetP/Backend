@@ -98,16 +98,3 @@
 
 ![erd](https://velog.velcdn.com/images/789456jang/post/510d9bab-2577-419a-82b6-58745a3f4166/image.png)
 ### 이미지를 ⭕클릭하시면 확대해서 볼 수 있어요!
-
-**[참고 자료]**
-
-## 🛠 기획 및 설계
-- [GitHub 프로젝트 칸반](https://github.com/TeamPetP/Backend/projects/1)
-<br>
-- [기능명세서](https://www.notion.so/PetP-152f4a68ebef4f3aa6bca494ed3d78d2)
-<br>
-- [페이지 기획](https://whimsical.com/petp-MqzhNXRTbomEmoMySeZUfE)
-<br>
-- [회의록](https://www.notion.so/6f8ebc64574c45468ec901228c87d4e5)
-<br>
-- [API 명세서](https://www.notion.so/API-312a7b3d21f842458493d1b9e9d3c473)
